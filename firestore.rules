@@ -1,0 +1,453 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: default deny everything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- PHASE 3: HARDENED GLOBAL PRIMITIVES ---
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isVerifiedAdminEmail() {
+      return isVerifiedUser() && request.auth.token.email == 'wigrund81@gmail.com';
+    }
+
+    function isAdmin() {
+      return isVerifiedAdminEmail() ||
+        (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isBoundedString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isOptionalString(data, key, maxLen) {
+      return !(key in data) || (data[key] is string && data[key].size() <= maxLen);
+    }
+
+    // --- VALIDATION BLUEPRINTS (ANTI-UPDATE-GAP) ---
+    function isValidUserPublicProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'role', 'city', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'role', 'city', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == userId
+        && isBoundedString(data.displayName, 1, 80)
+        && isBoundedString(data.role, 1, 80)
+        && isBoundedString(data.city, 1, 60)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivateInfo(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == userId
+        && isBoundedString(data.email, 3, 160)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSavedSession(data, userId, sessionId) {
+      return data.keys().hasAll(['uid', 'sessionId', 'title', 'time', 'stage', 'track', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'sessionId', 'title', 'time', 'stage', 'track', 'createdAt'])
+        && isValidId(data.uid)
+        && data.uid == userId
+        && isValidId(data.sessionId)
+        && data.sessionId == sessionId
+        && isBoundedString(data.title, 1, 160)
+        && isBoundedString(data.time, 1, 40)
+        && isBoundedString(data.stage, 1, 60)
+        && isBoundedString(data.track, 1, 60)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAdminRegistry(data, adminUid) {
+      return data.keys().hasAll(['uid', 'email', 'grantedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'grantedAt'])
+        && isValidId(data.uid)
+        && data.uid == adminUid
+        && isBoundedString(data.email, 3, 160)
+        && data.grantedAt is timestamp;
+    }
+
+    function isValidMerchant(data, merchantId) {
+      return data.keys().hasAll([
+          'id', 'name', 'domain', 'city', 'region', 'category',
+          'revenue', 'platform', 'paymentProvider', 'carrier',
+          'desc', 'status', 'updatedBy', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'name', 'domain', 'city', 'region', 'category',
+          'revenue', 'yoyGrowth', 'platform', 'paymentProvider', 'carrier',
+          'desc', 'status', 'updatedBy', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == merchantId
+        && isBoundedString(data.name, 1, 120)
+        && isBoundedString(data.domain, 2, 120)
+        && isBoundedString(data.city, 1, 80)
+        && isBoundedString(data.region, 1, 40)
+        && isBoundedString(data.category, 1, 80)
+        && isBoundedString(data.revenue, 1, 60)
+        && isOptionalString(data, 'yoyGrowth', 40)
+        && isBoundedString(data.platform, 1, 120)
+        && isBoundedString(data.paymentProvider, 1, 120)
+        && isBoundedString(data.carrier, 1, 120)
+        && isBoundedString(data.desc, 1, 600)
+        && data.status in ['published', 'draft']
+        && isValidId(data.updatedBy)
+        && data.updatedBy == request.auth.uid
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPartner(data, partnerId) {
+      return data.keys().hasAll([
+          'id', 'name', 'domain', 'cat', 'origin', 'stack',
+          'desc', 'status', 'updatedBy', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'name', 'domain', 'cat', 'origin', 'stack',
+          'customerCount', 'desc', 'status', 'updatedBy', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == partnerId
+        && isBoundedString(data.name, 1, 120)
+        && isBoundedString(data.domain, 2, 120)
+        && isBoundedString(data.cat, 1, 80)
+        && isBoundedString(data.origin, 1, 80)
+        && isBoundedString(data.stack, 1, 160)
+        && isOptionalString(data, 'customerCount', 120)
+        && isBoundedString(data.desc, 1, 600)
+        && data.status in ['published', 'draft']
+        && isValidId(data.updatedBy)
+        && data.updatedBy == request.auth.uid
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdBanner(data, bannerId) {
+      return data.keys().hasAll([
+          'id', 'placement', 'placementLabel', 'dimensions', 'mode',
+          'sponsorName', 'kicker', 'headline', 'body', 'ctaLabel',
+          'targetUrl', 'theme', 'active', 'updatedBy', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'placement', 'placementLabel', 'dimensions', 'mode',
+          'sponsorName', 'kicker', 'headline', 'body', 'ctaLabel',
+          'targetUrl', 'theme', 'active', 'updatedBy', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == bannerId
+        && data.placement in ['marknad-top', 'marknad-mid', 'event-top', 'partners-top', 'ehandlare-top', 'jobb-top']
+        && isBoundedString(data.placementLabel, 1, 100)
+        && isBoundedString(data.dimensions, 1, 40)
+        && data.mode in ['active', 'placeholder']
+        && isBoundedString(data.sponsorName, 1, 100)
+        && isBoundedString(data.kicker, 1, 80)
+        && isBoundedString(data.headline, 1, 180)
+        && isBoundedString(data.body, 0, 400)
+        && isBoundedString(data.ctaLabel, 1, 60)
+        && isBoundedString(data.targetUrl, 1, 300)
+        && data.theme in ['navy', 'gold', 'light']
+        && data.active is bool
+        && isValidId(data.updatedBy)
+        && data.updatedBy == request.auth.uid
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCommunityThread(data) {
+      return data.keys().hasAll([
+          'channel', 'author', 'authorUid', 'title', 'votes',
+          'replies', 'time', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'channel', 'author', 'authorUid', 'title', 'votes',
+          'replies', 'time', 'createdAt', 'updatedAt'
+        ])
+        && isBoundedString(data.channel, 2, 40)
+        && isBoundedString(data.author, 1, 80)
+        && isValidId(data.authorUid)
+        && isBoundedString(data.title, 3, 220)
+        && data.votes is int
+        && data.votes >= 1
+        && data.replies is int
+        && data.replies >= 0
+        && isBoundedString(data.time, 1, 40)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidContactMessage(data) {
+      return data.keys().hasAll([
+          'authorUid', 'name', 'email', 'topic', 'message',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'authorUid', 'name', 'email', 'company', 'topic', 'adSlot',
+          'message', 'status', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.authorUid)
+        && isBoundedString(data.name, 1, 100)
+        && isBoundedString(data.email, 3, 160)
+        && isOptionalString(data, 'company', 120)
+        && isBoundedString(data.topic, 1, 100)
+        && isOptionalString(data, 'adSlot', 100)
+        && isBoundedString(data.message, 2, 2000)
+        && data.status in ['new', 'reviewed', 'resolved']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // --- CONNECTIVITY CHECK ---
+    match /test/connection {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
+    // --- USER PROFILES & SPLIT PII + SAVED SESSIONS ---
+    match /users/{userId} {
+      allow get: if isVerifiedUser() && isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isVerifiedAdminEmail();
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserPublicProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && isValidUserPublicProfile(incoming(), userId)
+        && incoming().createdAt == existing().createdAt
+        && incoming().uid == existing().uid
+        && incoming().updatedAt == request.time
+        && (
+          (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'role', 'city', 'updatedAt']))
+          || isAdmin()
+        );
+      allow delete: if isVerifiedUser() && isValidId(userId) && (isOwner(userId) || isAdmin());
+
+      // Split Collection PII (Email isolated here) + Master Gate
+      match /private/{docId} {
+        allow get: if isVerifiedUser() && isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+        allow list: if isOwner(userId) || isVerifiedAdminEmail();
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(docId)
+          && docId == 'info'
+          && isValidUserPrivateInfo(incoming(), userId)
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isVerifiedUser()
+          && isValidId(userId)
+          && isValidId(docId)
+          && docId == 'info'
+          && isValidUserPrivateInfo(incoming(), userId)
+          && incoming().uid == existing().uid
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && (
+            (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'updatedAt']))
+            || isAdmin()
+          );
+        allow delete: if isVerifiedUser() && isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+      }
+
+      // Personal D-Congress 2027 Agenda Bookmarks + Master Gate
+      match /savedSessions/{sessionId} {
+        allow get: if isVerifiedUser() && isValidId(userId) && isValidId(sessionId) && (isOwner(userId) || isAdmin());
+        allow list: if isOwner(userId) || isVerifiedAdminEmail();
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(sessionId)
+          && isValidSavedSession(incoming(), userId, sessionId)
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isVerifiedUser()
+          && isValidId(userId)
+          && isValidId(sessionId)
+          && isValidSavedSession(incoming(), userId, sessionId)
+          && incoming().uid == existing().uid
+          && incoming().sessionId == existing().sessionId
+          && incoming().createdAt == existing().createdAt
+          && isAdmin();
+        allow delete: if isVerifiedUser() && isValidId(userId) && isValidId(sessionId) && (isOwner(userId) || isAdmin());
+      }
+    }
+
+    // --- ADMIN REGISTRY (NO SELF-ASSIGNMENT) ---
+    match /admins/{adminUid} {
+      allow get: if isVerifiedUser() && isValidId(adminUid) && (isOwner(adminUid) || isVerifiedAdminEmail());
+      allow list: if isVerifiedAdminEmail();
+      allow create: if isVerifiedAdminEmail()
+        && isValidId(adminUid)
+        && isValidAdminRegistry(incoming(), adminUid)
+        && incoming().grantedAt == request.time;
+      allow update: if isVerifiedAdminEmail()
+        && isValidId(adminUid)
+        && isValidAdminRegistry(incoming(), adminUid)
+        && incoming().uid == existing().uid
+        && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'grantedAt'])
+        && incoming().grantedAt == request.time;
+      allow delete: if isVerifiedAdminEmail() && isValidId(adminUid);
+    }
+
+    // --- MERCHANTS CATALOG ---
+    match /merchants/{merchantId} {
+      allow get: if isValidId(merchantId) && (existing().status == 'published' || isAdmin());
+      allow list: if existing().status == 'published' || isVerifiedAdminEmail();
+      allow create: if isVerifiedUser()
+        && isValidId(merchantId)
+        && isValidMerchant(incoming(), merchantId)
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerifiedUser()
+        && isValidId(merchantId)
+        && isValidMerchant(incoming(), merchantId)
+        && incoming().id == existing().id
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'domain', 'city', 'region', 'category', 'revenue',
+          'yoyGrowth', 'platform', 'paymentProvider', 'carrier',
+          'desc', 'status', 'updatedBy', 'updatedAt'
+        ])
+        && isAdmin();
+      allow delete: if isVerifiedUser() && isValidId(merchantId) && isAdmin();
+    }
+
+    // --- TECH PARTNERS CATALOG ---
+    match /partners/{partnerId} {
+      allow get: if isValidId(partnerId) && (existing().status == 'published' || isAdmin());
+      allow list: if existing().status == 'published' || isVerifiedAdminEmail();
+      allow create: if isVerifiedUser()
+        && isValidId(partnerId)
+        && isValidPartner(incoming(), partnerId)
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerifiedUser()
+        && isValidId(partnerId)
+        && isValidPartner(incoming(), partnerId)
+        && incoming().id == existing().id
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'domain', 'cat', 'origin', 'stack',
+          'customerCount', 'desc', 'status', 'updatedBy', 'updatedAt'
+        ])
+        && isAdmin();
+      allow delete: if isVerifiedUser() && isValidId(partnerId) && isAdmin();
+    }
+
+    // --- AD BANNERS & HOLDERS ---
+    match /adBanners/{bannerId} {
+      allow get: if isValidId(bannerId) && (existing().active == true || isAdmin());
+      allow list: if existing().active == true || isVerifiedAdminEmail();
+      allow create: if isVerifiedUser()
+        && isValidId(bannerId)
+        && isValidAdBanner(incoming(), bannerId)
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerifiedUser()
+        && isValidId(bannerId)
+        && isValidAdBanner(incoming(), bannerId)
+        && incoming().id == existing().id
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'placement', 'placementLabel', 'dimensions', 'mode',
+          'sponsorName', 'kicker', 'headline', 'body', 'ctaLabel',
+          'targetUrl', 'theme', 'active', 'updatedBy', 'updatedAt'
+        ])
+        && isAdmin();
+      allow delete: if isVerifiedUser() && isValidId(bannerId) && isAdmin();
+    }
+
+    // --- COMMUNITY FORUM THREADS ---
+    match /communityThreads/{threadId} {
+      allow get: if isValidId(threadId);
+      allow list: if existing().votes >= 1;
+      allow create: if isVerifiedUser()
+        && isValidId(threadId)
+        && isValidCommunityThread(incoming())
+        && incoming().authorUid == request.auth.uid
+        && incoming().votes == 1
+        && incoming().replies == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(threadId)
+        && isValidCommunityThread(incoming())
+        && incoming().authorUid == existing().authorUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (
+            existing().authorUid == request.auth.uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['channel', 'title', 'updatedAt'])
+          )
+          || (
+            incoming().votes == existing().votes + 1
+            && incoming().diff(existing()).affectedKeys().hasOnly(['votes', 'updatedAt'])
+          )
+          || isAdmin()
+        );
+      allow delete: if isVerifiedUser()
+        && isValidId(threadId)
+        && (existing().authorUid == request.auth.uid || isAdmin());
+    }
+
+    // --- CONTACT MESSAGES (PII PROTECTED) ---
+    match /contactMessages/{messageId} {
+      allow get: if isVerifiedUser()
+        && isValidId(messageId)
+        && (existing().authorUid == request.auth.uid || isAdmin());
+      allow list: if isVerifiedAdminEmail()
+        || (isVerifiedUser() && existing().authorUid == request.auth.uid);
+      allow create: if isVerifiedUser()
+        && isValidId(messageId)
+        && isValidContactMessage(incoming())
+        && incoming().authorUid == request.auth.uid
+        && incoming().status == 'new'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(messageId)
+        && isValidContactMessage(incoming())
+        && incoming().authorUid == existing().authorUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (
+            existing().authorUid == request.auth.uid
+            && existing().status != 'resolved'
+            && incoming().status == existing().status
+            && incoming().diff(existing()).affectedKeys().hasOnly(['message', 'adSlot', 'updatedAt'])
+          )
+          || isAdmin()
+        );
+      allow delete: if isVerifiedUser()
+        && isValidId(messageId)
+        && (existing().authorUid == request.auth.uid || isAdmin());
+    }
+  }
+}

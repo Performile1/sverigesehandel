@@ -13,6 +13,11 @@ import { MarknadView } from './components/MarknadView';
 import { MerchantsView } from './components/MerchantsView';
 import { Navbar } from './components/Navbar';
 import { PartnersView } from './components/PartnersView';
+import { useFirebase } from './contexts/FirebaseContext';
+import {
+  saveCommunityThreadToFirestore,
+  saveContactMessageToFirestore,
+} from './firebaseSync';
 import type { CMSStore, JobRoleCategory, Merchant, PortalTab, TechPartner } from './types';
 
 const TAB_TITLES: Record<PortalTab, string> = {
@@ -33,6 +38,7 @@ function getInitialTab(): PortalTab {
 }
 
 export default function App() {
+  const { user, authError } = useFirebase();
   const [store, setStore] = useState<CMSStore | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -110,6 +116,12 @@ export default function App() {
         ? 'CMS Studio | sverigesehandel.se'
         : TAB_TITLES[activeTab] || TAB_TITLES.marknad;
   }, [activeTab, mode]);
+
+  useEffect(() => {
+    if (authError) {
+      notify(authError);
+    }
+  }, [authError, notify]);
 
   function handleNavigate(tab: PortalTab, searchQuery?: string) {
     setInitialSearch(searchQuery || '');
@@ -326,6 +338,9 @@ export default function App() {
                 threads={store.communityThreads}
                 onAddThread={async (payload) => {
                   await api.addThread(payload);
+                  if (user?.emailVerified) {
+                    await saveCommunityThreadToFirestore(user, payload);
+                  }
                   await fetchStore();
                   notify('Din tråd har publicerats i nätverket.');
                 }}
@@ -346,6 +361,9 @@ export default function App() {
                 initialAdSlot={selectedAdSlot}
                 onSubmitContact={async (payload) => {
                   await api.submitContactMessage(payload);
+                  if (user?.emailVerified) {
+                    await saveContactMessageToFirestore(user, payload);
+                  }
                   await fetchStore();
                 }}
                 onNotify={notify}

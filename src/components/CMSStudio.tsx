@@ -23,6 +23,13 @@ import {
   Trash2,
 } from 'lucide-react';
 import { api } from '../api';
+import { useFirebase } from '../contexts/FirebaseContext';
+import {
+  deleteCatalogDocFromFirestore,
+  syncAdBannerToFirestore,
+  syncMerchantToFirestore,
+  syncPartnerToFirestore,
+} from '../firebaseSync';
 import type {
   AdBanner,
   CMSSection,
@@ -170,6 +177,7 @@ const JOB_ROLE_OPTIONS: JobRoleCategory[] = [
 ];
 
 export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudioProps) {
+  const { user, isAdmin, signingIn, signInWithGoogle } = useFirebase();
   const [section, setSection] = useState<CMSSection>('discover');
 
   // Table Filters
@@ -325,6 +333,9 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
           status: 'published' as const,
         }));
         const res = await api.batchAddMerchants(items);
+        if (user && isAdmin) {
+          await Promise.all(res.added.map((m) => syncMerchantToFirestore(user, m)));
+        }
         await onRefresh();
         onNotify(
           `${res.added.length} e-handlare importerade i CMS${
@@ -344,6 +355,9 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
           status: 'published' as const,
         }));
         const res = await api.batchAddPartners(items);
+        if (user && isAdmin) {
+          await Promise.all(res.added.map((p) => syncPartnerToFirestore(user, p)));
+        }
         await onRefresh();
         onNotify(
           `${res.added.length} tech-partners importerade i CMS${
@@ -411,26 +425,38 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
 
   async function toggleMerchantStatus(m: Merchant) {
     const nextStatus = m.status === 'published' ? 'draft' : 'published';
-    await api.upsertMerchant({ ...m, status: nextStatus });
+    const res = await api.upsertMerchant({ ...m, status: nextStatus });
+    if (user && isAdmin) {
+      await syncMerchantToFirestore(user, res.merchant);
+    }
     await onRefresh();
     onNotify(`${m.name} ändrad till ${nextStatus === 'published' ? 'Publicerad' : 'Utkast'}.`);
   }
 
   async function togglePartnerStatus(p: TechPartner) {
     const nextStatus = p.status === 'published' ? 'draft' : 'published';
-    await api.upsertPartner({ ...p, status: nextStatus });
+    const res = await api.upsertPartner({ ...p, status: nextStatus });
+    if (user && isAdmin) {
+      await syncPartnerToFirestore(user, res.partner);
+    }
     await onRefresh();
     onNotify(`${p.name} ändrad till ${nextStatus === 'published' ? 'Publicerad' : 'Utkast'}.`);
   }
 
   async function handleDeleteMerchant(m: Merchant) {
     await api.deleteMerchant(m.id);
+    if (user && isAdmin) {
+      await deleteCatalogDocFromFirestore(user, 'merchants', m.id);
+    }
     await onRefresh();
     onNotify(`${m.name} borttagen från CMS.`);
   }
 
   async function handleDeletePartner(p: TechPartner) {
     await api.deletePartner(p.id);
+    if (user && isAdmin) {
+      await deleteCatalogDocFromFirestore(user, 'partners', p.id);
+    }
     await onRefresh();
     onNotify(`${p.name} borttagen från CMS.`);
   }
@@ -669,7 +695,23 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
               {sidebarItems.find((i) => i.id === section)?.label}
             </span>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {isAdmin ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-[#059669] whitespace-nowrap">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Firestore Admin-synk
+              </span>
+            ) : (
+              <button
+                type="button"
+                disabled={signingIn}
+                onClick={signInWithGoogle}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap disabled:opacity-60"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[#006AA7]" />
+                {user ? 'Admin-synk inaktiv' : signingIn ? 'Loggar in...' : 'Logga in för molnsynk'}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onOpenEditor('merchant')}
@@ -2452,7 +2494,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                       onSubmit={async (e) => {
                         e.preventDefault();
                         const form = new FormData(e.currentTarget);
-                        await api.upsertAdBanner({
+                        const savedBanner = await api.upsertAdBanner({
                           ...banner,
                           sponsorName: String(form.get('sponsorName') || banner.sponsorName),
                           headline: String(form.get('headline') || banner.headline),
@@ -2462,6 +2504,9 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                           theme: (String(form.get('theme') || banner.theme) as AdBanner['theme']),
                           mode: (String(form.get('mode') || banner.mode) as AdBanner['mode']),
                         });
+                        if (user && isAdmin) {
+                          await syncAdBannerToFirestore(user, savedBanner);
+                        }
                         await onRefresh();
                         onNotify(`Annonsplats "${banner.placementLabel}" uppdaterad.`);
                       }}
@@ -2479,7 +2524,13 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                         <button
                           type="button"
                           onClick={async () => {
-                            await api.upsertAdBanner({ ...banner, active: !banner.active });
+                            const savedBanner = await api.upsertAdBanner({
+                              ...banner,
+                              active: !banner.active,
+                            });
+                            if (user && isAdmin) {
+                              await syncAdBannerToFirestore(user, savedBanner);
+                            }
                             await onRefresh();
                             onNotify(
                               !banner.active

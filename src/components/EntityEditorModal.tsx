@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Sparkles, X } from 'lucide-react';
 import { api } from '../api';
+import { useFirebase } from '../contexts/FirebaseContext';
+import { syncMerchantToFirestore, syncPartnerToFirestore } from '../firebaseSync';
 import type { Merchant, PublishStatus, TechPartner } from '../types';
 
 interface EntityEditorModalProps {
@@ -22,6 +24,7 @@ export function EntityEditorModal({
   onSaved,
   onNotify,
 }: EntityEditorModalProps) {
+  const { user, isAdmin } = useFirebase();
   const [saving, setSaving] = useState(false);
   const [enriching, setEnriching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -166,7 +169,7 @@ export function EntityEditorModal({
       if (mode === 'merchant') {
         const parsedRevM = Number(mRevenueNumericM);
         const parsedGrowth = Number(mYoyGrowthPct);
-        await api.upsertMerchant({
+        const res = await api.upsertMerchant({
           id: merchant?.id,
           name: mName.trim(),
           domain: mDomain.trim(),
@@ -190,9 +193,12 @@ export function EntityEditorModal({
           desc: mDesc.trim(),
           status: mStatus,
         });
+        if (user && isAdmin) {
+          await syncMerchantToFirestore(user, res.merchant);
+        }
         onNotify(merchant ? `${mName} uppdaterad i CMS.` : `${mName} tillagd i CMS.`);
       } else {
-        await api.upsertPartner({
+        const res = await api.upsertPartner({
           id: partner?.id,
           name: pName.trim(),
           domain: pDomain.trim(),
@@ -211,6 +217,9 @@ export function EntityEditorModal({
           desc: pDesc.trim(),
           status: pStatus,
         });
+        if (user && isAdmin) {
+          await syncPartnerToFirestore(user, res.partner);
+        }
         onNotify(partner ? `${pName} uppdaterad i CMS.` : `${pName} tillagd i CMS.`);
       }
       await onSaved();

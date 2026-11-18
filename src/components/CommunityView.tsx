@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronUp, MessageSquare } from 'lucide-react';
+import { useFirebase } from '../contexts/FirebaseContext';
 import type { CommunityThread } from '../types';
 
 interface CommunityViewProps {
@@ -34,6 +35,8 @@ export function CommunityView({
   const [joinCity, setJoinCity] = useState('Göteborg / Borås');
   const [joining, setJoining] = useState(false);
 
+  const { user, signInWithGoogle } = useFirebase();
+
   const filtered =
     activeChannel === 'all' ? threads : threads.filter((t) => t.channel === activeChannel);
 
@@ -44,7 +47,7 @@ export function CommunityView({
     try {
       await onAddThread({
         channel: newChannel,
-        author: 'Verifierad medlem · Sveriges E-handel',
+        author: user?.displayName || 'Verifierad medlem · Sveriges E-handel',
         title: newTitle.trim(),
       });
       setNewTitle('');
@@ -216,6 +219,23 @@ export function CommunityView({
             onSubmit={handlePost}
             className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3"
           >
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+              <span>
+                Publicerar som:{' '}
+                <strong className="text-[#040B16]">
+                  {user?.displayName || 'Verifierad medlem · Sveriges E-handel'}
+                </strong>
+              </span>
+              {!user && (
+                <button
+                  type="button"
+                  onClick={signInWithGoogle}
+                  className="text-[#006AA7] font-semibold hover:underline cursor-pointer"
+                >
+                  Logga in med Google för verifierad profil
+                </button>
+              )}
+            </div>
             <input
               type="text"
               required

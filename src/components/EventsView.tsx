@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { CalendarCheck, Check, ExternalLink, MapPin, Plus, Ticket, X } from 'lucide-react';
+import { useFirebase } from '../contexts/FirebaseContext';
 import type { AdBanner, DCSession, EcommerceEvent, PortalTab } from '../types';
 import { AdBannerSlot } from './AdBannerSlot';
 import { ResilientImage } from './ResilientImage';
@@ -28,7 +29,7 @@ export function EventsView({
   const [roleView, setRoleView] = useState<'visitor' | 'exhibitor'>('visitor');
 
   const [activeTrack, setActiveTrack] = useState<string>('all');
-  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const { user, savedSessionIds, toggleSavedSession, signInWithGoogle } = useFirebase();
 
   const publishedEvents = useMemo(
     () => events.filter((e) => e.status === 'published'),
@@ -52,14 +53,21 @@ export function EventsView({
       ? publishedSessions
       : publishedSessions.filter((s) => s.track === activeTrack);
 
-  const savedSessions = publishedSessions.filter((s) => savedIds.includes(s.id));
+  const savedSessions = publishedSessions.filter((s) => savedSessionIds.includes(s.id));
 
-  function toggleSession(id: string) {
-    setSavedIds((prev) => {
-      if (prev.includes(id)) return prev.filter((item) => item !== id);
-      onNotify('Programpunkt tillagd i ditt D-Congress 2027-schema.');
-      return [...prev, id];
-    });
+  async function handleToggleSession(session: DCSession) {
+    try {
+      const added = await toggleSavedSession(session);
+      if (added) {
+        onNotify(
+          user
+            ? 'Programpunkt sparad i ditt konto för D-Congress 2027.'
+            : 'Programpunkt tillagd i ditt D-Congress 2027-schema.'
+        );
+      }
+    } catch (err) {
+      onNotify(err instanceof Error ? err.message : 'Kunde inte uppdatera schemat.');
+    }
   }
 
   return (
@@ -340,7 +348,7 @@ export function EventsView({
 
               <div className="space-y-3">
                 {filteredSessions.map((s) => {
-                  const isSaved = savedIds.includes(s.id);
+                  const isSaved = savedSessionIds.includes(s.id);
                   return (
                     <div
                       key={s.id}
@@ -358,7 +366,7 @@ export function EventsView({
                       </div>
                       <button
                         type="button"
-                        onClick={() => toggleSession(s.id)}
+                        onClick={() => handleToggleSession(s)}
                         className={`shrink-0 px-3.5 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
                           isSaved
                             ? 'bg-[#059669] text-white'
@@ -385,6 +393,19 @@ export function EventsView({
                 <h3 className="font-display text-xl font-bold">Din personliga agenda</h3>
                 <p className="text-xs text-slate-400">
                   Välj programpunkter i listan för att bygga ditt schema inför Göteborg.
+                  {!user && (
+                    <>
+                      {' '}
+                      <button
+                        type="button"
+                        onClick={signInWithGoogle}
+                        className="text-[#FECC02] hover:underline font-semibold cursor-pointer"
+                      >
+                        Logga in med Google
+                      </button>{' '}
+                      för att spara mellan enheter.
+                    </>
+                  )}
                 </p>
 
                 <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
@@ -406,7 +427,7 @@ export function EventsView({
                         </div>
                         <button
                           type="button"
-                          onClick={() => toggleSession(s.id)}
+                          onClick={() => handleToggleSession(s)}
                           className="text-slate-400 hover:text-white p-1"
                           aria-label="Ta bort"
                         >

@@ -1,0 +1,345 @@
+{
+  "entities": {
+    "UserPublicProfile": {
+      "title": "UserPublicProfile",
+      "description": "Public profile for signed-in Sveriges E-handel portal and community members (no PII).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "displayName", "role", "city", "createdAt", "updatedAt"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated PII document for authenticated users (email stored separately from public profile).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "updatedAt"]
+    },
+    "SavedSession": {
+      "title": "SavedSession",
+      "description": "Saved D-Congress 2027 agenda item belonging to an authenticated user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "sessionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "time": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "stage": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "track": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "sessionId", "title", "time", "stage", "track", "createdAt"]
+    },
+    "AdminRegistry": {
+      "title": "AdminRegistry",
+      "description": "Trusted registry of admin UIDs for CMS management.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "grantedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "grantedAt"]
+    },
+    "MerchantDoc": {
+      "title": "MerchantDoc",
+      "description": "Swedish e-commerce merchant entry in the CMS catalog.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "domain": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "city": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "region": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "revenue": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "yoyGrowth": { "type": "string", "maxLength": 40 },
+        "platform": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "paymentProvider": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "carrier": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "desc": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "status": { "type": "string", "enum": ["published", "draft"] },
+        "updatedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "name",
+        "domain",
+        "city",
+        "region",
+        "category",
+        "revenue",
+        "platform",
+        "paymentProvider",
+        "carrier",
+        "desc",
+        "status",
+        "updatedBy",
+        "updatedAt"
+      ]
+    },
+    "TechPartnerDoc": {
+      "title": "TechPartnerDoc",
+      "description": "Nordic e-commerce tech/payment/logistics partner entry in the CMS catalog.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "domain": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "cat": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "origin": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "stack": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "customerCount": { "type": "string", "maxLength": 120 },
+        "desc": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "status": { "type": "string", "enum": ["published", "draft"] },
+        "updatedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "domain", "cat", "origin", "stack", "desc", "status", "updatedBy", "updatedAt"]
+    },
+    "AdBannerDoc": {
+      "title": "AdBannerDoc",
+      "description": "Sponsored ad banner or open ad holder slot managed in CMS Studio.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "placement": {
+          "type": "string",
+          "enum": ["marknad-top", "marknad-mid", "event-top", "partners-top", "ehandlare-top", "jobb-top"]
+        },
+        "placementLabel": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "dimensions": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "mode": { "type": "string", "enum": ["active", "placeholder"] },
+        "sponsorName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "kicker": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "headline": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "body": { "type": "string", "maxLength": 400 },
+        "ctaLabel": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "targetUrl": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "theme": { "type": "string", "enum": ["navy", "gold", "light"] },
+        "active": { "type": "boolean" },
+        "updatedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "placement",
+        "placementLabel",
+        "dimensions",
+        "mode",
+        "sponsorName",
+        "kicker",
+        "headline",
+        "body",
+        "ctaLabel",
+        "targetUrl",
+        "theme",
+        "active",
+        "updatedBy",
+        "updatedAt"
+      ]
+    },
+    "CommunityThreadDoc": {
+      "title": "CommunityThreadDoc",
+      "description": "Community discussion thread authored by an authenticated member.",
+      "type": "object",
+      "properties": {
+        "channel": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "author": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "authorUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": { "type": "string", "minLength": 3, "maxLength": 220 },
+        "votes": { "type": "integer" },
+        "replies": { "type": "integer" },
+        "time": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["channel", "author", "authorUid", "title", "votes", "replies", "time", "createdAt", "updatedAt"]
+    },
+    "ContactMessageDoc": {
+      "title": "ContactMessageDoc",
+      "description": "Contact or ad-banner booking inquiry addressed to hej@sverigesehandel.se (contains PII).",
+      "type": "object",
+      "properties": {
+        "authorUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "email": { "type": "string", "format": "email", "minLength": 3, "maxLength": 160 },
+        "company": { "type": "string", "maxLength": 120 },
+        "topic": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "adSlot": { "type": "string", "maxLength": 100 },
+        "message": { "type": "string", "minLength": 2, "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["new", "reviewed", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorUid", "name", "email", "topic", "message", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserPublicProfile" },
+      "description": "Public profile attributes (displayName, role, city) without email PII."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Owner/Admin-only PII storage (email) split from public user profile."
+    },
+    "/users/{userId}/savedSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/SavedSession" },
+      "description": "User's saved D-Congress 2027 agenda sessions."
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminRegistry" },
+      "description": "Verified CMS administrators."
+    },
+    "/merchants/{merchantId}": {
+      "schema": { "$ref": "#/entities/MerchantDoc" },
+      "description": "Published Swedish merchants and CMS drafts."
+    },
+    "/partners/{partnerId}": {
+      "schema": { "$ref": "#/entities/TechPartnerDoc" },
+      "description": "Published tech partners and CMS drafts."
+    },
+    "/adBanners/{bannerId}": {
+      "schema": { "$ref": "#/entities/AdBannerDoc" },
+      "description": "Ad banners and open banner holders synced from CMS Studio."
+    },
+    "/communityThreads/{threadId}": {
+      "schema": { "$ref": "#/entities/CommunityThreadDoc" },
+      "description": "Sveriges E-handel Network discussion threads."
+    },
+    "/contactMessages/{messageId}": {
+      "schema": { "$ref": "#/entities/ContactMessageDoc" },
+      "description": "Private contact and ad booking messages for hej@sverigesehandel.se."
+    }
+  }
+}
