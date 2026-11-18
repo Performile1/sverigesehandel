@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-navy-950: #040B16;
+  --color-navy-900: #0A1628;
+  --color-navy-800: #11223D;
+  --color-swe-blue: #006AA7;
+  --color-swe-blue-light: #E0F2FE;
+  --color-swe-yellow: #FECC02;
+  --color-swe-yellow-hover: #EAB308;
+  --color-nordic-green-950: #022C22;
+  --color-nordic-green-900: #064E3B;
+  --color-nordic-green-600: #059669;
+  --color-nordic-green-500: #10B981;
+  --color-nordic-green-100: #D1FAE5;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: #F4F6F9;
+    color: #0F172A;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-grid-bg {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

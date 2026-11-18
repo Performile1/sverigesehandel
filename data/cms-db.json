@@ -1,0 +1,3401 @@
+{
+  "merchants": [
+    {
+      "id": "m-apotea",
+      "name": "Apotea",
+      "domain": "apotea.se",
+      "city": "Morgongåva / Uppsala",
+      "region": "svealand",
+      "category": "Apotek & Skönhet",
+      "trustpilot": 4.8,
+      "reviews": "148 000+",
+      "revenue": "6,5 mdr SEK",
+      "revenueNumericM": 6500,
+      "yoyGrowth": "+14% YoY",
+      "yoyGrowthPct": 14,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Headless",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "Instabox, Budbee, PostNord",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Sveriges största nätapotek med högautomatiserat robotlager i Morgongåva och leverans inom 24h i hela landet.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-inet",
+      "name": "Inet",
+      "domain": "inet.se",
+      "city": "Göteborg",
+      "region": "vast",
+      "category": "Hemelektronik",
+      "trustpilot": 4.9,
+      "reviews": "67 400+",
+      "revenue": "1,6 mdr SEK",
+      "revenueNumericM": 1600,
+      "yoyGrowth": "+9% YoY",
+      "yoyGrowthPct": 9,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd (.NET)",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "PostNord, Instabox",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Branschledande kundnöjdhet inom datorer, komponenter och gaming med egen PC-byggartjänst i Sisjön.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-lyko",
+      "name": "Lyko",
+      "domain": "lyko.se",
+      "city": "Vansbro / Stockholm",
+      "region": "svealand",
+      "category": "Apotek & Skönhet",
+      "trustpilot": 4.6,
+      "reviews": "94 100+",
+      "revenue": "3,6 mdr SEK",
+      "revenueNumericM": 3600,
+      "yoyGrowth": "+16% YoY",
+      "yoyGrowthPct": 16,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Voyado",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "Budbee, Instabox, PostNord",
+      "certs": [
+        "Trygg E-handel",
+        "Certifierad E-handel"
+      ],
+      "desc": "Nordens ledande aktör inom hårvård och skönhet med högautomatiserat lager i Vansbro och starkt community.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-revrace",
+      "name": "RevolutionRace",
+      "domain": "revolutionrace.se",
+      "city": "Borås",
+      "region": "vast",
+      "category": "Mode & Outdoor",
+      "trustpilot": 4.6,
+      "reviews": "122 000+",
+      "revenue": "1,9 mdr SEK",
+      "revenueNumericM": 1900,
+      "yoyGrowth": "+11% YoY",
+      "yoyGrowthPct": 11,
+      "revenueYear": "2025/2026",
+      "platform": "Centra",
+      "paymentProvider": "Klarna & Adyen",
+      "carrier": "PostNord, DHL, Budbee",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Snabbväxande D2C-varumärke inom friluftskläder från Borås med majoriteten av försäljningen på export.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-nordicnest",
+      "name": "Nordic Nest",
+      "domain": "nordicnest.se",
+      "city": "Kalmar",
+      "region": "smaland",
+      "category": "Hem & Inredning",
+      "trustpilot": 4.4,
+      "reviews": "76 500+",
+      "revenue": "2,2 mdr SEK",
+      "revenueNumericM": 2200,
+      "yoyGrowth": "+8% YoY",
+      "yoyGrowthPct": 8,
+      "revenueYear": "2025/2026",
+      "platform": "Norce / Litium",
+      "paymentProvider": "Klarna & Adyen",
+      "carrier": "PostNord, Budbee, DHL",
+      "certs": [
+        "Trygg E-handel",
+        "Certifierad E-handel"
+      ],
+      "desc": "Exporterar skandinavisk design och heminredning till över 70 länder från sitt logistiknav i Kalmar.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-outnorth",
+      "name": "Outnorth",
+      "domain": "outnorth.se",
+      "city": "Växjö / Kalmar",
+      "region": "smaland",
+      "category": "Mode & Outdoor",
+      "trustpilot": 4.5,
+      "reviews": "54 200+",
+      "revenue": "1,3 mdr SEK",
+      "revenueNumericM": 1300,
+      "yoyGrowth": "+7% YoY",
+      "yoyGrowthPct": 7,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Headless",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "Instabox, PostNord, DHL",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Ledande nordisk outdoor-aktör med starkt fäste i Sverige, Norge och Tyskland.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-kjell",
+      "name": "Kjell & Company",
+      "domain": "kjell.com",
+      "city": "Malmö",
+      "region": "syd",
+      "category": "Hemelektronik",
+      "trustpilot": 4.7,
+      "reviews": "83 200+",
+      "revenue": "2,7 mdr SEK",
+      "revenueNumericM": 2700,
+      "yoyGrowth": "+4% YoY",
+      "yoyGrowthPct": 4,
+      "revenueYear": "2025/2026",
+      "platform": "Norce / Omnichannel",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "Instabox, PostNord, Butik 15 min",
+      "certs": [
+        "Trygg E-handel",
+        "Certifierad E-handel"
+      ],
+      "desc": "Nordisk omnichannel-pionjär inom hemelektroniktillbehör med klick-och-hämta i över 100 butiker.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-webhallen",
+      "name": "Webhallen",
+      "domain": "webhallen.com",
+      "city": "Stockholm",
+      "region": "svealand",
+      "category": "Hemelektronik",
+      "trustpilot": 4.3,
+      "reviews": "41 900+",
+      "revenue": "1,8 mdr SEK",
+      "revenueNumericM": 1800,
+      "yoyGrowth": "-3% YoY",
+      "yoyGrowthPct": -3,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "Instabox, Budbee, PostNord",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Etablerad teknik- och gaminghandlare med stark medlemsklubb och snabba leveranser i storstadsregioner.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-boozt",
+      "name": "Boozt",
+      "domain": "boozt.com",
+      "city": "Malmö / Ängelholm",
+      "region": "syd",
+      "category": "Mode & Outdoor",
+      "trustpilot": 4.5,
+      "reviews": "195 000+",
+      "revenue": "8,2 mdr SEK",
+      "revenueNumericM": 8200,
+      "yoyGrowth": "+10% YoY",
+      "yoyGrowthPct": 10,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd (Microservices)",
+      "paymentProvider": "Klarna, Swish & Apple Pay",
+      "carrier": "Budbee, Instabox, PostNord",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Nordiskt varuhus online med världens största AutoStore-anläggning i Ängelholm.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-nakd",
+      "name": "NA-KD",
+      "domain": "na-kd.com",
+      "city": "Göteborg",
+      "region": "vast",
+      "category": "Mode & Outdoor",
+      "trustpilot": 4.2,
+      "reviews": "110 000+",
+      "revenue": "2,1 mdr SEK",
+      "revenueNumericM": 2100,
+      "yoyGrowth": "+3% YoY",
+      "yoyGrowthPct": 3,
+      "revenueYear": "2025/2026",
+      "platform": "Centra",
+      "paymentProvider": "Klarna & Adyen",
+      "carrier": "Budbee, Instabox, DHL",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Globalt svenskt modevarumärke från Göteborg med influencer-drivet D2C-upplägg i Europa.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-ginatricot",
+      "name": "Gina Tricot",
+      "domain": "ginatricot.com",
+      "city": "Borås",
+      "region": "vast",
+      "category": "Mode & Outdoor",
+      "trustpilot": 4.1,
+      "reviews": "28 500+",
+      "revenue": "2,4 mdr SEK",
+      "revenueNumericM": 2400,
+      "yoyGrowth": "+6% YoY",
+      "yoyGrowthPct": 6,
+      "revenueYear": "2025/2026",
+      "platform": "Centra",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "Budbee, PostNord, Instabox",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Boråsbaserad modekedja med modern headless-arkitektur och sömlös omnichannel i Norden och Tyskland.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-adlibris",
+      "name": "Adlibris",
+      "domain": "adlibris.com",
+      "city": "Stockholm / Morgongåva",
+      "region": "svealand",
+      "category": "Böcker & Media",
+      "trustpilot": 4.4,
+      "reviews": "89 000+",
+      "revenue": "1,9 mdr SEK",
+      "revenueNumericM": 1900,
+      "yoyGrowth": "+4% YoY",
+      "yoyGrowthPct": 4,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Headless",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "PostNord, Instabox, Early Bird",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Sveriges största nätbokhandel sedan 1997 med automatiserat distributionscenter i Morgongåva.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-bokus",
+      "name": "Bokus",
+      "domain": "bokus.com",
+      "city": "Stockholm",
+      "region": "svealand",
+      "category": "Böcker & Media",
+      "trustpilot": 4.3,
+      "reviews": "52 100+",
+      "revenue": "680 M SEK",
+      "revenueNumericM": 680,
+      "yoyGrowth": "+2% YoY",
+      "yoyGrowthPct": 2,
+      "revenueYear": "2025/2026",
+      "platform": "Litium",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "PostNord, Early Bird, Instabox",
+      "certs": [
+        "Trygg E-handel",
+        "Certifierad E-handel"
+      ],
+      "desc": "En av Sveriges tidigaste e-handlare (grundad 1997) med över 10 miljoner böcker i sortimentet.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-matsmart",
+      "name": "Matsmart",
+      "domain": "matsmart.se",
+      "city": "Stockholm / Örebro",
+      "region": "svealand",
+      "category": "Dagligvaror & Mat",
+      "trustpilot": 4.7,
+      "reviews": "47 300+",
+      "revenue": "1,0 mdr SEK",
+      "revenueNumericM": 1000,
+      "yoyGrowth": "+12% YoY",
+      "yoyGrowthPct": 12,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / React",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "Instabox, Budbee, PostNord",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Cirkulär e-handel som räddar överskottsmat från producenter med automatiserat lager i Örebro.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-bagaren",
+      "name": "Bagaren och Kocken",
+      "domain": "bagarenochkocken.se",
+      "city": "Göteborg",
+      "region": "vast",
+      "category": "Hem & Inredning",
+      "trustpilot": 4.6,
+      "reviews": "61 800+",
+      "revenue": "790 M SEK",
+      "revenueNumericM": 790,
+      "yoyGrowth": "+7% YoY",
+      "yoyGrowthPct": 7,
+      "revenueYear": "2025/2026",
+      "platform": "Norce",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "PostNord, Instabox, Budbee",
+      "certs": [
+        "Trygg E-handel",
+        "Certifierad E-handel"
+      ],
+      "desc": "Göteborgsbaserad specialist på köksmaskiner och designredskap med stark tillväxt i hela Norden.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-caia",
+      "name": "CAIA Cosmetics",
+      "domain": "caiacosmetics.se",
+      "city": "Stockholm",
+      "region": "svealand",
+      "category": "Apotek & Skönhet",
+      "trustpilot": 4.5,
+      "reviews": "34 600+",
+      "revenue": "740 M SEK",
+      "revenueNumericM": 740,
+      "yoyGrowth": "+22% YoY",
+      "yoyGrowthPct": 22,
+      "revenueYear": "2025/2026",
+      "platform": "Centra",
+      "paymentProvider": "Klarna & Adyen",
+      "carrier": "Budbee, Instabox, DHL",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Snabbväxande D2C-skönhetsvarumärke med hög lojalitet och internationell expansion.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "m-ikea",
+      "name": "IKEA Sverige (Online)",
+      "domain": "ikea.com/se/sv",
+      "city": "Älmhult / Malmö",
+      "region": "smaland",
+      "category": "Hem & Inredning",
+      "trustpilot": 4.1,
+      "reviews": "92 000+",
+      "revenue": "4,8 mdr SEK",
+      "revenueNumericM": 4800,
+      "yoyGrowth": "+11% YoY",
+      "yoyGrowthPct": 11,
+      "revenueYear": "2025/2026",
+      "platform": "Composable / GCP",
+      "paymentProvider": "Adyen, Klarna & Swish",
+      "carrier": "Bring, PostNord, IKEA Hemleverans",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Sveriges största möbel- och heminredningsaktör online med hög andel Click & Collect och eldriven hemleverans.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-elgiganten",
+      "name": "Elgiganten",
+      "domain": "elgiganten.se",
+      "city": "Stockholm / Jönköping",
+      "region": "svealand",
+      "category": "Hemelektronik",
+      "trustpilot": 4.2,
+      "reviews": "138 000+",
+      "revenue": "4,9 mdr SEK",
+      "revenueNumericM": 4900,
+      "yoyGrowth": "+5% YoY",
+      "yoyGrowthPct": 5,
+      "revenueYear": "2025/2026",
+      "platform": "SAP Commerce / Cloud",
+      "paymentProvider": "Klarna, Swish & Adyen",
+      "carrier": "PostNord, Bring, Instabox",
+      "certs": [
+        "Trygg E-handel",
+        "Certifierad E-handel"
+      ],
+      "desc": "Marknadsledare inom hemelektronik och vitvaror med nordiskt centrallager i Jönköping och Collect@Store.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-netonnet",
+      "name": "NetOnNet",
+      "domain": "netonnet.se",
+      "city": "Borås / Viared",
+      "region": "vast",
+      "category": "Hemelektronik",
+      "trustpilot": 4.5,
+      "reviews": "81 400+",
+      "revenue": "6,8 mdr SEK",
+      "revenueNumericM": 6800,
+      "yoyGrowth": "+4% YoY",
+      "yoyGrowthPct": 4,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Composable",
+      "paymentProvider": "Svea & Swish",
+      "carrier": "PostNord, DHL, Instabox",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Pionjär inom självbetjäning direkt från lagerhylla med stark e-handel från Viared i Borås.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-dustin",
+      "name": "Dustin",
+      "domain": "dustin.se",
+      "city": "Nacka / Rosersberg",
+      "region": "svealand",
+      "category": "Hemelektronik",
+      "trustpilot": 4.3,
+      "reviews": "39 200+",
+      "revenue": "7,4 mdr SEK",
+      "revenueNumericM": 7400,
+      "yoyGrowth": "+3% YoY",
+      "yoyGrowthPct": 3,
+      "revenueYear": "2025/2026",
+      "platform": "SAP Commerce / Custom",
+      "paymentProvider": "Svea, Klarna & B2B Faktura",
+      "carrier": "PostNord, DHL, Schenker",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Nordens ledande IT- och hårdvarupartner för både SMB/Enterprise och teknikintresserade konsumenter.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-jollyroom",
+      "name": "Jollyroom",
+      "domain": "jollyroom.se",
+      "city": "Göteborg / Hisingen",
+      "region": "vast",
+      "category": "Barn & Familj",
+      "trustpilot": 4.4,
+      "reviews": "114 000+",
+      "revenue": "2,3 mdr SEK",
+      "revenueNumericM": 2300,
+      "yoyGrowth": "+6% YoY",
+      "yoyGrowthPct": 6,
+      "revenueYear": "2025/2026",
+      "platform": "Litium / Egenbyggd",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "PostNord, Bring, Budbee",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Nordens största e-handlare inom barn- och babyprodukter med enormt automatiserat lager på Hisingen.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-ellos",
+      "name": "Ellos",
+      "domain": "ellos.se",
+      "city": "Borås",
+      "region": "vast",
+      "category": "Mode & Outdoor",
+      "trustpilot": 4.1,
+      "reviews": "86 000+",
+      "revenue": "3,4 mdr SEK",
+      "revenueNumericM": 3400,
+      "yoyGrowth": "+2% YoY",
+      "yoyGrowthPct": 2,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Composable",
+      "paymentProvider": "Elpy, Klarna & Swish",
+      "carrier": "PostNord, Budbee, DHL",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Ikoniskt e-handelsföretag i Borås inom mode och heminredning för hela Norden.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-hm",
+      "name": "H&M Online Sverige",
+      "domain": "hm.com/se",
+      "city": "Stockholm / Eskilstuna",
+      "region": "svealand",
+      "category": "Mode & Outdoor",
+      "trustpilot": 4,
+      "reviews": "162 000+",
+      "revenue": "5,9 mdr SEK",
+      "revenueNumericM": 5900,
+      "yoyGrowth": "+5% YoY",
+      "yoyGrowthPct": 5,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Microservices",
+      "paymentProvider": "Klarna, Swish & Apple Pay",
+      "carrier": "Budbee, Instabox, PostNord",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Sveriges största globala modeaktör med hög integration mellan webb, mobilapp och fysiska butiker.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-stadium",
+      "name": "Stadium",
+      "domain": "stadium.se",
+      "city": "Norrköping",
+      "region": "smaland",
+      "category": "Sport & Fritid",
+      "trustpilot": 4.4,
+      "reviews": "58 000+",
+      "revenue": "2,1 mdr SEK",
+      "revenueNumericM": 2100,
+      "yoyGrowth": "+9% YoY",
+      "yoyGrowthPct": 9,
+      "revenueYear": "2025/2026",
+      "platform": "Composable / Norce",
+      "paymentProvider": "Walley & Swish",
+      "carrier": "Instabox, PostNord, Butik",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Nordens ledande sportkedja med sömlös omnikanal och automatiserat e-handelslager i Norrköping.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-xxl",
+      "name": "XXL Sport & Vildmark",
+      "domain": "xxl.se",
+      "city": "Stockholm / Örebro",
+      "region": "svealand",
+      "category": "Sport & Fritid",
+      "trustpilot": 4.1,
+      "reviews": "49 700+",
+      "revenue": "1,4 mdr SEK",
+      "revenueNumericM": 1400,
+      "yoyGrowth": "+3% YoY",
+      "yoyGrowthPct": 3,
+      "revenueYear": "2025/2026",
+      "platform": "SAP Commerce / Custom",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "PostNord, Bring, Instabox",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Stor volymhandlare inom sport, cykel och friluftsutrustning med skandinaviskt centrallager i Örebro.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-gymgrossisten",
+      "name": "Gymgrossisten",
+      "domain": "gymgrossisten.com",
+      "city": "Trollhättan / Stockholm",
+      "region": "vast",
+      "category": "Sport & Fritid",
+      "trustpilot": 4.6,
+      "reviews": "64 300+",
+      "revenue": "1,1 mdr SEK",
+      "revenueNumericM": 1100,
+      "yoyGrowth": "+11% YoY",
+      "yoyGrowthPct": 11,
+      "revenueYear": "2025/2026",
+      "platform": "Magento / Composable",
+      "paymentProvider": "Qliro, Klarna & Swish",
+      "carrier": "Instabox, Budbee, PostNord",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Marknadsledare inom kosttillskott och träningskläder med hög återköpsfrekvens och prenumerationer.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-proteinbolaget",
+      "name": "Proteinbolaget",
+      "domain": "proteinbolaget.se",
+      "city": "Karlskoga",
+      "region": "svealand",
+      "category": "Sport & Fritid",
+      "trustpilot": 4.7,
+      "reviews": "51 200+",
+      "revenue": "490 M SEK",
+      "revenueNumericM": 490,
+      "yoyGrowth": "+24% YoY",
+      "yoyGrowthPct": 24,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Headless",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "Instabox, Budbee, PostNord",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Snabbväxande värmländsk e-handlare inom kosttillskott och eget varumärke GAAM med hög kundlojalitet.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-bygghemma",
+      "name": "Bygghemma (BHG)",
+      "domain": "bygghemma.se",
+      "city": "Malmö",
+      "region": "syd",
+      "category": "Hem & Inredning",
+      "trustpilot": 4,
+      "reviews": "72 400+",
+      "revenue": "3,9 mdr SEK",
+      "revenueNumericM": 3900,
+      "yoyGrowth": "+4% YoY",
+      "yoyGrowthPct": 4,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Composable",
+      "paymentProvider": "Svea, Klarna & Swish",
+      "carrier": "DHL Freight, Schenker, Bring",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Sveriges största onlineaktör för byggvaror, badrum, dörrar och hemförbättring med drop-shipping och hemleverans.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-royaldesign",
+      "name": "Royal Design",
+      "domain": "royaldesign.se",
+      "city": "Kalmar / Stockholm",
+      "region": "smaland",
+      "category": "Hem & Inredning",
+      "trustpilot": 4.3,
+      "reviews": "68 900+",
+      "revenue": "1,2 mdr SEK",
+      "revenueNumericM": 1200,
+      "yoyGrowth": "+6% YoY",
+      "yoyGrowthPct": 6,
+      "revenueYear": "2025/2026",
+      "platform": "Norce",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "PostNord, Budbee, DHL",
+      "certs": [
+        "Trygg E-handel",
+        "Certifierad E-handel"
+      ],
+      "desc": "En av Nordens största designbutiker online för möbler, belysning och köksdesign.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-synsam",
+      "name": "Synsam Online",
+      "domain": "synsam.se",
+      "city": "Stockholm / Östersund",
+      "region": "norrland",
+      "category": "Apotek & Skönhet",
+      "trustpilot": 4.5,
+      "reviews": "44 100+",
+      "revenue": "1,3 mdr SEK",
+      "revenueNumericM": 1300,
+      "yoyGrowth": "+13% YoY",
+      "yoyGrowthPct": 13,
+      "revenueYear": "2025/2026",
+      "platform": "Composable / Custom",
+      "paymentProvider": "Klarna, Swish & Abonnemang",
+      "carrier": "PostNord, Instabox, Early Bird",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Omnichannel-ledare inom optik, linsprenumerationer och glasögonabonnemang med produktion i Östersund.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-meds",
+      "name": "MEDS Apotek",
+      "domain": "meds.se",
+      "city": "Stockholm",
+      "region": "svealand",
+      "category": "Apotek & Skönhet",
+      "trustpilot": 4.8,
+      "reviews": "62 500+",
+      "revenue": "980 M SEK",
+      "revenueNumericM": 980,
+      "yoyGrowth": "+28% YoY",
+      "yoyGrowthPct": 28,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Headless",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "Airmee, Budbee, Instabox, PostNord",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Snabbväxande fullskaligt nätapotek i Stockholm känt för samma-kväll-leveranser i storstadsområden.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-apoteket",
+      "name": "Apoteket.se",
+      "domain": "apoteket.se",
+      "city": "Solna / Stockholm",
+      "region": "svealand",
+      "category": "Apotek & Skönhet",
+      "trustpilot": 4.5,
+      "reviews": "79 300+",
+      "revenue": "3,2 mdr SEK",
+      "revenueNumericM": 3200,
+      "yoyGrowth": "+15% YoY",
+      "yoyGrowthPct": 15,
+      "revenueYear": "2025/2026",
+      "platform": "Composable / Optimizely",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "PostNord, Instabox, Airmee, Early Bird",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Stark digital tillväxt för receptbelagda och receptfria apoteksvaror kopplat till 400+ fysiska apotek.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-kronan",
+      "name": "Kronans Apotek",
+      "domain": "kronansapotek.se",
+      "city": "Stockholm / Eskilstuna",
+      "region": "svealand",
+      "category": "Apotek & Skönhet",
+      "trustpilot": 4.4,
+      "reviews": "54 800+",
+      "revenue": "2,1 mdr SEK",
+      "revenueNumericM": 2100,
+      "yoyGrowth": "+18% YoY",
+      "yoyGrowthPct": 18,
+      "revenueYear": "2025/2026",
+      "platform": "Composable / SAP",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "Budbee, Instabox, PostNord",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Snabb digital expansion efter sammanslagning med Apoteksgruppen, med modernt e-handelslager i Eskilstuna.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-babyshop",
+      "name": "Babyshop Group",
+      "domain": "babyshop.com",
+      "city": "Stockholm / Jönköping",
+      "region": "svealand",
+      "category": "Barn & Familj",
+      "trustpilot": 4.3,
+      "reviews": "42 600+",
+      "revenue": "890 M SEK",
+      "revenueNumericM": 890,
+      "yoyGrowth": "+5% YoY",
+      "yoyGrowthPct": 5,
+      "revenueYear": "2025/2026",
+      "platform": "Centra / Custom",
+      "paymentProvider": "Klarna & Adyen",
+      "carrier": "Budbee, PostNord, DHL",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Premium-e-handel för barnkläder och barnvagnar med global kundbas och centrallager i Jönköping.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-axelarigato",
+      "name": "Axel Arigato",
+      "domain": "axelarigato.com",
+      "city": "Göteborg",
+      "region": "vast",
+      "category": "Mode & Outdoor",
+      "trustpilot": 4.4,
+      "reviews": "29 800+",
+      "revenue": "760 M SEK",
+      "revenueNumericM": 760,
+      "yoyGrowth": "+17% YoY",
+      "yoyGrowthPct": 17,
+      "revenueYear": "2025/2026",
+      "platform": "Centra",
+      "paymentProvider": "Adyen, Klarna & Apple Pay",
+      "carrier": "DHL Express, Budbee, PostNord",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Göteborgsbaserat globalt sneaker- och modevarumärke med flaggskeppsbutiker och stark D2C-export.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-stronger",
+      "name": "Stronger",
+      "domain": "strongerlabel.com",
+      "city": "Stockholm",
+      "region": "svealand",
+      "category": "Mode & Outdoor",
+      "trustpilot": 4.5,
+      "reviews": "38 400+",
+      "revenue": "420 M SEK",
+      "revenueNumericM": 420,
+      "yoyGrowth": "+15% YoY",
+      "yoyGrowthPct": 15,
+      "revenueYear": "2025/2026",
+      "platform": "Centra",
+      "paymentProvider": "Klarna & Adyen",
+      "carrier": "Budbee, Instabox, DHL",
+      "certs": [
+        "Trygg E-handel"
+      ],
+      "desc": "Svenskt D2C-varumärke inom träningskläder med stark social commerce och internationell kundkrets.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-careofcarl",
+      "name": "Care of Carl",
+      "domain": "careofcarl.se",
+      "city": "Borås",
+      "region": "vast",
+      "category": "Mode & Outdoor",
+      "trustpilot": 4.8,
+      "reviews": "46 900+",
+      "revenue": "460 M SEK",
+      "revenueNumericM": 460,
+      "yoyGrowth": "+9% YoY",
+      "yoyGrowthPct": 9,
+      "revenueYear": "2025/2026",
+      "platform": "Geins / Custom",
+      "paymentProvider": "Klarna & Swish",
+      "carrier": "PostNord, Budbee, Instabox",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Boråsbaserad specialist på klassiskt herrmode med branschledande kundservice och personlig stilrådgivning.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "m-desenio",
+      "name": "Desenio",
+      "domain": "desenio.se",
+      "city": "Stockholm / Eskilstuna",
+      "region": "svealand",
+      "category": "Hem & Inredning",
+      "trustpilot": 4.3,
+      "reviews": "98 000+",
+      "revenue": "810 M SEK",
+      "revenueNumericM": 810,
+      "yoyGrowth": "+4% YoY",
+      "yoyGrowthPct": 4,
+      "revenueYear": "2025/2026",
+      "platform": "Egenbyggd / Headless",
+      "paymentProvider": "Klarna & Adyen",
+      "carrier": "PostNord, DHL, Budbee",
+      "certs": [
+        "Trygg E-handel",
+        "Fossilfri frakt"
+      ],
+      "desc": "Global svensk e-handlare inom posters och väggkonst med export till över 35 länder.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    }
+  ],
+  "partners": [
+    {
+      "id": "p-centra",
+      "name": "Centra",
+      "domain": "centra.com",
+      "cat": "E-handelsplattform",
+      "subType": "E-handelsplattform",
+      "origin": "Stockholm",
+      "stack": "Headless Commerce · Global D2C & B2B",
+      "customerCount": "350+ globala mode- & livsstilsvarumärken",
+      "pricingModel": "SaaS-licens + % GMV (Enterprise)",
+      "setupTime": "8–16 veckor",
+      "bestFor": "Mode, sneakers och livsstilsvarumärken som ska skala D2C & B2B globalt",
+      "keyStrengths": [
+        "Marknadsspecifika prislistor & valutor",
+        "Inbyggd B2B-showroom",
+        "Blixtsnabb headless API"
+      ],
+      "notableClients": [
+        "RevolutionRace",
+        "NA-KD",
+        "Gina Tricot",
+        "CAIA Cosmetics",
+        "Stronger"
+      ],
+      "desc": "Marknadsledande headless-plattform för mode- och livsstilsvarumärken som skalar globalt med lokala prislistor.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-klarna",
+      "name": "Klarna",
+      "domain": "klarna.com",
+      "cat": "Betalning & Checkout",
+      "subType": "Betalning & Checkout",
+      "origin": "Stockholm",
+      "stack": "BNPL · Direktbetalning · AI Shopping",
+      "customerCount": "575 000+ handlare globalt (ca 45 000 i Norden)",
+      "pricingModel": "Transaktionsavgift ca 1,5–2,9% + fast avgift",
+      "setupTime": "1–5 dagar (plugin / API)",
+      "bestFor": "Maximal konvertering i B2C både i Sverige och vid EU/US-export",
+      "keyStrengths": [
+        "Högst varumärkeskännedom i Sverige",
+        "30 dagars faktura & delbetalning",
+        "Klarna App återköpstrafik"
+      ],
+      "notableClients": [
+        "Apotea",
+        "Boozt",
+        "Lyko",
+        "Inet",
+        "Adlibris"
+      ],
+      "desc": "Global betalningsjätte som driver konvertering för över 500 000 handlare världen över.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-swish",
+      "name": "Swish Handel",
+      "domain": "swish.nu",
+      "cat": "Betalning & Checkout",
+      "subType": "Betalning & Checkout",
+      "origin": "Stockholm",
+      "stack": "Mobilt BankID · Direktbetalning",
+      "customerCount": "320 000+ företag (8,6M konsumenter)",
+      "pricingModel": "Bankavtal: ca 1,50–2,50 SEK/transaktion",
+      "setupTime": "2–7 dagar via bank + PSP",
+      "bestFor": "Lägst transaktionskostnad vid snabba mobilköp i Sverige",
+      "keyStrengths": [
+        "Lägst avgift per köp i Sverige",
+        "Omedelbar likviditet",
+        "42% marknadsandel i mobilen"
+      ],
+      "notableClients": [
+        "Apotea",
+        "Inet",
+        "Kjell & Company",
+        "Matsmart"
+      ],
+      "desc": "Sveriges snabbaste mobila betalsätt med över 8,5 miljoner anslutna användare och omedelbar likviditet.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-ingrid",
+      "name": "Ingrid",
+      "domain": "ingrid.com",
+      "cat": "Logistik & Last-mile",
+      "subType": "TA-system",
+      "origin": "Stockholm",
+      "stack": "Delivery Checkout · Tracking · Returns",
+      "customerCount": "450+ ledande nordiska & europeiska handlare",
+      "pricingModel": "SaaS-licens baserad på ordervolym",
+      "setupTime": "1–3 veckor",
+      "bestFor": "Checkout-optimering med dynamiska fraktpriser, klimatval och leveranslöften",
+      "keyStrengths": [
+        "Ökar konverteringen i fraktsteget",
+        "Dynamisk prisstyrning på marginal",
+        "Branschledande tracking-UI"
+      ],
+      "notableClients": [
+        "Apotea",
+        "Adlibris",
+        "Outnorth",
+        "Bagaren och Kocken"
+      ],
+      "desc": "Intelligent fraktväljare och leveransplattform som optimerar marginal, klimatval och kundupplevelse i kassan.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-instabee",
+      "name": "Instabox / Budbee (Instabee)",
+      "domain": "instabee.com",
+      "cat": "Logistik & Last-mile",
+      "subType": "Transportör",
+      "origin": "Stockholm",
+      "stack": "Paketskåp · Fossilfri hemleverans",
+      "customerCount": "2 500+ anslutna nordiska e-handlare",
+      "pricingModel": "Volymavtal per paketstorlek (S/M/L)",
+      "setupTime": "2–5 dagar via nShift/Ingrid",
+      "bestFor": "Snabb fossilfri kvällshemleverans & paketskåp i storstad och tätort",
+      "keyStrengths": [
+        "Högst NPS bland svenska konsumenter",
+        "100% fossilfria leveranser",
+        "Realtidskarta & PIN-skåp"
+      ],
+      "notableClients": [
+        "Apotea",
+        "Boozt",
+        "Lyko",
+        "Inet",
+        "NA-KD"
+      ],
+      "desc": "Nordens tätaste nätverk av smarta paketskåp och kvällsleveranser med eldrivna och fossilfria fordon.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-voyado",
+      "name": "Voyado",
+      "domain": "voyado.com",
+      "cat": "MarTech & AI",
+      "subType": "MarTech & AI",
+      "origin": "Norrköping / Stockholm",
+      "stack": "CDP · CRM · AI-personalisering & Sök",
+      "customerCount": "400+ ledande nordiska & europeiska retailvarumärken",
+      "pricingModel": "Årlig SaaS-licens baserad på databasstorlek & moduler",
+      "setupTime": "4–8 veckor",
+      "bestFor": "Omnichannel-retail och D2C med kundklubb, lojalitet och AI-produktsök",
+      "keyStrengths": [
+        "Branschstandard i Sverige för CDP/CRM",
+        "Voyado Elevate AI-sök",
+        "Kvitto- & butikskoppling"
+      ],
+      "notableClients": [
+        "Lyko",
+        "Kjell & Company",
+        "Gina Tricot",
+        "Nordic Nest"
+      ],
+      "desc": "Nordisk kunddataplattform, lojalitetsmotor och AI-drivet produktsök (Elevate) byggd specifikt för retail.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-norce",
+      "name": "Norce",
+      "domain": "norce.io",
+      "cat": "E-handelsplattform",
+      "subType": "E-handelsplattform",
+      "origin": "Stockholm / Borås",
+      "stack": "Composable Commerce · PIM · Orderhub",
+      "customerCount": "220+ medelstora & stora nordiska handlare",
+      "pricingModel": "Månadslicens per modul (Commerce + PIM)",
+      "setupTime": "8–16 veckor",
+      "bestFor": "Stora sortiment (10 000+ SKU) med komplex prissättning, B2B eller omnikanal",
+      "keyStrengths": [
+        "Kraftfull inbyggd PIM & prislogik",
+        "Sömlös koppling till ERP",
+        "Stark B2C & B2B-arkitektur"
+      ],
+      "notableClients": [
+        "Nordic Nest",
+        "Kjell & Company",
+        "Bagaren och Kocken"
+      ],
+      "desc": "Svensk composable SaaS-plattform med inbyggd PIM, prissättningsmotor och stark B2C/B2B-arkitektur.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-litium",
+      "name": "Litium",
+      "domain": "litium.com",
+      "cat": "E-handelsplattform",
+      "subType": "E-handelsplattform",
+      "origin": "Stockholm",
+      "stack": "Cloud Commerce · PIM · B2B & B2C",
+      "customerCount": "250+ nordiska B2B- & B2C-företag",
+      "pricingModel": "Årlig SaaS-prenumeration + volymsteg",
+      "setupTime": "10–18 veckor via partnerbyrå",
+      "bestFor": "Etablerade svenska företag inom .NET-ekosystemet med avancerad B2B/B2C",
+      "keyStrengths": [
+        "Allt-i-ett med CMS, PIM & Commerce",
+        "Mycket stark på B2B-kundportaler",
+        "Bred nordisk byråbas"
+      ],
+      "notableClients": [
+        "Bokus",
+        "Lindex",
+        "Tingstad",
+        "Jollyroom"
+      ],
+      "desc": "Svensk e-handelsplattform specialiserad på medelstora och stora B2B- och B2C-handlare i Norden.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-brink",
+      "name": "Brink Commerce",
+      "domain": "brinkcommerce.com",
+      "cat": "E-handelsplattform",
+      "subType": "E-handelsplattform",
+      "origin": "Stockholm",
+      "stack": "Serverless API-First · Extreme Scale",
+      "customerCount": "40+ snabbväxande globala D2C-varumärken",
+      "pricingModel": "API-usage & GMV-baserad Enterprise-licens",
+      "setupTime": "6–12 veckor",
+      "bestFor": "Trafiktunga globala D2C-varumärken med extrema drops & Black Week-toppar",
+      "keyStrengths": [
+        "Serverless skalning utan flaskhalsar",
+        "Extremt snabb API-svarstid",
+        "Frihet i frontend & Best-of-Breed"
+      ],
+      "notableClients": [
+        "Eton Shirts",
+        "Sneakersnstuff",
+        "Nudie Jeans"
+      ],
+      "desc": "API-first headless commerce-motor byggd på serverless molnarkitektur för snabbväxande globala D2C-varumärken.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-geins",
+      "name": "Geins",
+      "domain": "geins.io",
+      "cat": "E-handelsplattform",
+      "subType": "E-handelsplattform",
+      "origin": "Göteborg / Borås",
+      "stack": "Composable API · Multi-market · OMS",
+      "customerCount": "80+ nordiska e-handlare",
+      "pricingModel": "Transparent SaaS-licens",
+      "setupTime": "6–10 veckor",
+      "bestFor": "Handlare som vill ha headless-frihet med snabb time-to-market",
+      "keyStrengths": [
+        "Komplett GraphQL-API",
+        "Multi-storefront & PIM",
+        "Nära support i Göteborg"
+      ],
+      "notableClients": [
+        "Länna Sport",
+        "Care of Carl"
+      ],
+      "desc": "Göteborgsbaserad API-first e-handelsplattform med fokus på snabb time-to-market och skalbarhet.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-nshift",
+      "name": "nShift",
+      "domain": "nshift.com",
+      "cat": "Logistik & Last-mile",
+      "subType": "TA-system",
+      "origin": "Stockholm / Göteborg",
+      "stack": "Delivery & Experience Management · 1000+ Carriers",
+      "customerCount": "100 000+ användande företag (Unifaun + Consignor)",
+      "pricingModel": "Månadslicens + avgift per sändning",
+      "setupTime": "1–2 veckor",
+      "bestFor": "Handlare med många fraktavtal som behöver automatiserad EDI & etikettutskrift",
+      "keyStrengths": [
+        "Marknadsledande TA-motor i Norden",
+        "1 000+ färdiga transportörkopplingar",
+        "Inbyggd checkout & returer"
+      ],
+      "notableClients": [
+        "Webhallen",
+        "Nordic Nest",
+        "CDON"
+      ],
+      "desc": "Europaledande plattform för TA-system (Transport Administration), spårning och automatiserade returer.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-postnord",
+      "name": "PostNord",
+      "domain": "postnord.se",
+      "cat": "Logistik & Last-mile",
+      "subType": "Transportör",
+      "origin": "Solna / Stockholm",
+      "stack": "Ombud · Paketskåp · Hemleverans · 3PL",
+      "customerCount": "35 000+ avtalskunder i Norden",
+      "pricingModel": "Avtalspris per vikt/volym + drivmedelstillägg",
+      "setupTime": "2–5 dagar via TA-system",
+      "bestFor": "100% rikstäckning i hela Sverige inklusive glesbygd och Varubrev",
+      "keyStrengths": [
+        "5 000+ paketskåp & 2 000+ ombud",
+        "Varubrev till brevlåda",
+        "Hela Sverige nästa dag"
+      ],
+      "notableClients": [
+        "Apotea",
+        "Adlibris",
+        "Inet",
+        "Outnorth"
+      ],
+      "desc": "Nordens största logistikpartner med rikstäckande nätverk av ombud, paketskåp och TPL-lager.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-qliro",
+      "name": "Qliro",
+      "domain": "qliro.com",
+      "cat": "Betalning & Checkout",
+      "subType": "Betalning & Checkout",
+      "origin": "Stockholm",
+      "stack": "Nordic Checkout · Faktura · Delbetalning",
+      "customerCount": "550+ medelstora & stora nordiska e-handlare",
+      "pricingModel": "Volymbaserad transaktions- & checkout-avgift",
+      "setupTime": "1–3 veckor",
+      "bestFor": "Nordiska handlare med hög snittorder som vill äga checkout-data",
+      "keyStrengths": [
+        "Snabb nordisk checkout",
+        "Stark delbetalning & app",
+        "Hög kundnöjdhet"
+      ],
+      "notableClients": [
+        "Nelly",
+        "CDON",
+        "Gymgrossisten",
+        "Lyko"
+      ],
+      "desc": "Svensk betallösning skräddarsydd för nordiska e-handlare med hög konvertering och egen mobilapp.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-walley",
+      "name": "Walley (Collector Bank)",
+      "domain": "walleypay.com",
+      "cat": "Betalning & Checkout",
+      "subType": "Betalning & Checkout",
+      "origin": "Göteborg",
+      "stack": "B2C & B2B Checkout · Unified Payments",
+      "customerCount": "1 200+ nordiska B2C- & B2B-handlare",
+      "pricingModel": "Skräddarsytt avtal (B2C + B2B-kredit)",
+      "setupTime": "1–3 veckor",
+      "bestFor": "Omnichannel-handlare & B2B/B2C-hybridbutiker",
+      "keyStrengths": [
+        "Sömlös B2B + B2C-checkout",
+        "Kassa-till-butik-flöden",
+        "Flexibla krediter"
+      ],
+      "notableClients": [
+        "Kjell & Company",
+        "Stadium",
+        "Skincity"
+      ],
+      "desc": "Göteborgsbaserad betalpartner som kombinerar hög konvertering med flexibla faktura- och B2B-flöden.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-svea",
+      "name": "Svea Ekonomi (Svea Bank)",
+      "domain": "svea.com",
+      "cat": "Betalning & Checkout",
+      "subType": "Betalning & Checkout",
+      "origin": "Solna / Stockholm",
+      "stack": "Svea Checkout · B2B Faktura · Swish",
+      "customerCount": "12 000+ nordiska e-handlare & företag",
+      "pricingModel": "Fast månadsavgift + låg transaktionsprocent",
+      "setupTime": "3–10 dagar",
+      "bestFor": "Breda sortiment med både privatkunder, företag och offentlig sektor",
+      "keyStrengths": [
+        "Starkast på B2B-fakturering",
+        "Egen banklicens & inkasso",
+        "Hög acceptansgrad"
+      ],
+      "notableClients": [
+        "Dustin",
+        "NetOnNet",
+        "Bygghemma"
+      ],
+      "desc": "Komplett nordisk betalningspartner för både konsument- och företagshandel med bred lokal täckning.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-funnel",
+      "name": "Funnel",
+      "domain": "funnel.io",
+      "cat": "MarTech & AI",
+      "subType": "MarTech & AI",
+      "origin": "Stockholm",
+      "stack": "Marketing Data Hub · Attribution · BI",
+      "customerCount": "2 500+ bolag & byråer globalt",
+      "pricingModel": "Tiered SaaS baserad på antal datakällor & export",
+      "setupTime": "1–2 veckor",
+      "bestFor": "Marknadsteam som vill samla Meta, Google, TikTok & GA4 för exakt ROAS/MER",
+      "keyStrengths": [
+        "500+ färdiga annonskonnektorer",
+        "Ingen kod krävs för datastädning",
+        "Exporterar till BigQuery/Looker"
+      ],
+      "notableClients": [
+        "RevolutionRace",
+        "Daniel Wellington",
+        "Chiquelle"
+      ],
+      "desc": "Svenskt data-hubb-företag som samlar all annons-, CAPI- och e-handelsdata i realtid för exakt ROAS-styrning.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-triggerbee",
+      "name": "Triggerbee",
+      "domain": "triggerbee.com",
+      "cat": "MarTech & AI",
+      "subType": "MarTech & AI",
+      "origin": "Stockholm",
+      "stack": "Onsite Personalization · First-party Data",
+      "customerCount": "650+ nordiska e-handlare",
+      "pricingModel": "Trafikbaserad månadslicens",
+      "setupTime": "1–3 dagar (script + CRM-koppling)",
+      "bestFor": "Öka prenumerantvärvning och konvertering direkt på sajten via beteendedata",
+      "keyStrengths": [
+        "Djup integration med Voyado & Rule",
+        "Gamification & VIP-meddelanden",
+        "GDPR-säkrad första-partsdata"
+      ],
+      "notableClients": [
+        "Apotek Hjärtat",
+        "Polarn O. Pyret",
+        "Royal Design"
+      ],
+      "desc": "Plattform för personaliserade onsite-kampanjer, kundklubbsvärvning och konverteringsoptimering.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-rule",
+      "name": "Rule",
+      "domain": "rule.se",
+      "cat": "MarTech & AI",
+      "subType": "MarTech & AI",
+      "origin": "Stockholm",
+      "stack": "Marketing Automation · Email & SMS",
+      "customerCount": "1 100+ svenska företag & e-handlare",
+      "pricingModel": "Månadslicens per antal aktiva kontakter",
+      "setupTime": "2–5 dagar",
+      "bestFor": "Svenska D2C-varumärken som söker svenskdatalagrad e-post & SMS-automation",
+      "keyStrengths": [
+        "Servrar i Sverige (GDPR-vänligt)",
+        "Låg tröskel för SMS & Email",
+        "Personlig svensk support"
+      ],
+      "notableClients": [
+        "Stronger",
+        "Chimi",
+        "Kidsbrandstore"
+      ],
+      "desc": "Svensk plattform för datadriven e-post, SMS och automatiserade kundflöden anpassad för nordiska integritetskrav.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-specter",
+      "name": "Specter",
+      "domain": "specter.se",
+      "cat": "ERP & Omnichannel",
+      "subType": "ERP & Omnichannel",
+      "origin": "Varberg",
+      "stack": "Molnbaserat Affärssystem · WMS · Kassa",
+      "customerCount": "1 300+ svenska e-handlare & omnikanalbutiker",
+      "pricingModel": "Månadslicens per användare & modul",
+      "setupTime": "2–6 veckor",
+      "bestFor": "Svenska omnikanalhandlare med både webbshop, lager och fysisk butik",
+      "keyStrengths": [
+        "Inbyggd e-handelskoppling",
+        "WMS + POS i samma system",
+        "Anpassat för svensk bokföring"
+      ],
+      "notableClients": [
+        "Svenska D2C-handlare",
+        "Omnichannel-butiker"
+      ],
+      "desc": "Svenskt molnbaserat affärssystem och lagersystem byggt för växande e-handlare och fysiska butiker.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-ongoing",
+      "name": "Ongoing Warehouse",
+      "domain": "ongoingwarehouse.com",
+      "cat": "ERP & Omnichannel",
+      "subType": "ERP & Omnichannel",
+      "origin": "Göteborg",
+      "stack": "WMS · 3PL · Lagerautomation",
+      "customerCount": "700+ lager & 3PL-aktörer i Norden/Europa",
+      "pricingModel": "SaaS-licens per användare / orderrad",
+      "setupTime": "2–6 veckor",
+      "bestFor": "Egen lagerdrift eller 3PL-partner som kräver snabb plock & AutoStore-stöd",
+      "keyStrengths": [
+        "Nordisk standard för 3PL-WMS",
+        "Färdiga kopplingar till nShift & PostNord",
+        "Stöd för robotlager"
+      ],
+      "notableClients": [
+        "Shelfless",
+        "PostNord TPL",
+        "Nordiska 3PL-aktörer"
+      ],
+      "desc": "Göteborgsbaserat webbaserat WMS (Warehouse Management System) som driver hundratals nordiska e-handelslager.",
+      "status": "published",
+      "updatedAt": "2026-11-18T19:22:28.450Z"
+    },
+    {
+      "id": "p-kustom",
+      "name": "Kustom (fd Klarna Checkout)",
+      "domain": "kustom.co",
+      "cat": "Betalning & Checkout",
+      "subType": "Betalning & Checkout",
+      "origin": "Stockholm",
+      "stack": "Neutral Checkout · Multi-PSP · Nordisk standard",
+      "customerCount": "24 000+ europeiska handlare",
+      "pricingModel": "Checkout-avgift + valfri PSP-routing",
+      "setupTime": "1–2 veckor",
+      "bestFor": "Handlare som vill behålla KCO-upplevelsen med frihet att välja betalsätt",
+      "keyStrengths": [
+        "Beprövad nordisk konverteringsmotor",
+        "Oberoende PSP-stöd",
+        "Stöd för 170+ marknader"
+      ],
+      "notableClients": [
+        "Svenska D2C-handlare",
+        "Nordiska omnichannel-kedjor"
+      ],
+      "desc": "Fristående europeisk checkout-plattform byggd på beprövad KCO-arkitektur med stöd för flera betalpartners.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-adyen",
+      "name": "Adyen",
+      "domain": "adyen.com",
+      "cat": "Betalning & Checkout",
+      "subType": "Betalning & Checkout",
+      "origin": "Stockholm / Amsterdam",
+      "stack": "Enterprise Unified Commerce · Global Acquiring",
+      "customerCount": "4 000+ enterprise-handlare globalt",
+      "pricingModel": "Interchange++ + fast avgift per transaktion",
+      "setupTime": "2–6 veckor",
+      "bestFor": "Global D2C-export & fysiska butiker med enhetlig kassa (Unified Commerce)",
+      "keyStrengths": [
+        "Interchange++ ger lägre kortavgift vid skala",
+        "Lokala betalsätt globalt",
+        "POS + Web i ett"
+      ],
+      "notableClients": [
+        "RevolutionRace",
+        "H&M",
+        "Axel Arigato",
+        "IKEA"
+      ],
+      "desc": "Global betalplattform för storhandlare som förenar e-handel, mobilapp och fysiska kassaterminaler.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-stripe",
+      "name": "Stripe",
+      "domain": "stripe.com",
+      "cat": "Betalning & Checkout",
+      "subType": "Betalning & Checkout",
+      "origin": "Stockholm / Dublin",
+      "stack": "API-first Payments · Subscriptions · Apple Pay",
+      "customerCount": "3 000 000+ företag globalt",
+      "pricingModel": "1,5% + 1,80 SEK (EU-kort) · Klarna/Swish tillval",
+      "setupTime": "1–3 dagar (utvecklarvänlig)",
+      "bestFor": "Headless SaaS, prenumerationer och global lansering från dag ett",
+      "keyStrengths": [
+        "Branschbäst API & dokumentation",
+        "Inbyggd prenumerationsmotor",
+        "Klarna & Apple Pay direkt"
+      ],
+      "notableClients": [
+        "Centra-handlare",
+        "Globala D2C-startups"
+      ],
+      "desc": "Utvecklarfokuserad betalningsinfrastruktur med fullt API-stöd för kort, Apple Pay, Klarna och prenumerationer.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-dhl",
+      "name": "DHL Freight / DHL eCommerce",
+      "domain": "dhl.com/se-sv",
+      "cat": "Logistik & Last-mile",
+      "subType": "Transportör",
+      "origin": "Stockholm / Solna",
+      "stack": "Service Point · Skåp · EU-export & Pall",
+      "customerCount": "18 000+ svenska företagskunder",
+      "pricingModel": "Vikt-/zonbaserat avtal (inrikes + export)",
+      "setupTime": "3–7 dagar",
+      "bestFor": "Gränsöverskridande export till Tyskland/EU och tyngre paket/hemleverans",
+      "keyStrengths": [
+        "Starkast in i DACH/Tyskland",
+        "1 700+ svenska ombud",
+        "Hanterar även pall & styckegods"
+      ],
+      "notableClients": [
+        "RevolutionRace",
+        "Bygghemma",
+        "Nordic Nest"
+      ],
+      "desc": "Global logistikjätte med brett svenskt ombudsnät och sömlös linjetrafik till Tyskland och övriga Europa.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-bring",
+      "name": "Bring",
+      "domain": "bring.se",
+      "cat": "Logistik & Last-mile",
+      "subType": "Transportör",
+      "origin": "Stockholm / Oslo",
+      "stack": "Norge-export (VOEC) · Hemleverans · Ombud",
+      "customerCount": "9 500+ nordiska e-handelskunder",
+      "pricingModel": "Nordiskt volymavtal (fokus SE/NO/DK)",
+      "setupTime": "3–7 dagar",
+      "bestFor": "E-handlare som exporterar mycket till Norge eller levererar vitvaror/möbler",
+      "keyStrengths": [
+        "Nummer 1 in till Norge",
+        "Inbärning & tvåmansleverans",
+        "Fossilfria stadskärnor"
+      ],
+      "notableClients": [
+        "IKEA",
+        "Elgiganten",
+        "Jollyroom",
+        "XXL"
+      ],
+      "desc": "Nordisk transportör med ledande nätverk för Norge-export, paketombud och tung hemleverans med inbärning.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-airmee",
+      "name": "Airmee",
+      "domain": "airmee.com",
+      "cat": "Logistik & Last-mile",
+      "subType": "Transportör",
+      "origin": "Stockholm",
+      "stack": "Same-day · 1h-tidsslots · Fossilfri stadskörning",
+      "customerCount": "450+ storstadsinriktade e-handlare",
+      "pricingModel": "Fast zonpris per paket i storstad",
+      "setupTime": "2–5 dagar via Ingrid/nShift",
+      "bestFor": "Apotek, skönhet och dagligvaror som vill erbjuda same-day på kvällen",
+      "keyStrengths": [
+        "Leverans samma kväll (17–22)",
+        "Realtidsoptimering av rutter",
+        "Elektrifierade budflottor"
+      ],
+      "notableClients": [
+        "MEDS",
+        "Apoteket",
+        "Lyko",
+        "Matsmart"
+      ],
+      "desc": "Svenskt tech-logistikbolag specialiserat på blixtsnabba same-day- och kvällsleveranser i svenska storstäder.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-earlybird",
+      "name": "Early Bird",
+      "domain": "earlybird.se",
+      "cat": "Logistik & Last-mile",
+      "subType": "Transportör",
+      "origin": "Stockholm",
+      "stack": "Morgonleverans 01–07 · Brevlåda & Dörr",
+      "customerCount": "700+ svenska e-handlare (småpaket)",
+      "pricingModel": "Mycket konkurrenskraftigt pris för paket < 2 kg",
+      "setupTime": "2–5 dagar",
+      "bestFor": "Lätta order (apotek, böcker, accessoarer) direkt vid dörren före 07:00",
+      "keyStrengths": [
+        "Leverans innan frukost (kl. 07)",
+        "Utnyttjar tidningsbudens nattnät",
+        "Låg skadefrekvens"
+      ],
+      "notableClients": [
+        "Apotea",
+        "Adlibris",
+        "Bokus",
+        "Synsam"
+      ],
+      "desc": "Levererar e-handelspaket direkt till kundens brevlåda eller ytterdörr tidigt på morgonen via tidningsdistributörer.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-schenker",
+      "name": "DB Schenker",
+      "domain": "dbschenker.com/se-sv",
+      "cat": "Logistik & Last-mile",
+      "subType": "Transportör",
+      "origin": "Göteborg",
+      "stack": "Ombud · B2B-paket · Hemleverans & Pall",
+      "customerCount": "14 000+ svenska B2B- & B2C-kunder",
+      "pricingModel": "Vikt- och volymbaserat företagsavtal",
+      "setupTime": "3–7 dagar",
+      "bestFor": "Tyngre gods, byggvaror, cyklar samt kombinerade B2B/B2C-flöden",
+      "keyStrengths": [
+        "1 600+ ombud i Sverige",
+        "Starkt nätverk för tungt gods",
+        "Hög leveransprecision"
+      ],
+      "notableClients": [
+        "Bygghemma",
+        "Dustin",
+        "NetOnNet"
+      ],
+      "desc": "Tungviktare från Göteborg inom både svenska ombudspaket och större hemleveranser/pallgods i Europa.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-fraktjakt",
+      "name": "Fraktjakt",
+      "domain": "fraktjakt.se",
+      "cat": "Logistik & Last-mile",
+      "subType": "TA-system",
+      "origin": "Jönköping",
+      "stack": "TA-system · Prisjämförelse · Färdiga Fraktavtal",
+      "customerCount": "3 500+ svenska SMB-ehandlare",
+      "pricingModel": "Gratis bas / Plus-licens + färdiga rabatterade avtal",
+      "setupTime": "1 dag (plug-and-play)",
+      "bestFor": "Små & medelstora e-handlare som vill ha både TA-system och färdiga fraktavtal",
+      "keyStrengths": [
+        "Inkluderar färdiga fraktrabatter",
+        "Enkel integration till WooCommerce/Shopify",
+        "Svensk support i Jönköping"
+      ],
+      "notableClients": [
+        "Svenska nischhandlare",
+        "Tillväxtbolag SMB"
+      ],
+      "desc": "Svenskt TA-system som kombinerar automatiserad bokning med färdigförhandlade fraktpriser för växande butiker.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-shiplink",
+      "name": "Shiplink",
+      "domain": "shiplink.se",
+      "cat": "Logistik & Last-mile",
+      "subType": "TA-system",
+      "origin": "Stockholm",
+      "stack": "TA-bokning · Färdiga Avtal · Personlig Kundservice",
+      "customerCount": "4 000+ svenska e-handels- & B2B-företag",
+      "pricingModel": "Ingen månadsavgift på standard · volymrabatt",
+      "setupTime": "1 dag",
+      "bestFor": "Växande e-handlare som vill boka PostNord, DHL och Schenker utan egna tunga avtal",
+      "keyStrengths": [
+        "Ingen fast startavgift",
+        "Samlad faktura & reklamatationshantering",
+        "Snabb onboarding"
+      ],
+      "notableClients": [
+        "Växande svenska D2C-butiker"
+      ],
+      "desc": "Svensk fraktportal och TA-verktyg som ger mindre och medelstora e-handlare storföretagspriser från dag ett.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-shopifyplus",
+      "name": "Shopify Plus",
+      "domain": "shopify.com/plus",
+      "cat": "E-handelsplattform",
+      "subType": "E-handelsplattform",
+      "origin": "Stockholm / Global",
+      "stack": "Global SaaS · Hydrogen Headless · App Ecosystem",
+      "customerCount": "50 000+ Plus-varumärken globalt (2 500+ i Norden)",
+      "pricingModel": "Från ca 2 300 USD/mån (eller 0,25% GMV)",
+      "setupTime": "4–10 veckor",
+      "bestFor": "Snabb global expansion, lägst total ägandekostnad (TCO) och tusentals appar",
+      "keyStrengths": [
+        "Världens snabbaste checkout-ekosystem",
+        "Minimal teknisk förvaltning",
+        "Starkt stöd i svenska byråer"
+      ],
+      "notableClients": [
+        "Chimi",
+        "Nudie Jeans",
+        "Carl Edmond"
+      ],
+      "desc": "Global molnplattform som växer snabbt bland svenska D2C-bolag tack vare låg TCO och enormt app-ekosystem.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-askas",
+      "name": "Askås",
+      "domain": "askas.se",
+      "cat": "E-handelsplattform",
+      "subType": "E-handelsplattform",
+      "origin": "Säffle / Värmland",
+      "stack": "Helintegrerad E-handel · PIM · ERP-koppling",
+      "customerCount": "200+ etablerade svenska e-handlare",
+      "pricingModel": "Månadsabonnemang inkl. hosting & support",
+      "setupTime": "6–12 veckor",
+      "bestFor": "Svenska specialhandlare med höga krav på personlig support och stabil drift",
+      "keyStrengths": [
+        "Svenskutvecklad helhetsplattform",
+        "Lång historik & stabilitet",
+        "Egen dedikerad support"
+      ],
+      "notableClients": [
+        "Svenska specialbutiker",
+        "Fackhandel online"
+      ],
+      "desc": "En av Sveriges mest erfarna e-handelsplattformar från Säffle med komplett funktionalitet och lokal support.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-klaviyo",
+      "name": "Klaviyo",
+      "domain": "klaviyo.com",
+      "cat": "MarTech & AI",
+      "subType": "MarTech & AI",
+      "origin": "Global / Stockholm",
+      "stack": "Email · SMS · CDP & Prediktiv AI",
+      "customerCount": "150 000+ e-handlare globalt (4 000+ i Norden)",
+      "pricingModel": "Skalbar månadslicens efter aktiva profiler",
+      "setupTime": "1–4 dagar (native i Shopify & Centra)",
+      "bestFor": "Snabbväxande D2C på Shopify Plus/Centra med avancerad segmentering",
+      "keyStrengths": [
+        "Marknadsledande flödesbyggare",
+        "Prediktivt churn- & LTV-betyg",
+        "Djup Shopify/Centra-synk"
+      ],
+      "notableClients": [
+        "Axel Arigato",
+        "Globala svenska D2C-varumärken"
+      ],
+      "desc": "Global standard för datadriven e-post och SMS inom D2C med inbyggd AI-prediktion för återköp.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-helloretail",
+      "name": "Hello Retail",
+      "domain": "helloretail.com",
+      "cat": "MarTech & AI",
+      "subType": "MarTech & AI",
+      "origin": "Köpenhamn / Stockholm",
+      "stack": "AI-sök · Produktrekommendationer · Personalisering",
+      "customerCount": "2 400+ nordiska & europeiska webbutiker",
+      "pricingModel": "Trafik- & SKU-baserad SaaS-licens",
+      "setupTime": "3–7 dagar",
+      "bestFor": "Höja snittorder (AOV) genom smarta produktsök & rekommendationer",
+      "keyStrengths": [
+        "Snabb ROI på sajt-sök",
+        "Visual search & kundanpassad sortering",
+        "Nordiskt fokus"
+      ],
+      "notableClients": [
+        "Nordiska medelstora e-handlare"
+      ],
+      "desc": "Nordisk plattform för AI-drivet sajt-sök, dynamiska rekommendationer och personaliserade nyhetsbrev.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "p-lipscore",
+      "name": "Lipscore",
+      "domain": "lipscore.com",
+      "cat": "MarTech & AI",
+      "subType": "MarTech & AI",
+      "origin": "Oslo / Stockholm",
+      "stack": "Produktrecensioner · Q&A · Google Seller Ratings",
+      "customerCount": "600+ nordiska e-handlare",
+      "pricingModel": "Månadslicens per ordervolym",
+      "setupTime": "2–5 dagar",
+      "bestFor": "Maximera andelen verifierade produktrecensioner för bättre SEO & förtroende",
+      "keyStrengths": [
+        "Extremt hög svarsfrekvens (upp till 25%)",
+        "Google Shopping-stjärnor",
+        "Stark nordisk närvaro"
+      ],
+      "notableClients": [
+        "Nordiska sport-, skönhets- & heminredningsbutiker"
+      ],
+      "desc": "Nordisk plattform för kund- och produktrecensioner med branschledande svarsfrekvens direkt i e-postflödet.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    }
+  ],
+  "events": [
+    {
+      "id": "ev-dcongress-2027",
+      "name": "D-Congress 2027",
+      "dateLabel": "10–11 mars 2027",
+      "city": "Göteborg",
+      "venue": "Svenska Mässan, Göteborg",
+      "organizer": "Svensk Handel",
+      "ticketInfo": "Handlarpass 995 SEK · Partnerpass 6 495 SEK",
+      "focusAreas": [
+        "Agentic AI",
+        "Cross-Border",
+        "Plattformar",
+        "Logistik",
+        "Checkout"
+      ],
+      "audienceType": "4 500+ handlare, tech-ledare, partners & investerare",
+      "website": "dcongress.se",
+      "desc": "Nordens ledande e-handelsevent arrangerat av Svensk Handel. Två intensiva dagar på fyra scener med 140+ utställare, keynotes och branschmiddag i Göteborg.",
+      "featured": true,
+      "status": "published"
+    },
+    {
+      "id": "ev-ecom-expo-sthlm",
+      "name": "E-commerce Expo Stockholm",
+      "dateLabel": "25–26 maj 2027",
+      "city": "Stockholm",
+      "venue": "Kistamässan, Stockholm",
+      "organizer": "E-commerce Expo",
+      "ticketInfo": "Fackmässa · Yrkesverksamma & utställare",
+      "focusAreas": [
+        "E-handelsplattformar",
+        "Betallösningar",
+        "Marknadsföringsverktyg",
+        "Logistikpartners"
+      ],
+      "audienceType": "Yrkesverksamma som utvärderar nya plattformar, PSP & logistik",
+      "website": "ecommerceexpo.se",
+      "desc": "Denna renodlade fackmässa hålls den 25–26 maj 2027 på Kistamässan i Stockholm och riktar sig till yrkesverksamma som vill hitta nya e-handelsplattformar, betallösningar, marknadsföringsverktyg och logistikpartners.",
+      "featured": true,
+      "status": "published"
+    },
+    {
+      "id": "ev-retail-tech",
+      "name": "Retail Technology",
+      "dateLabel": "24–25 augusti 2027",
+      "city": "Stockholm",
+      "venue": "Stockholmsmässan i Älvsjö (samarrangeras med Formex)",
+      "organizer": "Stockholmsmässan",
+      "ticketInfo": "Kostnadsfri entrébiljett för yrkesverksamma inom branschen",
+      "focusAreas": [
+        "E-handel",
+        "Omnikanal",
+        "AI",
+        "Betalningssystem",
+        "Framtidens kundupplevelser"
+      ],
+      "audienceType": "Retailers, omnikanalhandlare & Formex-besökare",
+      "website": "retailtechnology.se",
+      "desc": "Arrangeras den 24–25 augusti 2027 på Stockholmsmässan i Älvsjö och samarrangeras med inredningsmässan Formex. Fokus ligger på e-handel, omnikanal, AI, betalningssystem och framtidens kundupplevelser.",
+      "featured": true,
+      "status": "published"
+    },
+    {
+      "id": "ev-stora-ehandelsdagen",
+      "name": "Stora Ehandelsdagen",
+      "dateLabel": "Årlig höstkonferens (Oktober)",
+      "city": "Stockholm",
+      "venue": "Stockholm",
+      "organizer": "Ehandel.se",
+      "ticketInfo": "Konferensbiljett för grundare & beslutsfattare",
+      "focusAreas": [
+        "Ledarskap",
+        "Nätverkande",
+        "Lönsamhet",
+        "Liveintervjuer"
+      ],
+      "audienceType": "Grundare, VD:ar och beslutsfattare inom svensk e-handel",
+      "website": "ehandel.se",
+      "desc": "En årlig branschkonferens i Stockholm som arrangeras av Ehandel.se under hösten (hölls i oktober 2026). Dagen bjuder på liveintervjuer, paneldebatter och nätverkande för grundare och beslutsfattare.",
+      "featured": false,
+      "status": "published"
+    },
+    {
+      "id": "ev-nxt-nordic",
+      "name": "NXT Nordic",
+      "dateLabel": "Årlig nordisk konferens",
+      "city": "Oslo",
+      "venue": "Oslo, Norge",
+      "organizer": "NXT",
+      "ticketInfo": "Konferenspass · Nordiskt nätverkande",
+      "focusAreas": [
+        "Nordisk tillväxt",
+        "Cross-border Norge/Sverige",
+        "Retail Tech",
+        "AI"
+      ],
+      "audienceType": "Svenska och norska e-handelsbolag & tech-leverantörer",
+      "website": "nxtnordic.com",
+      "desc": "En stor norsk e-handelskonferens i Oslo som lockar många svenska bolag och leverantörer för nordiskt nätverkande och kunskapsutbyte.",
+      "featured": false,
+      "status": "published"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "dc1",
+      "time": "Dag 1 · 09:30",
+      "stage": "Main Stage",
+      "track": "AI & Data",
+      "title": "Agentic Commerce 2027: När AI-agenter tar över kundresan",
+      "speaker": "Marcus Bergström (Fintech AI Lab)",
+      "status": "published"
+    },
+    {
+      "id": "dc2",
+      "time": "Dag 1 · 11:00",
+      "stage": "Global Stage",
+      "track": "Cross-Border & Logistik",
+      "title": "Exportraketen: Så vinner svenska varumärken Tyskland & USA",
+      "speaker": "Astrid Lindholm (Nordic Outdoor Group)",
+      "status": "published"
+    },
+    {
+      "id": "dc3",
+      "time": "Dag 1 · 13:30",
+      "stage": "Tech & Growth",
+      "track": "Checkout & Tillväxt",
+      "title": "Zero-Friction Checkout: Swish, BankID & biometrisk konvertering",
+      "speaker": "Panel: Klarna, Ingrid & Lyko",
+      "status": "published"
+    },
+    {
+      "id": "dc4",
+      "time": "Dag 1 · 15:15",
+      "stage": "Main Stage",
+      "track": "Cross-Border & Logistik",
+      "title": "Fossilfri robotlogistik i hela Sverige – från Skåne till Norrbotten",
+      "speaker": "Elin Söderberg (Apotea)",
+      "status": "published"
+    },
+    {
+      "id": "dc5",
+      "time": "Dag 2 · 10:00",
+      "stage": "Tech & Growth",
+      "track": "AI & Data",
+      "title": "Bortom Meta-pixeln: Server-Side CAPI, First-Party Data & GEO-sök",
+      "speaker": "Sara Vestergaard (Funnel & Voyado)",
+      "status": "published"
+    },
+    {
+      "id": "dc6",
+      "time": "Dag 2 · 14:00",
+      "stage": "Main Stage",
+      "track": "Checkout & Tillväxt",
+      "title": "Svensk Handels stora framtidsanalys: Handelns spelregler 2027–2030",
+      "speaker": "Johan Kroon (Svensk Handel)",
+      "status": "published"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "j-1",
+      "title": "Head of E-commerce",
+      "company": "RevolutionRace",
+      "city": "Borås",
+      "workModel": "Hybrid",
+      "roleCategory": "E-commerce Management",
+      "seniority": "Senior / Chef",
+      "salaryRange": "65 000–85 000 SEK/mån",
+      "applyUrl": "https://career.revolutionrace.com",
+      "skills": [
+        "Centra",
+        "D2C Export",
+        "P&L-ansvar",
+        "Konverteringsoptimering"
+      ],
+      "desc": "Leda fortsatt global D2C-tillväxt på 40+ marknader med fullt ansvar för digital affär, team och konvertering.",
+      "postedAt": "2 dagar sedan",
+      "expiresAt": "2026-12-22",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "active",
+      "validationNote": "Aktiv annons · verifierad länk",
+      "status": "published"
+    },
+    {
+      "id": "j-2",
+      "title": "Senior Headless Frontend Engineer (React / Next.js)",
+      "company": "Centra",
+      "city": "Stockholm",
+      "workModel": "Hybrid",
+      "roleCategory": "Tech & Utveckling",
+      "seniority": "Senior",
+      "salaryRange": "60 000–75 000 SEK/mån",
+      "applyUrl": "https://centra.com/careers",
+      "skills": [
+        "TypeScript",
+        "React",
+        "GraphQL",
+        "Edge Caching"
+      ],
+      "desc": "Bygg nästa generations blixtsnabba storefront-komponenter och checkout-upplevelser för nordiska modevarumärken.",
+      "postedAt": "3 dagar sedan",
+      "expiresAt": "2027-01-15",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "active",
+      "validationNote": "Aktiv annons · verifierad länk",
+      "status": "published"
+    },
+    {
+      "id": "j-3",
+      "title": "Performance Marketing & Paid Social Lead",
+      "company": "CAIA Cosmetics",
+      "city": "Stockholm",
+      "workModel": "Hybrid",
+      "roleCategory": "Growth & MarTech",
+      "seniority": "Senior",
+      "salaryRange": "52 000–65 000 SEK/mån",
+      "applyUrl": "https://caiacosmetics.se/pages/careers",
+      "skills": [
+        "Meta CAPI",
+        "Google Ads",
+        "Funnel.io",
+        "MER / Incrementality"
+      ],
+      "desc": "Skala kundanskaffning i Norden och DACH genom datadriven attribuering, kreativ testning och server-side spårning.",
+      "postedAt": "Idag",
+      "expiresAt": "2026-12-30",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "active",
+      "validationNote": "Aktiv annons · verifierad länk",
+      "status": "published"
+    },
+    {
+      "id": "j-4",
+      "title": "Supply Chain & 3PL Operations Manager",
+      "company": "Apotea",
+      "city": "Morgongåva / Uppsala",
+      "workModel": "På plats",
+      "roleCategory": "Logistik & Supply Chain",
+      "seniority": "Mid / Senior",
+      "salaryRange": "50 000–62 000 SEK/mån",
+      "applyUrl": "https://apotea.se/jobb",
+      "skills": [
+        "AutoStore",
+        "WMS",
+        "Last-mile",
+        "Transportupphandling"
+      ],
+      "desc": "Optimera flöden, ledtider och fossilfria transportavtal för Sveriges största nätapotek.",
+      "postedAt": "4 dagar sedan",
+      "expiresAt": "2027-01-10",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "active",
+      "validationNote": "Aktiv annons · verifierad länk",
+      "status": "published"
+    },
+    {
+      "id": "j-5",
+      "title": "CRM & Retention Specialist (Voyado)",
+      "company": "Lyko",
+      "city": "Stockholm / Vansbro",
+      "workModel": "Hybrid",
+      "roleCategory": "Growth & MarTech",
+      "seniority": "Mid-level",
+      "salaryRange": "42 000–52 000 SEK/mån",
+      "applyUrl": "https://lyko.com/sv/jobb",
+      "skills": [
+        "Voyado",
+        "Marketing Automation",
+        "Lojalitetsprogram",
+        "LTV-analys"
+      ],
+      "desc": "Utveckla automatiserade kundresor, segmentering och personaliserade erbjudanden för över 2 miljoner klubbmedlemmar.",
+      "postedAt": "5 dagar sedan",
+      "expiresAt": "2026-12-20",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "active",
+      "validationNote": "Aktiv annons · verifierad länk",
+      "status": "published"
+    },
+    {
+      "id": "j-6",
+      "title": "E-commerce Merchandising & CRO Manager",
+      "company": "Nordic Nest",
+      "city": "Kalmar",
+      "workModel": "Hybrid",
+      "roleCategory": "Merchandising & CX",
+      "seniority": "Mid / Senior",
+      "salaryRange": "45 000–55 000 SEK/mån",
+      "applyUrl": "https://nordicnest.se/karriar",
+      "skills": [
+        "Site Search",
+        "A/B-testning",
+        "Sortimentsstyrning",
+        "UX-analys"
+      ],
+      "desc": "Ansvara för sajtens produktupptäckt, AI-driven sökoptimering och kategoriexponering på 10+ språk.",
+      "postedAt": "1 vecka sedan",
+      "expiresAt": "2026-12-28",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "active",
+      "validationNote": "Aktiv annons · verifierad länk",
+      "status": "published"
+    },
+    {
+      "id": "j-7",
+      "title": "Tech Lead Checkout & Payments",
+      "company": "Boozt",
+      "city": "Malmö",
+      "workModel": "Hybrid",
+      "roleCategory": "Tech & Utveckling",
+      "seniority": "Lead / Staff",
+      "salaryRange": "68 000–85 000 SEK/mån",
+      "applyUrl": "https://careers.boozt.com",
+      "skills": [
+        "Distributed Systems",
+        "Klarna / Adyen API",
+        "Swish",
+        "Observability"
+      ],
+      "desc": "Led utvecklingen av skalbara betalnings- och kassaflöden som hanterar tusentals ordrar i minuten under Black Week.",
+      "postedAt": "2 dagar sedan",
+      "expiresAt": "2027-01-20",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "active",
+      "validationNote": "Aktiv annons · verifierad länk",
+      "status": "published"
+    },
+    {
+      "id": "j-8",
+      "title": "Digital Commerce & Omnichannel Manager",
+      "company": "Kjell & Company",
+      "city": "Malmö",
+      "workModel": "Hybrid",
+      "roleCategory": "E-commerce Management",
+      "seniority": "Senior",
+      "salaryRange": "55 000–68 000 SEK/mån",
+      "applyUrl": "https://kjell.com/se/om-oss/karriar",
+      "skills": [
+        "Omnichannel",
+        "Norce",
+        "Click & Collect",
+        "Kundresa"
+      ],
+      "desc": "Knyt ihop digital handel med över 100 fysiska servicebutiker för branschledande tillgänglighet i hela Norden.",
+      "postedAt": "6 dagar sedan",
+      "expiresAt": "2027-01-08",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "active",
+      "validationNote": "Aktiv annons · verifierad länk",
+      "status": "published"
+    },
+    {
+      "id": "j-9",
+      "title": "AI & Data Engineer (Agentic Search)",
+      "company": "Voyado",
+      "city": "Norrköping / Remote",
+      "workModel": "Remote",
+      "roleCategory": "Tech & Utveckling",
+      "seniority": "Senior",
+      "salaryRange": "58 000–74 000 SEK/mån",
+      "applyUrl": "https://voyado.com/career",
+      "skills": [
+        "Python",
+        "Vector Search",
+        "LLM / Embeddings",
+        "Real-time Pipelines"
+      ],
+      "desc": "Bygg nästa generations AI-rekommendationer och semantiskt produktsök för Nordens största e-handlare.",
+      "postedAt": "3 dagar sedan",
+      "expiresAt": "2027-01-25",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "active",
+      "validationNote": "Aktiv annons · verifierad länk",
+      "status": "published"
+    },
+    {
+      "id": "j-10",
+      "title": "Head of Customer Experience & Returns",
+      "company": "NA-KD",
+      "city": "Göteborg",
+      "workModel": "Hybrid",
+      "roleCategory": "Merchandising & CX",
+      "seniority": "Chef / Lead",
+      "salaryRange": "52 000–65 000 SEK/mån",
+      "applyUrl": "https://na-kd.com/en/careers",
+      "skills": [
+        "Kundservice-AI",
+        "Returminimering",
+        "Trustpilot",
+        "NPS"
+      ],
+      "desc": "Minska returgraden med smart storleksdata och höj kundnöjdheten i alla europeiska kanaler.",
+      "postedAt": "1 vecka sedan",
+      "expiresAt": "2026-12-31",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "active",
+      "validationNote": "Aktiv annons · verifierad länk",
+      "status": "published"
+    },
+    {
+      "id": "j-archived-1",
+      "title": "E-commerce Coordinator (Sommarsäsong 2026)",
+      "company": "Arkiverat exempelbolag",
+      "city": "Stockholm",
+      "workModel": "Hybrid",
+      "roleCategory": "Merchandising & CX",
+      "seniority": "Junior",
+      "applyUrl": "https://ehandel.se/jobb",
+      "skills": [
+        "Shopify",
+        "Kundtjänst"
+      ],
+      "desc": "Automatiskt stängd annons efter att sista ansökningsdatum passerat.",
+      "postedAt": "Aug 2026",
+      "expiresAt": "2026-09-15",
+      "verifiedAt": "2026-11-18",
+      "jobStatus": "expired",
+      "validationNote": "Stängd automatiskt: annonsen markerad som utgången/tillsatt",
+      "status": "draft"
+    }
+  ],
+  "recruitmentSites": [
+    {
+      "id": "rec-ehandel",
+      "name": "Ehandel.se Jobb",
+      "domain": "ehandel.se/jobb",
+      "type": "Jobbportal",
+      "rolesCovered": [
+        "E-commerce Management",
+        "Growth & MarTech",
+        "Logistik & Supply Chain",
+        "Merchandising & CX"
+      ],
+      "coverage": "Hela Sverige",
+      "desc": "Sveriges största branschspecifika jobbportal för e-handel med annonser direkt från svenska nätbutiker och leverantörer.",
+      "status": "published"
+    },
+    {
+      "id": "rec-hammer",
+      "name": "Hammer & Hanborg (Jurek)",
+      "domain": "hammerhanborg.com",
+      "type": "Rekryteringsbyrå",
+      "rolesCovered": [
+        "E-commerce Management",
+        "Growth & MarTech",
+        "Merchandising & CX"
+      ],
+      "coverage": "Stockholm, Göteborg & Malmö",
+      "desc": "Specialiserade på rekrytering och interimkonsulter inom digital handel, E-commerce Managers, CMO och tillväxtroller.",
+      "status": "published"
+    },
+    {
+      "id": "rec-trib",
+      "name": "Trib",
+      "domain": "trib.se",
+      "type": "Rekryteringsbyrå",
+      "rolesCovered": [
+        "Growth & MarTech",
+        "E-commerce Management",
+        "Tech & Utveckling"
+      ],
+      "coverage": "Stockholm, Göteborg & Remote",
+      "desc": "Rekryterar specialister och chefer inom performance marketing, CRM, CRO, SEO och digital affärsutveckling.",
+      "status": "published"
+    },
+    {
+      "id": "rec-novare",
+      "name": "Novare Executive Search",
+      "domain": "novare.se",
+      "type": "Headhunting & Interim",
+      "rolesCovered": [
+        "E-commerce Management",
+        "Tech & Utveckling",
+        "Logistik & Supply Chain"
+      ],
+      "coverage": "Hela Sverige & Norden",
+      "desc": "Executive search för VD, CDO, CTO, Head of E-commerce och styrelserekrytering i snabbväxande retail- och techbolag.",
+      "status": "published"
+    },
+    {
+      "id": "rec-breakit",
+      "name": "Breakit Jobb",
+      "domain": "breakit.se/jobb",
+      "type": "Jobbportal",
+      "rolesCovered": [
+        "Tech & Utveckling",
+        "Growth & MarTech",
+        "E-commerce Management"
+      ],
+      "coverage": "Sverige (Tech & D2C Startups)",
+      "desc": "Jobbportal fokuserad på svenska tillväxtbolag, D2C-varumärken, fintech och SaaS-bolag inom e-handelsekosystemet.",
+      "status": "published"
+    },
+    {
+      "id": "rec-ants",
+      "name": "Ants Tech Recruiters",
+      "domain": "ants.se",
+      "type": "Rekryteringsbyrå",
+      "rolesCovered": [
+        "Tech & Utveckling"
+      ],
+      "coverage": "Stockholm, Göteborg, Malmö & Remote",
+      "desc": "Inriktade på seniora utvecklare, headless-arkitekter, plattformsteam och data/AI-ingenjörer för e-handelsplattformar.",
+      "status": "published"
+    },
+    {
+      "id": "rec-talentpartner",
+      "name": "Talent&Partner",
+      "domain": "talentpartner.se",
+      "type": "Rekryteringsbyrå",
+      "rolesCovered": [
+        "Growth & MarTech",
+        "Merchandising & CX",
+        "E-commerce Management"
+      ],
+      "coverage": "Stockholm & Mälardalen",
+      "desc": "Nischad rekrytering inom e-handel, social commerce, media, CRM och digital kundupplevelse.",
+      "status": "published"
+    },
+    {
+      "id": "rec-poolia-logistik",
+      "name": "Poolia Supply Chain & Logistik",
+      "domain": "poolia.se",
+      "type": "Rekryteringsbyrå",
+      "rolesCovered": [
+        "Logistik & Supply Chain"
+      ],
+      "coverage": "Borås, Jönköping, Stockholm, Göteborg, Malmö",
+      "desc": "Specialister på chefer och analytiker inom 3PL, lagerautomation, inköp och transportlogistik för e-handelskluster.",
+      "status": "published"
+    },
+    {
+      "id": "rec-kimm",
+      "name": "KIMM (Wise Professionals)",
+      "domain": "kimm.se",
+      "type": "Rekryteringsbyrå",
+      "rolesCovered": [
+        "Merchandising & CX",
+        "Growth & MarTech",
+        "E-commerce Management"
+      ],
+      "coverage": "Stockholm, Göteborg & Malmö",
+      "desc": "Rekrytering och konsultuthyrning inom kommunikation, marknad, content, UX och digital försäljning.",
+      "status": "published"
+    },
+    {
+      "id": "rec-retail-recruitment",
+      "name": "Retail Recruitment",
+      "domain": "retailrecruitment.se",
+      "type": "Headhunting & Interim",
+      "rolesCovered": [
+        "E-commerce Management",
+        "Merchandising & CX",
+        "Logistik & Supply Chain"
+      ],
+      "coverage": "Hela Norden",
+      "desc": "Headhunting helt dedikerad till detaljhandel, omnikanal, kategori-/inköpschefer och e-handelsledare.",
+      "status": "published"
+    },
+    {
+      "id": "rec-boras-hub",
+      "name": "Textile Fashion Center / Borås Karriär",
+      "domain": "textilefashioncenter.se",
+      "type": "Jobbportal",
+      "rolesCovered": [
+        "Merchandising & CX",
+        "E-commerce Management",
+        "Logistik & Supply Chain"
+      ],
+      "coverage": "Borås & Västsverige",
+      "desc": "Regional ingång till roller hos Sveriges största mode- och textil-e-handlare i Borås-klustret.",
+      "status": "published"
+    },
+    {
+      "id": "rec-linkedin-se",
+      "name": "LinkedIn Jobs – E-handel Sverige",
+      "domain": "linkedin.com/jobs",
+      "type": "Jobbportal",
+      "rolesCovered": [
+        "E-commerce Management",
+        "Tech & Utveckling",
+        "Growth & MarTech",
+        "Logistik & Supply Chain",
+        "Merchandising & CX"
+      ],
+      "coverage": "Hela Sverige & Internationellt",
+      "desc": "Störst volym av direktannonser från både svenska D2C-varumärken och internationella e-handelsplattformar.",
+      "status": "published"
+    }
+  ],
+  "regions": {
+    "vast": {
+      "key": "vast",
+      "name": "Västsverige (Göteborg & Borås)",
+      "tag": "E-handelshjärta & D-Congress",
+      "share": "22,4 %",
+      "aov": "965 SEK",
+      "hubs": "Borås (Textil & D2C), Göteborg (Svenska Mässan & Hamnen), Landvetter",
+      "desc": "Nordens tätaste kluster för modehandlare (RevolutionRace, Nelly, Gina Tricot, NA-KD), 3PL-logistik och värdregion för D-Congress 2027."
+    },
+    "svealand": {
+      "key": "svealand",
+      "name": "Svealand (Stockholm & Mälardalen)",
+      "tag": "Fintech, SaaS & Tillväxtmotor",
+      "share": "36,1 %",
+      "aov": "1 040 SEK",
+      "hubs": "Stockholm (Klarna, Centra, Voyado), Morgongåva/Uppsala (Apotea), Rosersberg",
+      "desc": "Högst köpkraft per capita och centrum för svensk fintech, apotekse-handel och blixtsnabba same-day leveranser."
+    },
+    "smaland": {
+      "key": "smaland",
+      "name": "Småland & Östergötland (E4-korridoren)",
+      "tag": "Nordens Logistiktriangel",
+      "share": "15,2 %",
+      "aov": "920 SEK",
+      "hubs": "Jönköping (Torsvik), Kalmar (Nordic Nest/Outnorth), Linköping & Norrköping",
+      "desc": "Strategiskt läge där 80 % av Nordens befolkning nås inom 24 timmar. Hemvist för flera av landets största exportörer inom hem och outdoor."
+    },
+    "syd": {
+      "key": "syd",
+      "name": "Sydsverige (Malmö, Helsingborg & Skåne)",
+      "tag": "Exportporten mot kontinenten",
+      "share": "15,5 %",
+      "aov": "910 SEK",
+      "hubs": "Helsingborg (Logistikhubb), Malmö (Tech & Cross-border), Ängelholm",
+      "desc": "Direktkoppling via Öresund till Danmark och Tyskland ger regionen landets högsta andel gränsöverskridande B2C-export."
+    },
+    "norrland": {
+      "key": "norrland",
+      "name": "Norrland (Umeå, Luleå, Sundsvall & Åre)",
+      "tag": "Hög digital frekvens & outdoor",
+      "share": "10,8 %",
+      "aov": "890 SEK",
+      "hubs": "Umeå, Luleå (Grön datacenter-tech), Sundsvall, Åre/Östersund",
+      "desc": "Långa avstånd driver hög köpfrekvens online. Paketskåp och lantbrevbärare säkerställer hög leveransprecision i hela landsdelen."
+    }
+  },
+  "orderBenchmarks": [
+    {
+      "id": "ob-apotek",
+      "category": "Apotek & Skönhet",
+      "avgOrderValueSek": 485,
+      "itemsPerOrder": 3.8,
+      "avgCustomerShippingFeeSek": 19,
+      "merchantShippingCostSek": 44,
+      "freeShippingThresholdSek": 299,
+      "returnRatePct": 1.8,
+      "conversionRatePct": 5.2,
+      "grossMarginPct": 44
+    },
+    {
+      "id": "ob-mode",
+      "category": "Mode & Outdoor",
+      "avgOrderValueSek": 1120,
+      "itemsPerOrder": 2.1,
+      "avgCustomerShippingFeeSek": 29,
+      "merchantShippingCostSek": 56,
+      "freeShippingThresholdSek": 599,
+      "returnRatePct": 21.5,
+      "conversionRatePct": 2.8,
+      "grossMarginPct": 58
+    },
+    {
+      "id": "ob-elektronik",
+      "category": "Hemelektronik",
+      "avgOrderValueSek": 2340,
+      "itemsPerOrder": 1.4,
+      "avgCustomerShippingFeeSek": 39,
+      "merchantShippingCostSek": 68,
+      "freeShippingThresholdSek": 499,
+      "returnRatePct": 4.2,
+      "conversionRatePct": 2.1,
+      "grossMarginPct": 24
+    },
+    {
+      "id": "ob-hem",
+      "category": "Hem & Inredning",
+      "avgOrderValueSek": 1680,
+      "itemsPerOrder": 1.9,
+      "avgCustomerShippingFeeSek": 49,
+      "merchantShippingCostSek": 135,
+      "freeShippingThresholdSek": 999,
+      "returnRatePct": 7.5,
+      "conversionRatePct": 1.9,
+      "grossMarginPct": 49
+    },
+    {
+      "id": "ob-sport",
+      "category": "Sport & Fritid",
+      "avgOrderValueSek": 980,
+      "itemsPerOrder": 2.3,
+      "avgCustomerShippingFeeSek": 29,
+      "merchantShippingCostSek": 62,
+      "freeShippingThresholdSek": 499,
+      "returnRatePct": 11,
+      "conversionRatePct": 2.6,
+      "grossMarginPct": 46
+    },
+    {
+      "id": "ob-mat",
+      "category": "Dagligvaror & Mat",
+      "avgOrderValueSek": 1190,
+      "itemsPerOrder": 18.4,
+      "avgCustomerShippingFeeSek": 45,
+      "merchantShippingCostSek": 95,
+      "freeShippingThresholdSek": 750,
+      "returnRatePct": 0.8,
+      "conversionRatePct": 6.4,
+      "grossMarginPct": 28
+    },
+    {
+      "id": "ob-barn",
+      "category": "Barn & Familj",
+      "avgOrderValueSek": 820,
+      "itemsPerOrder": 2.7,
+      "avgCustomerShippingFeeSek": 29,
+      "merchantShippingCostSek": 54,
+      "freeShippingThresholdSek": 499,
+      "returnRatePct": 9.5,
+      "conversionRatePct": 3.4,
+      "grossMarginPct": 48
+    },
+    {
+      "id": "ob-bocker",
+      "category": "Böcker & Media",
+      "avgOrderValueSek": 390,
+      "itemsPerOrder": 2.5,
+      "avgCustomerShippingFeeSek": 19,
+      "merchantShippingCostSek": 39,
+      "freeShippingThresholdSek": 249,
+      "returnRatePct": 1.2,
+      "conversionRatePct": 4.8,
+      "grossMarginPct": 38
+    }
+  ],
+  "shippingTiers": [
+    {
+      "id": "st-1",
+      "orderValueRange": "Under 300 SEK",
+      "minOrderSek": 0,
+      "maxOrderSek": 299,
+      "customerShippingFeeSek": 39,
+      "merchantShippingCostSek": 44,
+      "freeShippingSharePct": 18,
+      "shippingToAovPct": 19.5,
+      "dominantMethod": "Varubrev / PostNord",
+      "insight": "Låga ordervärden tål sällan fri frakt. Majoriteten av svenska handlare tar 29–49 kr i fraktavgift."
+    },
+    {
+      "id": "st-2",
+      "orderValueRange": "300 – 599 SEK",
+      "minOrderSek": 300,
+      "maxOrderSek": 599,
+      "customerShippingFeeSek": 29,
+      "merchantShippingCostSek": 49,
+      "freeShippingSharePct": 46,
+      "shippingToAovPct": 10.8,
+      "dominantMethod": "Paketskåp (Instabox / PostNord)",
+      "insight": "Vanligaste spannet för fri-frakttröskel (ofta 399–499 kr), vilket höjer snittordern med 14–18%."
+    },
+    {
+      "id": "st-3",
+      "orderValueRange": "600 – 999 SEK",
+      "minOrderSek": 600,
+      "maxOrderSek": 999,
+      "customerShippingFeeSek": 19,
+      "merchantShippingCostSek": 58,
+      "freeShippingSharePct": 68,
+      "shippingToAovPct": 7.4,
+      "dominantMethod": "Paketskåp & Budbee Box",
+      "insight": "Svenskt rikssnitt (AOV 945 SEK). Handlaren subventionerar i snitt 39 SEK per order för att maximera konvertering."
+    },
+    {
+      "id": "st-4",
+      "orderValueRange": "1 000 – 1 999 SEK",
+      "minOrderSek": 1000,
+      "maxOrderSek": 1999,
+      "customerShippingFeeSek": 9,
+      "merchantShippingCostSek": 69,
+      "freeShippingSharePct": 84,
+      "shippingToAovPct": 4.9,
+      "dominantMethod": "Paketskåp & Postombud",
+      "insight": "Fri frakt till paketskåp är standard, medan kvällshemleverans till dörren ofta prissätts med 29–49 kr tillägg."
+    },
+    {
+      "id": "st-5",
+      "orderValueRange": "2 000+ SEK",
+      "minOrderSek": 2000,
+      "maxOrderSek": null,
+      "customerShippingFeeSek": 24,
+      "merchantShippingCostSek": 125,
+      "freeShippingSharePct": 79,
+      "shippingToAovPct": 4.1,
+      "dominantMethod": "Hemleverans & Ombud",
+      "insight": "Skrymmande varor (möbler, vitvaror, cyklar) driver högre faktisk fraktkostnad trots högt ordervärde."
+    }
+  ],
+  "deliveryStats": {
+    "avgWeightKg": 1.8,
+    "medianWeightKg": 1.1,
+    "mostCommonDimensionsCm": "32 × 24 × 12 cm",
+    "varubrevOrSmallBoxSharePct": 44,
+    "leaveOutsideDoorSharePct": 58,
+    "homeDeliveryPreferredSlot": "17:00 – 22:00 (Kväll)",
+    "updatedNote": "Svenskt konsumentindex 2026 · PostNord, Instabee & Ingrid benchmark",
+    "timeWindows": [
+      {
+        "id": "tw-evening",
+        "windowLabel": "Kvällshemleverans (17:00 – 22:00)",
+        "sharePct": 54,
+        "preferenceRank": "#1 Hemleverans",
+        "bestFor": "Yrkesverksamma & barnfamiljer som är hemma efter jobbet"
+      },
+      {
+        "id": "tw-nextday-locker",
+        "windowLabel": "Nästa vardag i Paketskåp (dygnet runt)",
+        "sharePct": 68,
+        "preferenceRank": "#1 Flexibilitet",
+        "bestFor": "Utan tider att passa – hämtas på vägen hem från jobbet"
+      },
+      {
+        "id": "tw-early",
+        "windowLabel": "Tidig morgon vid dörr/brevlåda (före 07:00)",
+        "sharePct": 19,
+        "preferenceRank": "Växer +21%",
+        "bestFor": "Apotek, skönhet & böcker via Early Bird / Varubrev"
+      },
+      {
+        "id": "tw-sameday",
+        "windowLabel": "Samma dag / Express (storstad)",
+        "sharePct": 14,
+        "preferenceRank": "Premiumtillval",
+        "bestFor": "Akutbehov i Stockholm, Göteborg & Malmö (Airmee / Budbee)"
+      },
+      {
+        "id": "tw-weekend",
+        "windowLabel": "Helgleverans (Lördag–Söndag)",
+        "sharePct": 24,
+        "preferenceRank": "Hög konvertering fre–lör",
+        "bestFor": "Lördags- & söndagsköp där paketskåp fylls på under helgen"
+      }
+    ],
+    "receptionChannels": [
+      {
+        "id": "rc-locker",
+        "channel": "Paketskåp (Instabox, PostNord, Budbee Box)",
+        "sharePct": 46,
+        "avgLeadTimeDays": "1–2 dagar",
+        "insight": "Överlägsen etta i Sverige tack vare 0 sek kötid och 24/7-hämtning med BankID/PIN."
+      },
+      {
+        "id": "rc-agent",
+        "channel": "Postombud i butik / Matbutik",
+        "sharePct": 31,
+        "avgLeadTimeDays": "1–2 dagar",
+        "insight": "Starkt i glesbygd och för paket som överskrider paketskåpens standardfack."
+      },
+      {
+        "id": "rc-home",
+        "channel": "Hemleverans (Dörr & Brevlåda)",
+        "sharePct": 23,
+        "homeDropSharePct": 58,
+        "avgLeadTimeDays": "1–3 dagar",
+        "insight": "58% av svenskarna väljer \"lämna utanför dörren\" utan kvittens när det erbjuds i kassan."
+      }
+    ],
+    "parcelSizeTiers": [
+      {
+        "id": "ps-s",
+        "sizeClass": "S · Brevlåda / Varubrev / E-handelspåse",
+        "typicalDimensionsCm": "24 × 17 × 5 cm",
+        "weightRangeKg": "0,1 – 0,6 kg",
+        "shareOfOrdersPct": 44,
+        "dominantCarrierOption": "Varubrev, Early Bird, Paketskåp S"
+      },
+      {
+        "id": "ps-m",
+        "sizeClass": "M · Standardkartong (Vanligast)",
+        "typicalDimensionsCm": "32 × 24 × 12 cm",
+        "weightRangeKg": "0,7 – 2,5 kg",
+        "shareOfOrdersPct": 39,
+        "dominantCarrierOption": "Paketskåp M, Ombud, Kvällsbud"
+      },
+      {
+        "id": "ps-l",
+        "sizeClass": "L · Större paket (Sport / Kök / Elektronik)",
+        "typicalDimensionsCm": "50 × 35 × 25 cm",
+        "weightRangeKg": "2,6 – 10 kg",
+        "shareOfOrdersPct": 13,
+        "dominantCarrierOption": "Postombud, Paketskåp XL, Hemleverans"
+      },
+      {
+        "id": "ps-xl",
+        "sizeClass": "XL / Skrymmande (Möbler, Cyklar, Vitvaror)",
+        "typicalDimensionsCm": "80 × 60 × 45+ cm",
+        "weightRangeKg": "10 – 35+ kg",
+        "shareOfOrdersPct": 4,
+        "dominantCarrierOption": "Hemleverans till tomtgräns / inbärning / DHL Pall"
+      }
+    ]
+  },
+  "laws": [
+    {
+      "id": "law-prisinfo",
+      "title": "Prisinformationslagen (30-dagarsregeln / Omnibus)",
+      "category": "Pris & Kassa",
+      "authority": "Konsumentverket",
+      "effectiveDate": "Gällande (Skärpt tillsyn 2025–2026)",
+      "summary": "Vid varje prissänkning eller kampanj (t.ex. Black Week/REA) måste det lägsta pris produkten haft under de senaste 30 dagarna före prissänkningen tydligt anges som referenspris.",
+      "requirements": [
+        "Logga historiska lägstapriser per SKU de senaste 30 dagarna",
+        "Beräkna rabattprocent mot 30-dagars lägstapris – inte konstlat ordinarie pris",
+        "Undantag endast för varor som snabbt försämras (färskvaror)"
+      ],
+      "penaltyInfo": "Marknadsstörningsavgift upp till 4% av årsomsättningen (miljonbelopp utdömda i Sverige)."
+    },
+    {
+      "id": "law-betaltjanst",
+      "title": "Betaltjänstlagen (Rättvis kassaordning / Förvalda betalsätt)",
+      "category": "Pris & Kassa",
+      "authority": "Finansinspektionen & Konsumentverket",
+      "effectiveDate": "Gällande svensk lag",
+      "summary": "I kassan får ett kredit- eller fakturaalternativ aldrig vara förvalt eller presenteras före direktbetalningsalternativ (som Swish eller bankkort/direktbetalning) om direktbetalning erbjuds.",
+      "requirements": [
+        "Direktbetalning (t.ex. Swish, kort) ska visas före eller lika synligt som kredit/BNPL",
+        "Inget betalsätt som medför kredit får vara förvalt automatiskt",
+        "Tydlig upplysning om ev. fakturaavgifter eller ränta före köpknapp"
+      ],
+      "penaltyInfo": "Föreläggande med vite och tillsynsåtgärd från Konsumentverket."
+    },
+    {
+      "id": "law-distansavtal",
+      "title": "Distansavtalslagen & 14 dagars ångerrätt (+ Ångerrättsknapp 2026)",
+      "category": "Konsumenträtt",
+      "authority": "Konsumentverket / EU-direktiv",
+      "effectiveDate": "Gällande · Digital ångerrättsknapp juni 2026",
+      "summary": "Konsumenter har 14 dagars lagstadgad ångerrätt från mottagandet av varan. Nya EU-regler kräver dessutom en tydligt synlig digital ångerrättsfunktion (\"Ångra köp\"-knapp) direkt på webbplatsen.",
+      "requirements": [
+        "Erbjud en lättillgänglig digital ångerfunktion direkt på sajten utan inloggningshinder",
+        "Återbetala inom 14 dagar från att kunden meddelat ånger (får invänta returkvitto)",
+        "Tydlig information före köp om vem som bekostar returfrakten"
+      ],
+      "penaltyInfo": "Förlängd ångerrätt upp till 12 månader om kunden inte informerats korrekt, samt vite."
+    },
+    {
+      "id": "law-konsumentkop",
+      "title": "Konsumentköplagen (3 års reklamationsrätt & omvänd bevisbörda)",
+      "category": "Konsumenträtt",
+      "authority": "Konsumentverket & ARN",
+      "effectiveDate": "Gällande (Reviderad 2022–2026)",
+      "summary": "Konsumenter har 3 års reklamationsrätt för ursprungliga fel. Under de första 2 åren gäller omvänd bevisbörda – säljaren måste bevisa att felet inte fanns vid leverans.",
+      "requirements": [
+        "Omvänd bevisbörda i 24 månader (gäller även digitala tjänster och smarta produkter)",
+        "E-handlaren står för alla frakt- och felsökningskostnader vid godkänd reklamation",
+        "Säkerställ säkerhetsuppdateringar för uppkopplade/digitala varor"
+      ],
+      "penaltyInfo": "Krav på omleverans, reparation, prisavdrag eller hävning via ARN/domstol."
+    },
+    {
+      "id": "law-gdpr-cookie",
+      "title": "GDPR, LEK & Cookie-samtycke (Server-side & First-Party Data)",
+      "category": "Data & Tillgänglighet",
+      "authority": "IMY & Post- och telestyrelsen (PTS)",
+      "effectiveDate": "Gällande · Skärpt PTS-tillsyn",
+      "summary": "Marknadsförings- och analyscookies samt pixelspårning kräver aktivt, informerat samtycke. \"Neka alla\" måste vara lika enkelt att klicka som \"Acceptera alla\".",
+      "requirements": [
+        "Likvärdiga \"Acceptera\" och \"Avvisa\"-knappar i första lagret av cookie-bannern",
+        "Implementera Consent Mode v2 och skicka ingen CAPI/konverteringsdata utan samtycke",
+        "Dokumenterade personuppgiftsbiträdesavtal (PUB) för CRM/CDP, chatt och AI-sök"
+      ],
+      "penaltyInfo": "Sanktionsavgifter från IMY samt föreläggande från PTS."
+    },
+    {
+      "id": "law-eaa",
+      "title": "Tillgänglighetsdirektivet (EAA / WCAG 2.1 AA)",
+      "category": "Data & Tillgänglighet",
+      "authority": "PTS & Konsumentverket",
+      "effectiveDate": "Tvingande från 28 juni 2025",
+      "summary": "Alla e-handelswebbplatser, mobilappar och digitala kassor måste uppfylla tillgänglighetskrav motsvarande WCAG 2.1 nivå AA så att personer med funktionsnedsättning kan handla självständigt.",
+      "requirements": [
+        "Full tangentbordsnavigering i meny, filtrering, varukorg och kassa",
+        "Korrekt färgkontrast, alt-texter på produktbilder och tydliga felmeddelanden",
+        "Publicerad tillgänglighetsredogörelse på webbplatsen"
+      ],
+      "penaltyInfo": "Föreläggande och sanktionsavgift upp till 10 miljoner SEK vid bristande efterlevnad."
+    },
+    {
+      "id": "law-gpsr",
+      "title": "GPSR – Allmänna produktsäkerhetsförordningen",
+      "category": "Konsumenträtt",
+      "authority": "Konsumentverket / EU",
+      "effectiveDate": "Tvingande från december 2024",
+      "summary": "Alla konsumentprodukter som säljs online inom EU måste visa tillverkarens namn, adress och kontaktuppgifter samt tydliga säkerhetsvarningar direkt på produktsidan före köp.",
+      "requirements": [
+        "Visa tillverkarens (och ev. EU-ansvarig ekonomisk aktörs) namn, postadress & e-post på produktsidan",
+        "Tydlig produktidentifiering (typ, batch eller serienummer) och bild",
+        "Säkerhetsvarningar och instruktioner på svenska för produkter sålda i Sverige"
+      ],
+      "penaltyInfo": "Säljförbud, återkallelsekrav och sanktionsavgifter."
+    },
+    {
+      "id": "law-ppwr-npa",
+      "title": "Förpackningsansvar (NPA) & EU:s förpackningsförordning PPWR",
+      "category": "Hållbarhet & Tull",
+      "authority": "Naturvårdsverket / NPA",
+      "effectiveDate": "Gällande · PPWR skärps stegvis 2026–2030",
+      "summary": "Alla svenska e-handlare som sätter förpackningar på marknaden måste vara anslutna till en godkänd producentansvarsorganisation (t.ex. NPA) och rapportera materialvikter. PPWR förbjuder överdimensionerade luftfyllda paket.",
+      "requirements": [
+        "Registrering hos Naturvårdsverket & anslutning till NPA (Näringslivets Producentansvar)",
+        "Max 40–50% tomrum i e-handelspaket – rätt kartongstorlek minskar både frakt och avgift",
+        "Årlig rapportering av wellpapp, plast och tejp i kg"
+      ],
+      "penaltyInfo": "Miljösanktionsavgift vid utebliven rapportering eller oregistrerade förpackningar."
+    },
+    {
+      "id": "law-greenclaims",
+      "title": "Marknadsföringslagen & Green Claims (Miljöpåståenden)",
+      "category": "Hållbarhet & Tull",
+      "authority": "Konsumentverket & Patent- och marknadsdomstolen",
+      "effectiveDate": "Gällande · Skärpt EU-direktiv 2026",
+      "summary": "Generella uttryck som \"klimatsmart\", \"grön frakt\" eller \"hållbart val\" utan verifierad specifikation och livscykeldata är förbjudna i svensk e-handel.",
+      "requirements": [
+        "Ersätt vaga ord som \"miljövänlig\" med konkret mätdata (t.ex. \"100% HVO100 eller elbil\")",
+        "Kräver verifiering bakom egna hållbarhetsmärkningar i kassan och på produktsidor",
+        "Tydlig åtskillnad mellan klimatkompensation och faktisk utsläppsminskning"
+      ],
+      "penaltyInfo": "Förbud vid vite och marknadsstörningsavgift."
+    },
+    {
+      "id": "law-oss-voec",
+      "title": "Moms OSS (EU-export) & Norges VOEC-ordning",
+      "category": "Hållbarhet & Tull",
+      "authority": "Skatteverket & Skatteetaten (Norge)",
+      "effectiveDate": "Gällande",
+      "summary": "Vid försäljning över 10 000 EUR till konsumenter i andra EU-länder ska destinationslandets moms tas ut via Skatteverkets OSS-portal. För export till Norge gäller VOEC-registrering för tullfri direktmoms.",
+      "requirements": [
+        "Registrera moms via One Stop Shop (OSS) i Sverige och ta ut korrekt lokal EU-moms i kassan",
+        "Registrera VOEC-nummer hos norska Skatteetaten för varor under 3 000 NOK (annars betalar kunden dubbel moms/tull)",
+        "Skicka digitalt VOEC-ID i EDI-data till transportören (Bring/PostNord)"
+      ],
+      "penaltyInfo": "Straffavgifter, kvarhållna paket i norska tullen och kundreturer."
+    }
+  ],
+  "intelligenceSources": [
+    {
+      "id": "ecdb",
+      "name": "ECDB (ecommerceDB)",
+      "shortLabel": "ECDB",
+      "focusArea": "Butiksomsättning & kategoridata",
+      "url": "https://ecommercedb.com/markets/se/all",
+      "headlineMetric": "Topp 100 svenska e-handlare (nettoomsättning)",
+      "headlineValue": "62 % marknadsandel",
+      "updatedPeriod": "Helårsdata 2025 / Q3 2026",
+      "summary": "ECDB spårar nettoomsättning per butiksnivå, marknadskoncentration och kategorifördelning i Sverige. De 100 största aktörerna står för majoriteten av den totala digitala detaljhandeln.",
+      "keyFindings": [
+        {
+          "label": "Mode & Skor (andelsstörst)",
+          "value": "28 %",
+          "note": "Drivs av Zalando, Boozt, H&M, NA-KD"
+        },
+        {
+          "label": "Hemelektronik & Media",
+          "value": "24 %",
+          "note": "Elgiganten, NetOnNet, Dustin, Kjell & Co"
+        },
+        {
+          "label": "Hem, Bygg & Trädgård",
+          "value": "18 %",
+          "note": "IKEA, Bygghemma, Nordic Nest"
+        },
+        {
+          "label": "Apotek, Skönhet & Hälsa",
+          "value": "17 %",
+          "note": "Apotea, Lyko, Apoteket, MEDS"
+        }
+      ]
+    },
+    {
+      "id": "statista",
+      "name": "Statista Market Insights",
+      "shortLabel": "Statista",
+      "focusArea": "Makroprognos & ARPU",
+      "url": "https://www.statista.com/outlook/emo/ecommerce/sweden",
+      "headlineMetric": "Genomsnittlig intäkt per e-handelskund (ARPU)",
+      "headlineValue": "17 850 SEK / år",
+      "updatedPeriod": "Prognos 2026–2029",
+      "summary": "Statista kvantifierar svensk e-handelspenetration, årlig tillväxttakt (CAGR) och köpfrekvens per användare över mobil och desktop.",
+      "keyFindings": [
+        {
+          "label": "Aktiva digitala köpare i Sverige",
+          "value": "8,6 milj",
+          "note": "89 % penetration (16–74 år)"
+        },
+        {
+          "label": "Förväntad CAGR (2026–2029)",
+          "value": "+7,2 %",
+          "note": "Stabil tillväxt efter 2023 års rekyl"
+        },
+        {
+          "label": "Mobilandel av transaktioner",
+          "value": "71 %",
+          "note": "Swish & Apple Pay driver mobila köp"
+        },
+        {
+          "label": "Cross-border-andel av köp",
+          "value": "21 %",
+          "note": "Tyskland, Kina, Storbritannien & USA"
+        }
+      ]
+    },
+    {
+      "id": "builtwith",
+      "name": "BuiltWith",
+      "shortLabel": "BuiltWith",
+      "focusArea": "Plattforms- & infrastrukturdata",
+      "url": "https://trends.builtwith.com/shop/country/Sweden",
+      "headlineMetric": "Kartlagda aktiva svenska webbutiker (.se)",
+      "headlineValue": "38 400+ domäner",
+      "updatedPeriod": "Live-index Q4 2026",
+      "summary": "BuiltWith analyserar källkod, DNS-poster och plattformssignaturer i Sverige för att kartlägga hur marknadsandelarna skiftar mellan SaaS, open-source och headless.",
+      "keyFindings": [
+        {
+          "label": "Shopify & Shopify Plus",
+          "value": "31 %",
+          "note": "Starkast tillväxt i D2C 10–300 MSEK"
+        },
+        {
+          "label": "WooCommerce (WordPress)",
+          "value": "22 %",
+          "note": "Dominerar bland mindre specialhandlare"
+        },
+        {
+          "label": "Svenska SaaS (Askås, Abicart, Quickbutik)",
+          "value": "14 %",
+          "note": "Hög retention bland etablerade .se-butiker"
+        },
+        {
+          "label": "Headless / Enterprise (Centra, Norce, Litium)",
+          "value": "17 %",
+          "note": "Dominerar bland omsättning >100 MSEK"
+        }
+      ]
+    },
+    {
+      "id": "wappalyzer",
+      "name": "Wappalyzer",
+      "shortLabel": "Wappalyzer",
+      "focusArea": "Checkout-, PSP- & MarTech-skript",
+      "url": "https://www.wappalyzer.com/technologies/",
+      "headlineMetric": "Identifierade betalskript & MarTech-taggar",
+      "headlineValue": "18,4 snitt-SDK / sajt",
+      "updatedPeriod": "Telemetri Q4 2026",
+      "summary": "Wappalyzer detekterar klientsides- och serverintegrationer på svenska e-handelssajter – från betalleverantörer i kassan till CDP, recensioner och server-side taggning.",
+      "keyFindings": [
+        {
+          "label": "Klarna Checkout / Klarna Payments",
+          "value": "74 %",
+          "note": "Vanligaste betalintegrationen i Sverige"
+        },
+        {
+          "label": "Swish Handel (direkt eller via PSP)",
+          "value": "68 %",
+          "note": "Högst konverteringslyft i mobilen"
+        },
+        {
+          "label": "Voyado (CDP / CRM / Elevate)",
+          "value": "28 %",
+          "note": "Andel bland butiker >100 MSEK omsättning"
+        },
+        {
+          "label": "Klaviyo / Rule (Marketing Automation)",
+          "value": "33 %",
+          "note": "Standard i D2C & snabbväxande varumärken"
+        }
+      ]
+    },
+    {
+      "id": "tembi",
+      "name": "Tembi",
+      "shortLabel": "Tembi",
+      "focusArea": "Nordisk sortiment-, pris- & tillväxtintelligens",
+      "url": "https://www.tembi.io",
+      "headlineMetric": "Nordiska e-handlare med AI-sök & dynamisk prissättning",
+      "headlineValue": "+18 % snittorder",
+      "updatedPeriod": "Nordisk analys 2026",
+      "summary": "Tembi analyserar nordiska handlares produktutbud, lagerstatus, prisrörelser och tech-mognad i realtid för att visa vad som skiljer snabbväxare från genomsnittet.",
+      "keyFindings": [
+        {
+          "label": "AOV-lyft med AI-sök & personalisering",
+          "value": "+18 %",
+          "note": "Jämfört med standard filtrering"
+        },
+        {
+          "label": "Snabbväxande nischer 2026",
+          "value": "Apotek & Sport",
+          "note": "+14–22 % tillväxt i aktiva SKU:er"
+        },
+        {
+          "label": "Lagerslut på toppsäljare (snitt)",
+          "value": "7,4 %",
+          "note": "Kostar ca 3–5 % av potentiell GMV"
+        },
+        {
+          "label": "Flerkanalsnärvaro (Omnikanal)",
+          "value": "44 %",
+          "note": "Erbjuder Click & Collect inom 2h"
+        }
+      ]
+    },
+    {
+      "id": "hui",
+      "name": "HUI Research (E-handelsindikatorn)",
+      "shortLabel": "HUI Research",
+      "focusArea": "Officiell svensk detaljhandelsstatistik",
+      "url": "https://hui.se/rapporter/e-handelsindikatorn/",
+      "headlineMetric": "Total svensk B2C-ehandelsomsättning",
+      "headlineValue": "168,4 mdr SEK",
+      "updatedPeriod": "E-handelsindikatorn 2026",
+      "summary": "HUI Research mäter tillsammans med Svensk Handel den faktiska omsättningsutvecklingen i svensk detaljhandel på nätet månad för månad och per region.",
+      "keyFindings": [
+        {
+          "label": "Årstakt (YoY-tillväxt)",
+          "value": "+8,4 %",
+          "note": "Realt återhämtad tillväxt i samtliga län"
+        },
+        {
+          "label": "E-handelns andel av total detaljhandel",
+          "value": "15,8 %",
+          "note": "Över 34 % inom elektronik & böcker"
+        },
+        {
+          "label": "Q4 & Black Week-andel av helåret",
+          "value": "31 %",
+          "note": "November + december driver marginalen"
+        },
+        {
+          "label": "Genomsnittligt ordervärde (AOV)",
+          "value": "945 SEK",
+          "note": "Varierar mellan 465 kr (Böcker) och 1 920 kr (Hem)"
+        }
+      ]
+    },
+    {
+      "id": "paketindex",
+      "name": "Paketindex (PostNord & Transportföretagen)",
+      "shortLabel": "Paketindex",
+      "focusArea": "Paketvolymer, vikt, skåp & leveransval",
+      "url": "https://www.svenskhandel.se",
+      "headlineMetric": "Totalt antal B2C-paket i Sverige per år",
+      "headlineValue": "182 milj paket",
+      "updatedPeriod": "Paketindex Q3–Q4 2026",
+      "summary": "Paketindex sammanställer faktiska sändningsvolymer från nordiska transportörer: paketens vikt, mått, utlämningskanaler (paketskåp vs ombud vs dörr) och returgrad.",
+      "keyFindings": [
+        {
+          "label": "Leverans till paketskåp",
+          "value": "46 %",
+          "note": "Snabbast växande kanal i storstäder & kranskommuner"
+        },
+        {
+          "label": "Hemleverans utan kvittens",
+          "value": "58 %",
+          "note": "Konsumenter väljer \"lämna utanför dörren\""
+        },
+        {
+          "label": "Snittvikt / Medianvikt per paket",
+          "value": "1,8 kg / 1,1 kg",
+          "note": "54 % ryms i varubrev eller S-skåp"
+        },
+        {
+          "label": "Genomsnittlig returgrad (alla branscher)",
+          "value": "11,2 %",
+          "note": "Mode upp till 26 %, Apotek under 2 %"
+        }
+      ]
+    }
+  ],
+  "techStackShares": [
+    {
+      "id": "ts-shopify",
+      "layer": "E-handelsplattform",
+      "source": "BuiltWith",
+      "name": "Shopify & Shopify Plus",
+      "sharePct": 31,
+      "detectedSites": "11 900+ .se-butiker"
+    },
+    {
+      "id": "ts-woo",
+      "layer": "E-handelsplattform",
+      "source": "BuiltWith",
+      "name": "WooCommerce",
+      "sharePct": 22,
+      "detectedSites": "8 450+ .se-butiker"
+    },
+    {
+      "id": "ts-nordic-ent",
+      "layer": "E-handelsplattform",
+      "source": "BuiltWith",
+      "name": "Centra, Norce, Litium & Brink",
+      "sharePct": 17,
+      "detectedSites": "Topp 500 omsättning"
+    },
+    {
+      "id": "ts-se-saas",
+      "layer": "E-handelsplattform",
+      "source": "BuiltWith",
+      "name": "Askås, Abicart, Quickbutik & Starweb",
+      "sharePct": 14,
+      "detectedSites": "5 380+ .se-butiker"
+    },
+    {
+      "id": "ts-klarna",
+      "layer": "Betalning (PSP)",
+      "source": "Wappalyzer",
+      "name": "Klarna / Kustom Checkout",
+      "sharePct": 74,
+      "detectedSites": "Dominerande i svensk B2C"
+    },
+    {
+      "id": "ts-swish",
+      "layer": "Betalning (PSP)",
+      "source": "Wappalyzer",
+      "name": "Swish Handel",
+      "sharePct": 68,
+      "detectedSites": "Standard i mobil kassa"
+    },
+    {
+      "id": "ts-qliro-walley",
+      "layer": "Betalning (PSP)",
+      "source": "Wappalyzer",
+      "name": "Qliro, Walley & Svea Bank",
+      "sharePct": 24,
+      "detectedSites": "Starka i apotek, mode & hemelektronik"
+    },
+    {
+      "id": "ts-voyado",
+      "layer": "MarTech & CRM",
+      "source": "Wappalyzer",
+      "name": "Voyado (CDP / Elevate)",
+      "sharePct": 28,
+      "detectedSites": "Bland e-handlare >100 MSEK"
+    },
+    {
+      "id": "ts-klaviyo-rule",
+      "layer": "MarTech & CRM",
+      "source": "Wappalyzer",
+      "name": "Klaviyo & Rule",
+      "sharePct": 33,
+      "detectedSites": "Email & SMS-automation"
+    }
+  ],
+  "adBanners": [
+    {
+      "id": "ad-dcongress-main",
+      "placement": "marknad-top",
+      "placementLabel": "Toppbanner · Marknad & Insikter",
+      "dimensions": "980 × 120 px / Fullbredd",
+      "mode": "active",
+      "sponsorName": "D-Congress 2027 · Svensk Handel",
+      "kicker": "Annons · Nordens största e-handelsevent",
+      "headline": "D-Congress 2027 på Svenska Mässan i Göteborg (10–11 mars)",
+      "body": "Möt 4 500+ handlare, tech-partners och beslutsfattare under två intensiva dagar med fokus på Agentic AI, Cross-Border och framtidens checkout. Handlarpass från 995 SEK.",
+      "ctaLabel": "Boka biljett på dcongress.se",
+      "targetUrl": "https://dcongress.se",
+      "internalTab": "event",
+      "theme": "navy",
+      "active": true
+    },
+    {
+      "id": "ad-holder-marknad-mid",
+      "placement": "marknad-mid",
+      "placementLabel": "Mellansektion · Marknad & Lagstiftning",
+      "dimensions": "980 × 120 px / Native Sponsor",
+      "mode": "placeholder",
+      "sponsorName": "Ledig annonsplats",
+      "kicker": "Annonsplats · Syns för 18 000+ beslutsfattare/mån",
+      "headline": "Exponera ert varumärke intill svensk e-handelsstatistik & lagstiftning",
+      "body": "Perfekt placering för betallösningar, fraktpartners, affärssystem eller rådgivare som vill nå svenska e-handelschefer. Kontakta hej@sverigesehandel.se för mediakit.",
+      "ctaLabel": "Boka denna annonsplats",
+      "targetUrl": "mailto:hej@sverigesehandel.se?subject=Annonsbokning%20Marknad%20%26%20Insikter",
+      "internalTab": "kontakt",
+      "theme": "light",
+      "active": true
+    },
+    {
+      "id": "ad-dcongress-event",
+      "placement": "event-top",
+      "placementLabel": "Toppbanner · Event & Mässor",
+      "dimensions": "980 × 120 px / Event Sponsor",
+      "mode": "active",
+      "sponsorName": "D-Congress 2027 · Utställare & Biljetter",
+      "kicker": "Officiell eventannons · 10–11 mars 2027",
+      "headline": "Säkra din monterplats eller handlarbiljett till D-Congress 2027",
+      "body": "140+ utställare, 4 scener och årets största branschmiddag i Göteborg. Bygg ditt eget program här på sverigesehandel.se och säkra din plats i tid.",
+      "ctaLabel": "Gå till dcongress.se",
+      "targetUrl": "https://dcongress.se",
+      "theme": "gold",
+      "active": true
+    },
+    {
+      "id": "ad-checkoutstrategi-partners",
+      "placement": "partners-top",
+      "placementLabel": "Toppbanner · Tech & Jämför-sidor",
+      "dimensions": "980 × 120 px / Partner Sponsor",
+      "mode": "active",
+      "sponsorName": "Checkoutstrategi.se",
+      "kicker": "Sponsrad expertis · Konvertering & Kassastrategi",
+      "headline": "Öka konverteringen i kassan – rätt betalmix, fraktväljare och TA-flöde",
+      "body": "Checkoutstrategi.se hjälper svenska e-handlare att minska kassaavhopp, förhandla PSP-avgifter och strukturera leveransvalen i checkout för högre täckningsbidrag.",
+      "ctaLabel": "Besök checkoutstrategi.se",
+      "targetUrl": "https://checkoutstrategi.se",
+      "theme": "navy",
+      "active": true
+    },
+    {
+      "id": "ad-holder-ehandlare",
+      "placement": "ehandlare-top",
+      "placementLabel": "Toppbanner · E-handelskatalogen",
+      "dimensions": "728 × 90 px / Leaderboard",
+      "mode": "placeholder",
+      "sponsorName": "Ledig annonsplats",
+      "kicker": "Annonsplats · E-handlare & Omsättningskatalog",
+      "headline": "Ledig annonsbanner ovanför Sveriges största e-handlare",
+      "body": "Nå e-handelsgrundare, marknadschefer och logistikansvariga som dagligen jämför konkurrenter och tech-stack. Hör av dig till hej@sverigesehandel.se.",
+      "ctaLabel": "Kontakta oss för pris & placering",
+      "targetUrl": "mailto:hej@sverigesehandel.se?subject=Annonsbokning%20E-handelskatalogen",
+      "internalTab": "kontakt",
+      "theme": "light",
+      "active": true
+    },
+    {
+      "id": "ad-holder-jobb",
+      "placement": "jobb-top",
+      "placementLabel": "Toppbanner · Jobb & Rekrytering",
+      "dimensions": "980 × 120 px / Rekryteringsbanner",
+      "mode": "placeholder",
+      "sponsorName": "Ledig annonsplats",
+      "kicker": "Annonsplats · Employer Branding & Rekrytering",
+      "headline": "Lyft fram era lediga e-handelsroller eller er rekryteringsbyrå här",
+      "body": "Synlighet direkt bland E-commerce Managers, Growth-specialister, utvecklare och logistikchefer. Mejla hej@sverigesehandel.se eller boka via kontaktsidan.",
+      "ctaLabel": "Boka annonsplats på Jobbsidan",
+      "targetUrl": "mailto:hej@sverigesehandel.se?subject=Annonsbokning%20Jobb%20%26%20Rekrytering",
+      "internalTab": "kontakt",
+      "theme": "light",
+      "active": true
+    }
+  ],
+  "contactMessages": [],
+  "timeline": [
+    {
+      "id": "t1",
+      "era": "90s",
+      "year": "1994–1997",
+      "badge": "Synliga pixlar",
+      "title": "Modem, HTML-tabeller & första nätbutikerna",
+      "desc": "Bokus och Adlibris grundas. Varje bild optimeras pixel för pixel för att ladda på uppringda modem.",
+      "stack": "28.8k modem · GIF-pixlar · Postförskott"
+    },
+    {
+      "id": "t2",
+      "era": "90s",
+      "year": "1998–1999",
+      "badge": "Volymhandel",
+      "title": "CDON & Dustin bevisar e-handelns kraft",
+      "desc": "Svenskarna börjar köpa skivor, spel och elektronik på nätet. SSL-kryptering skapar första digitala tryggheten.",
+      "stack": "SSL 128-bit · Perl/CGI · Postpaket"
+    },
+    {
+      "id": "t3",
+      "era": "00s",
+      "year": "2005–2009",
+      "badge": "Fintech-skiftet",
+      "title": "Klarna, Prisjakt & E-barometern",
+      "desc": "Faktura efter leverans och blixtsnabba personnummeruppslag i kassan sänker friktionen dramatiskt.",
+      "stack": "Klarna Checkout · Google AdWords · Prisjakt"
+    },
+    {
+      "id": "t4",
+      "era": "10s",
+      "year": "2012–2016",
+      "badge": "Facebook-pixeln",
+      "title": "Swish & 1×1-pixeln förändrar marknadsföringen",
+      "desc": "Med smartphones och Facebook-pixeln får e-handlare exakt konverteringsdata, retargeting och ROAS-styrning.",
+      "stack": "Meta Pixel · Swish Handel · Responsiv webb"
+    },
+    {
+      "id": "t5",
+      "era": "10s",
+      "year": "2017–2019",
+      "badge": "Last-mile boom",
+      "title": "Instabox, Budbee & smarta paketskåp",
+      "desc": "Svenska logistikbolag revolutionerar leveransen med realtidskarta och PIN-kodsöppnade skåp över hela landet.",
+      "stack": "Ingrid · nShift · Paketskåps-API"
+    },
+    {
+      "id": "t6",
+      "era": "20s",
+      "year": "2020–2027",
+      "badge": "Agentic AI & CAPI",
+      "title": "Server-side tracking, GEO-sök & AI-agenter",
+      "desc": "Tredjepartscookies ersätts av server-side CAPI, förstapartsdata och AI-assistenter som rekommenderar och genomför köp.",
+      "stack": "Meta CAPI · Headless · Agentic Commerce"
+    }
+  ],
+  "communityThreads": [
+    {
+      "id": "c1",
+      "channel": "#ai-och-data",
+      "author": "Erik S. · E-commerce Manager (Göteborg)",
+      "title": "Resultat efter 90 dagar med Meta Server-Side CAPI + första-parts kunddata: +19% attribuerad ROAS",
+      "votes": 42,
+      "replies": 16,
+      "time": "2h sedan"
+    },
+    {
+      "id": "c2",
+      "channel": "#export-tull",
+      "author": "Sofia L. · Grundare (Borås)",
+      "title": "Bästa upplägget för returer från Tyskland & Norge utan att äta upp bruttomarginalen?",
+      "votes": 31,
+      "replies": 11,
+      "time": "4h sedan"
+    },
+    {
+      "id": "c3",
+      "channel": "#d-congress-2027",
+      "author": "Johan K. · Head of Tech (Stockholm)",
+      "title": "Vilka bokar middag i Göteborg kvällen före D-Congress 10 mars 2027? Vi samlar 30 handlare!",
+      "votes": 54,
+      "replies": 23,
+      "time": "Idag"
+    },
+    {
+      "id": "c4",
+      "channel": "#checkout-optimering",
+      "author": "Hanna B. · Growth Lead (Malmö)",
+      "title": "A/B-test: Swish som förvalt betalsätt i mobilen ökade checkout-completion med 6,4%",
+      "votes": 38,
+      "replies": 9,
+      "time": "Igår"
+    }
+  ],
+  "communityMembers": [],
+  "updatedAt": "2026-11-18T20:35:50.183Z"
+}

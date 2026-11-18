@@ -1,0 +1,6 @@
+{
+  "name": "Sveriges E-handel CMS",
+  "description": "Datadriven CMS- och branschplattform för svensk e-handel: sök och lägg till e-handlare och tech-partners, hantera marknadsdata, D-Congress 2027 och branschnätverk.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

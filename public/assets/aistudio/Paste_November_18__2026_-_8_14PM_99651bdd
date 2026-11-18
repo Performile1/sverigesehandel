@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="sv" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sveriges E-handel | Marknadsdata, D-Congress 2027, Partners & Community</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Plus Jakarta Sans + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            deepNavy: {
+              950: '#040B16',
+              900: '#0A1628',
+              800: '#11223D',
+            },
+            sweBlue: {
+              DEFAULT: '#006AA7',
+              bright: '#0EA5E9',
+              light: '#E0F2FE',
+            },
+            sweYellow: {
+              DEFAULT: '#FECC02',
+              hover: '#EAB308',
+            },
+            nordicGreen: {
+              950: '#022C22',
+              900: '#064E3B',
+              600: '#059669',
+              500: '#10B981',
+              100: '#D1FAE5',
+            },
+          },
+          fontFamily: {
+            sans: ['"Inter"', 'system-ui', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #F4F6F9;
+      color: #0F172A;
+    }
+    .glass-dark {
+      background: rgba(10, 22, 40, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .bento-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 1.5rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .bento-card:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 12px 30px -10px rgba(4, 11, 22, 0.08);
+    }
+    .sweden-region {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .sweden-region:hover {
+      fill: #FECC02;
+      filter: drop-shadow(0 0 8px rgba(254, 204, 2, 0.5));
+    }
+    .sweden-region.active {
+      fill: #FECC02;
+      stroke: #040B16;
+      stroke-width: 2.5;
+    }
+    .grid-bg {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #040B16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-sweYellow selection:text-deepNavy-950">
+
+  <!-- LIVE TELEMETRY TOP BAR -->
+  <div class="bg-deepNavy-950 text-slate-300 text-xs border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-9 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 overflow-hidden">
+        <span class="inline-flex items-center gap-1.5 font-mono text-[11px] font-bold text-nordicGreen-500 bg-nordicGreen-500/10 border border-nordicGreen-500/30 px-2 py-0.5 rounded-full shrink-0">
+          <span class="w-1.5 h-1.5 rounded-full bg-nordicGreen-500 animate-pulse"></span> LIVE INDEX Q4 2026
+        </span>
+        <span class="truncate text-slate-300">
+          Svensk e-handel: <strong class="text-white font-mono">168,4 mdr SEK</strong> (+8,4% YoY) • Mobilandel: <strong class="text-sweYellow font-mono">71%</strong> • Exporttillväxt: <strong class="text-nordicGreen-500 font-mono">+11,2%</strong>
+        </span>
+      </div>
+      <div class="hidden md:flex items-center gap-4 shrink-0 font-mono text-[11px]">
+        <button onclick="switchTab('dcongress')" class="text-sweYellow hover:underline flex items-center gap-1">
+          <i class="fa-solid fa-ticket"></i> D-CONGRESS 2027 • 10–11 MARS
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODERN STICKY GLASS NAVBAR -->
+  <header class="sticky top-0 z-40 bg-deepNavy-950/95 backdrop-blur-xl border-b border-white/10 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-4">
+        <!-- Brand Logo -->
+        <div class="flex items-center gap-3 cursor-pointer shrink-0" onclick="switchTab('marknad')">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sweBlue to-nordicGreen-600 p-[1px] shadow-lg shadow-sweBlue/20">
+            <div class="w-full h-full bg-deepNavy-950 rounded-[11px] flex items-center justify-center relative overflow-hidden">
+              <div class="w-1.5 h-full bg-sweYellow absolute left-2.5"></div>
+              <div class="h-1.5 w-full bg-sweYellow absolute top-3.5"></div>
+            </div>
+          </div>
+          <div>
+            <div class="font-display font-extrabold text-lg tracking-tight leading-none flex items-center gap-1.5">
+              <span>sverigesehandel</span><span class="text-sweYellow">.se</span>
+            </div>
+            <span class="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Data • Tech • Community</span>
+          </div>
+        </div>
+
+        <!-- Global Quick Search Input -->
+        <div class="hidden lg:flex items-center flex-1 max-w-sm relative">
+          <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3.5"></i>
+          <input
+            type="text"
+            id="globalSearchInput"
+            onkeyup="handleGlobalSearch(event)"
+            placeholder="Snabbsök e-handlare, partners, talare..."
+            class="w-full bg-white/5 border border-white/10 focus:border-sweYellow/70 focus:bg-white/10 rounded-xl pl-9 pr-12 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none transition"
+          />
+          <kbd class="absolute right-2.5 text-[10px] font-mono text-slate-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/10">Enter</kbd>
+        </div>
+
+        <!-- Desktop Navigation Tabs -->
+        <nav class="hidden md:flex items-center gap-1 text-xs font-semibold" id="desktopNav">
+          <button data-tab="marknad" onclick="switchTab('marknad')" class="nav-btn px-3 py-2 rounded-xl transition flex items-center gap-1.5 bg-white text-deepNavy-950 font-bold">
+            <i class="fa-solid fa-chart-line"></i> Marknad & Data
+          </button>
+          <button data-tab="dcongress" onclick="switchTab('dcongress')" class="nav-btn px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-sweYellow hover:bg-white/10">
+            <i class="fa-solid fa-bolt"></i> D-Congress 2027
+          </button>
+          <button data-tab="historia" onclick="switchTab('historia')" class="nav-btn px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-slate-300 hover:bg-white/10 hover:text-white">
+            <i class="fa-solid fa-microchip"></i> Pixlar &rarr; AI
+          </button>
+          <button data-tab="ehandlare" onclick="switchTab('ehandlare')" class="nav-btn px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-slate-300 hover:bg-white/10 hover:text-white">
+            <i class="fa-solid fa-star"></i> E-handlare
+          </button>
+          <button data-tab="partners" onclick="switchTab('partners')" class="nav-btn px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-slate-300 hover:bg-white/10 hover:text-white">
+            <i class="fa-solid fa-layer-group"></i> Tech & Partners
+          </button>
+          <button data-tab="community" onclick="switchTab('community')" class="nav-btn px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-slate-300 hover:bg-white/10 hover:text-white">
+            <i class="fa-solid fa-users"></i> Community
+          </button>
+        </nav>
+
+        <!-- Mobile Menu Button -->
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-xl bg-white/10 text-white hover:bg-white/20" aria-label="Öppna meny">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+
+      <!-- Mobile Dropdown Menu -->
+      <div id="mobileNav" class="hidden md:hidden pb-4 pt-2 border-t border-white/10 space-y-1">
+        <button onclick="switchTab('marknad'); toggleMobileMenu()" class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold text-white hover:bg-white/10 flex items-center gap-2.5">
+          <i class="fa-solid fa-chart-line text-sweBlue-bright w-5"></i> Marknad & Data
+        </button>
+        <button onclick="switchTab('dcongress'); toggleMobileMenu()" class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-bold text-sweYellow hover:bg-white/10 flex items-center gap-2.5">
+          <i class="fa-solid fa-bolt w-5"></i> D-Congress 2027 (Specialsida)
+        </button>
+        <button onclick="switchTab('historia'); toggleMobileMenu()" class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold text-white hover:bg-white/10 flex items-center gap-2.5">
+          <i class="fa-solid fa-microchip text-nordicGreen-500 w-5"></i> Från Pixlar till AI
+        </button>
+        <button onclick="switchTab('ehandlare'); toggleMobileMenu()" class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold text-white hover:bg-white/10 flex items-center gap-2.5">
+          <i class="fa-solid fa-star text-sweYellow w-5"></i> E-handlare & Trustpilot
+        </button>
+        <button onclick="switchTab('partners'); toggleMobileMenu()" class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold text-white hover:bg-white/10 flex items-center gap-2.5">
+          <i class="fa-solid fa-layer-group text-sweBlue-bright w-5"></i> Tech & Partners
+        </button>
+        <button onclick="switchTab('community'); toggleMobileMenu()" class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold text-white hover:bg-white/10 flex items-center gap-2.5">
+          <i class="fa-solid fa-users text-nordicGreen-500 w-5"></i> Community Network
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT WRAPPER -->
+  <main>
+
+    <!-- =======================================================================
+         VIEW 1: MARKNAD & DATA (MODERN BENTO OVERVIEW)
+         ======================================================================= -->
+    <section id="tab-marknad" class="tab-section">
+      <!-- Dark High-Contrast SaaS Hero -->
+      <div class="bg-deepNavy-950 text-white grid-bg border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <!-- Left Hero Content -->
+            <div class="lg:col-span-7 space-y-6">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/15 text-xs font-mono text-sweYellow">
+                <span>SWEDISH E-COMMERCE INTELLIGENCE</span>
+                <span class="text-slate-500">|</span>
+                <span class="text-nordicGreen-500">2026/2027</span>
+              </div>
+              <h1 class="font-display text-3xl sm:text-5xl lg:text-[52px] font-extrabold tracking-tight leading-[1.08]">
+                Hela Sveriges <span class="text-transparent bg-clip-text bg-gradient-to-r from-sweYellow via-amber-200 to-nordicGreen-500">e-handelsdata</span> i realtid.
+              </h1>
+              <p class="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed">
+                Datadriven branschplattform för svenska e-handlare, tech-partners och investerare. Utforska regional marknadsdata, gränshandel, verifierade Trustpilot-betyg och programmet inför D-Congress 2027.
+              </p>
+
+              <!-- Interactive Hero Search & Quick Shortcuts -->
+              <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                <div class="relative flex-1 max-w-md">
+                  <i class="fa-solid fa-search text-slate-400 absolute left-4 top-3.5 text-sm"></i>
+                  <input
+                    type="text"
+                    id="heroSearch"
+                    onkeyup="if(event.key==='Enter') runHeroSearch()"
+                    placeholder="Sök butik, plattform, region eller mässa..."
+                    class="w-full bg-white text-deepNavy-950 rounded-2xl pl-11 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-sweYellow/40 shadow-lg"
+                  />
+                </div>
+                <button onclick="runHeroSearch()" class="px-6 py-3 rounded-2xl bg-sweYellow hover:bg-sweYellow-hover text-deepNavy-950 font-bold text-sm transition shadow-lg shadow-sweYellow/10">
+                  Analysera &rarr;
+                </button>
+                <button onclick="switchTab('dcongress')" class="px-5 py-3 rounded-2xl bg-nordicGreen-900/80 hover:bg-nordicGreen-900 border border-nordicGreen-500/40 text-white font-semibold text-sm transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-bolt text-sweYellow"></i> D-Congress 2027
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Hero Visual Bento Card (Nordic Nature + Modern Commerce) -->
+            <div class="lg:col-span-5">
+              <div class="glass-dark rounded-3xl p-4 space-y-4 shadow-2xl">
+                <div class="relative rounded-2xl overflow-hidden h-48">
+                  <img
+                    src="https://images.unsplash.com/photo-1509356843151-3e7d96241e11?auto=format&fit=crop&w=900&q=80"
+                    onerror="this.src='https://placehold.co/800x400/0A1628/FECC02?text=Nordic+Digital+Commerce'"
+                    alt="Skandinavisk kust och digital handel"
+                    class="w-full h-full object-cover"
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-deepNavy-950 via-deepNavy-950/30 to-transparent"></div>
+                  <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+                    <div>
+                      <span class="text-[10px] font-mono uppercase tracking-wider bg-nordicGreen-600 text-white px-2 py-0.5 rounded">Nordisk Benchmark</span>
+                      <p class="text-sm font-bold text-white mt-1">Högst digital mognad i Europa</p>
+                    </div>
+                    <span class="font-mono text-xs text-sweYellow bg-deepNavy-950/80 px-2.5 py-1 rounded-lg border border-white/10">94% BankID-penetration</span>
+                  </div>
+                </div>
+
+                <!-- 4 Crisp Telemetry KPIs -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+                    <div class="text-[11px] font-mono text-slate-400">TOTAL OMSÄTTNING</div>
+                    <div class="font-display text-2xl font-extrabold text-white mt-0.5">168,4 mdr</div>
+                    <div class="text-xs text-nordicGreen-500 font-semibold mt-0.5"><i class="fa-solid fa-arrow-trend-up"></i> +8,4% vs föregående år</div>
+                  </div>
+                  <div class="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+                    <div class="text-[11px] font-mono text-slate-400">EXPORTVOLYM</div>
+                    <div class="font-display text-2xl font-extrabold text-sweYellow mt-0.5">44,2 mdr</div>
+                    <div class="text-xs text-slate-300 mt-0.5">Norden, DACH & Nordamerika</div>
+                  </div>
+                  <div class="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+                    <div class="text-[11px] font-mono text-slate-400">IMPORT (CROSS-BORDER)</div>
+                    <div class="font-display text-2xl font-extrabold text-white mt-0.5">35,8 mdr</div>
+                    <div class="text-xs text-sweBlue-bright mt-0.5">Asien 39% • EU 52%</div>
+                  </div>
+                  <div class="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+                    <div class="text-[11px] font-mono text-slate-400">SNITTORDER (AOV)</div>
+                    <div class="font-display text-2xl font-extrabold text-white mt-0.5">945 SEK</div>
+                    <div class="text-xs text-nordicGreen-500 mt-0.5">71% via smartphone</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BENTO DATA SECTION -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+
+        <!-- ROW 1: INTERACTIVE SWEDEN MAP + REGIONAL TELEMETRY -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 bento-card p-6 sm:p-7">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
+              <div>
+                <span class="text-xs font-mono font-bold uppercase text-sweBlue">GEOGRAFISK ANALYS</span>
+                <h2 class="font-display text-2xl font-extrabold text-deepNavy-950">Sveriges E-handelsregioner & Logistiknav</h2>
+              </div>
+              <span class="text-xs font-semibold bg-sweYellow/30 text-deepNavy-950 px-3 py-1 rounded-full">Välj region i kartan</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+              <!-- Stylized Modern SVG Map -->
+              <div class="sm:col-span-5 bg-deepNavy-950 rounded-2xl p-4 flex justify-center items-center relative overflow-hidden">
+                <svg viewBox="0 0 220 440" class="w-44 h-auto" aria-label="Interaktiv karta över Sverige">
+                  <!-- Norrland -->
+                  <path id="reg-norrland" onclick="selectRegion('norrland')" class="sweden-region" fill="#064E3B" stroke="#1E293B" stroke-width="1.5"
+                    d="M115,15 L155,25 L175,65 L165,115 L145,155 L125,195 L72,190 L68,145 L85,95 L98,45 Z" />
+                  <!-- Svealand -->
+                  <path id="reg-svealand" onclick="selectRegion('svealand')" class="sweden-region" fill="#006AA7" stroke="#1E293B" stroke-width="1.5"
+                    d="M72,190 L125,195 L138,235 L132,272 L68,268 L58,230 Z" />
+                  <!-- Västsverige -->
+                  <path id="reg-vast" onclick="selectRegion('vast')" class="sweden-region active" fill="#FECC02" stroke="#040B16" stroke-width="2"
+                    d="M52,268 L88,268 L86,335 L48,332 L44,295 Z" />
+                  <!-- Småland & Östergötland -->
+                  <path id="reg-smaland" onclick="selectRegion('smaland')" class="sweden-region" fill="#059669" stroke="#1E293B" stroke-width="1.5"
+                    d="M88,268 L132,272 L124,342 L86,335 Z" />
+                  <!-- Sydsverige -->
+                  <path id="reg-syd" onclick="selectRegion('syd')" class="sweden-region" fill="#0284C7" stroke="#1E293B" stroke-width="1.5"
+                    d="M56,335 L112,342 L106,385 L58,382 Z" />
+                  <!-- Gotland -->
+                  <path id="reg-gotland" onclick="selectRegion('smaland')" class="sweden-region" fill="#059669" stroke="#1E293B" stroke-width="1.2"
+                    d="M148,305 L158,302 L155,332 L145,330 Z" />
+
+                  <!-- City Nodes -->
+                  <circle cx="122" cy="242" r="4.5" fill="#FFFFFF" stroke="#040B16" stroke-width="1.5" />
+                  <text x="130" y="245" font-size="9" font-weight="bold" fill="#FFFFFF">Stockholm</text>
+
+                  <circle cx="58" cy="312" r="4.5" fill="#040B16" stroke="#FFFFFF" stroke-width="1.5" />
+                  <text x="8" y="315" font-size="9" font-weight="bold" fill="#FFFFFF">Gbg / Borås</text>
+
+                  <circle cx="98" cy="304" r="4" fill="#FECC02" stroke="#040B16" stroke-width="1.2" />
+                  <text x="90" y="296" font-size="8" font-weight="bold" fill="#FFFFFF">Jönköping</text>
+
+                  <circle cx="68" cy="370" r="4.5" fill="#FECC02" stroke="#040B16" stroke-width="1.5" />
+                  <text x="76" y="373" font-size="9" font-weight="bold" fill="#FFFFFF">Malmö</text>
+
+                  <circle cx="145" cy="110" r="4" fill="#FECC02" stroke="#040B16" stroke-width="1.2" />
+                  <text x="96" y="106" font-size="8" font-weight="bold" fill="#FFFFFF">Umeå / Luleå</text>
+                </svg>
+              </div>
+
+              <!-- Dynamic Region Telemetry -->
+              <div class="sm:col-span-7 space-y-4" id="regionDetailPanel">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- EXPORT & IMPORT FLOW VISUALIZER -->
+          <div class="lg:col-span-5 bento-card p-6 sm:p-7 flex flex-col justify-between space-y-5">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold uppercase text-nordicGreen-600">CROSS-BORDER ANALYS</span>
+                <div class="inline-flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                  <button onclick="setTradeMode('export')" id="trade-btn-export" class="px-3 py-1 rounded-lg bg-deepNavy-950 text-white transition">Export (44,2 mdr)</button>
+                  <button onclick="setTradeMode('import')" id="trade-btn-import" class="px-3 py-1 rounded-lg text-slate-600 hover:text-deepNavy-950 transition">Import (35,8 mdr)</button>
+                </div>
+              </div>
+              <h2 class="font-display text-2xl font-extrabold text-deepNavy-950 mt-2" id="tradeTitle">Svenska exportmarknader</h2>
+              <p class="text-xs text-slate-500 mt-1" id="tradeSubtitle">Andel av svensk gränsöverskridande e-handelsförsäljning per marknad.</p>
+            </div>
+
+            <div id="tradeBarsContainer" class="space-y-3.5">
+              <!-- Populated by JS -->
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
+              <span class="text-slate-600 font-medium">Nettohandelsbalans digital handel:</span>
+              <span class="font-mono font-bold text-nordicGreen-600 bg-nordicGreen-100 px-2.5 py-1 rounded-lg">+8,4 mdr SEK överskott</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 2: DEMOGRAPHICS & CONSUMER BEHAVIOR BENTO -->
+        <div class="bento-card p-6 sm:p-8">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase text-sweBlue">KONSUMENTINSIKT & DEMOGRAFI</span>
+              <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-deepNavy-950 mt-1">Vem handlar vad – och hur vill svensken betala?</h2>
+            </div>
+            <div class="inline-flex bg-slate-100 p-1 rounded-xl text-xs font-bold self-start">
+              <button onclick="setDemoTab('generations')" id="demo-tab-generations" class="px-3.5 py-2 rounded-lg bg-white text-deepNavy-950 shadow-sm transition">Generationer</button>
+              <button onclick="setDemoTab('payments')" id="demo-tab-payments" class="px-3.5 py-2 rounded-lg text-slate-600 hover:text-deepNavy-950 transition">Betalsätt</button>
+              <button onclick="setDemoTab('delivery')" id="demo-tab-delivery" class="px-3.5 py-2 rounded-lg text-slate-600 hover:text-deepNavy-950 transition">Leveransval</button>
+            </div>
+          </div>
+
+          <div id="demoBentoBody" class="mt-6">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- ROW 3: MODERN PHOTO + INSIGHT CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bento-card overflow-hidden flex flex-col">
+            <div class="h-44 relative">
+              <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=700&q=80"
+                   onerror="this.src='https://placehold.co/600x350/040B16/FECC02?text=Mobile+Checkout'"
+                   alt="Svensk konsument betalar med mobilen" class="w-full h-full object-cover" />
+              <span class="absolute top-3 left-3 bg-deepNavy-950/90 text-sweYellow font-mono text-[11px] font-bold px-2.5 py-1 rounded-lg">CHECKOUT DATA</span>
+            </div>
+            <div class="p-5 flex-1 flex flex-col justify-between space-y-3">
+              <div>
+                <h3 class="font-display font-bold text-lg text-deepNavy-950">One-Click BankID & Swish sänker avhopp med 34%</h3>
+                <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">Svenska konsumenter överger kassan direkt om manuella kortuppgifter krävs. Friktionsfri identifiering är standard 2027.</p>
+              </div>
+              <button onclick="switchTab('ehandlare')" class="text-xs font-bold text-sweBlue hover:underline text-left">Jämför topprankade kassor &rarr;</button>
+            </div>
+          </div>
+
+          <div class="bento-card overflow-hidden flex flex-col">
+            <div class="h-44 relative">
+              <img src="https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=700&q=80"
+                   onerror="this.src='https://placehold.co/600x350/064E3B/FFFFFF?text=Nordic+Sustainability'"
+                   alt="Nordisk skog och fossilfri logistik" class="w-full h-full object-cover" />
+              <span class="absolute top-3 left-3 bg-nordicGreen-900/90 text-nordicGreen-100 font-mono text-[11px] font-bold px-2.5 py-1 rounded-lg">GRÖN LOGISTIK</span>
+            </div>
+            <div class="p-5 flex-1 flex flex-col justify-between space-y-3">
+              <div>
+                <h3 class="font-display font-bold text-lg text-deepNavy-950">64% väljer fossilfritt paketskåp i kassan</h3>
+                <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">Når speditören märker leveransvalet med tydlig klimatdata väljer majoriteten av svenskarna eldrivna transporter.</p>
+              </div>
+              <button onclick="switchTab('partners')" class="text-xs font-bold text-nordicGreen-600 hover:underline text-left">Se logistikpartners &rarr;</button>
+            </div>
+          </div>
+
+          <div class="bento-card overflow-hidden flex flex-col bg-deepNavy-950 text-white border-deepNavy-800">
+            <div class="h-44 relative">
+              <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=700&q=80"
+                   onerror="this.src='https://placehold.co/600x350/0A1628/FECC02?text=D-Congress+2027'"
+                   alt="D-Congress Svenska Mässan" class="w-full h-full object-cover opacity-80" />
+              <span class="absolute top-3 left-3 bg-sweYellow text-deepNavy-950 font-mono text-[11px] font-bold px-2.5 py-1 rounded-lg">10–11 MARS 2027</span>
+            </div>
+            <div class="p-5 flex-1 flex flex-col justify-between space-y-3">
+              <div>
+                <h3 class="font-display font-bold text-lg text-white">D-Congress 2027: Nordens största mötesplats</h3>
+                <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">4 500+ beslutsfattare på Svenska Mässan i Göteborg. Bygg ditt personliga scenprogram direkt i vår eventmodul.</p>
+              </div>
+              <button onclick="switchTab('dcongress')" class="text-xs font-bold text-sweYellow hover:underline text-left">Öppna D-Congress 2027 &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         VIEW 2: D-CONGRESS 2027 (DEDICATED MODERN EVENT PAGE)
+         ======================================================================= -->
+    <section id="tab-dcongress" class="tab-section hidden">
+      <!-- D-Congress 2027 Hero Banner -->
+      <div class="bg-deepNavy-950 text-white grid-bg border-b border-white/10 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div class="lg:col-span-7 space-y-5">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="bg-sweYellow text-deepNavy-950 font-mono font-extrabold text-xs px-3 py-1 rounded-full">D-CONGRESS 2027</span>
+                <span class="bg-white/10 text-slate-200 font-mono text-xs px-3 py-1 rounded-full"><i class="fa-solid fa-location-dot text-sweYellow mr-1"></i> Svenska Mässan, Göteborg</span>
+                <span class="bg-nordicGreen-500/20 text-nordicGreen-500 border border-nordicGreen-500/30 font-mono text-xs px-3 py-1 rounded-full">10–11 MARS 2027</span>
+              </div>
+
+              <h1 class="font-display text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05]">
+                Where Nordic Commerce <span class="text-sweYellow">Shapes the Future.</span>
+              </h1>
+              <p class="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed">
+                Nordens ledande e-handelsevent arrangerat av Svensk Handel. Två intensiva dagar med fokus på <strong>Agentic AI, Cross-Border Scale, Unified Commerce</strong> och 4 500+ handlare, tech-ledare och investerare under samma tak.
+              </p>
+
+              <!-- Live Countdown Pill Row -->
+              <div class="grid grid-cols-4 gap-3 max-w-md pt-2" id="dcCountdown">
+                <div class="glass-dark rounded-2xl p-3 text-center">
+                  <div id="cd-days" class="font-mono text-2xl sm:text-3xl font-extrabold text-sweYellow">112</div>
+                  <div class="text-[10px] font-mono uppercase text-slate-400">Dagar</div>
+                </div>
+                <div class="glass-dark rounded-2xl p-3 text-center">
+                  <div id="cd-hours" class="font-mono text-2xl sm:text-3xl font-extrabold text-white">14</div>
+                  <div class="text-[10px] font-mono uppercase text-slate-400">Timmar</div>
+                </div>
+                <div class="glass-dark rounded-2xl p-3 text-center">
+                  <div id="cd-mins" class="font-mono text-2xl sm:text-3xl font-extrabold text-white">38</div>
+                  <div class="text-[10px] font-mono uppercase text-slate-400">Minuter</div>
+                </div>
+                <div class="glass-dark rounded-2xl p-3 text-center">
+                  <div class="font-mono text-2xl sm:text-3xl font-extrabold text-nordicGreen-500">4 500+</div>
+                  <div class="text-[10px] font-mono uppercase text-slate-400">Deltagare</div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-3 pt-2">
+                <button onclick="openTicketModal('Handlarpass (E-handlare)', '995 SEK (ex. moms)')" class="px-6 py-3.5 rounded-2xl bg-sweYellow hover:bg-sweYellow-hover text-deepNavy-950 font-extrabold text-sm transition shadow-lg">
+                  Boka Handlarpass 2027 &rarr;
+                </button>
+                <a href="#dc-program" class="px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-semibold text-sm transition">
+                  Utforska Scenprogram
+                </a>
+              </div>
+            </div>
+
+            <!-- Right Side: Gothenburg & Conference Visual + Ticket Tiers -->
+            <div class="lg:col-span-5 space-y-4">
+              <div class="glass-dark rounded-3xl p-5 space-y-4">
+                <div class="relative h-44 rounded-2xl overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=800&q=80"
+                       onerror="this.src='https://placehold.co/700x400/0A1628/FECC02?text=Keynote+Stage+Gothenburg'"
+                       alt="Keynote scen D-Congress Göteborg" class="w-full h-full object-cover" />
+                  <div class="absolute inset-0 bg-gradient-to-t from-deepNavy-950/90 via-transparent to-transparent"></div>
+                  <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs">
+                    <span class="font-bold text-white">4 Scener • 140+ Utställare • VIP-middag</span>
+                    <span class="bg-nordicGreen-500 text-deepNavy-950 font-bold px-2 py-0.5 rounded">GÖTEBORG</span>
+                  </div>
+                </div>
+
+                <!-- Ticket Tiers Quick Select -->
+                <div class="space-y-2.5">
+                  <div class="p-3.5 rounded-2xl bg-white/5 border border-sweYellow/40 flex items-center justify-between">
+                    <div>
+                      <div class="text-xs font-mono text-sweYellow font-bold">HANDLARPASS (RETAILER / D2C)</div>
+                      <div class="text-xs text-slate-300">Full tillgång till alla scener, mässgolv & nätverk</div>
+                    </div>
+                    <button onclick="openTicketModal('Handlarpass 2027', '995 SEK')" class="px-3.5 py-2 rounded-xl bg-sweYellow text-deepNavy-950 font-bold text-xs shrink-0">995 kr</button>
+                  </div>
+
+                  <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+                    <div>
+                      <div class="text-xs font-mono text-white font-bold">PARTNER / LEVERANTÖRSPASS</div>
+                      <div class="text-xs text-slate-400">För SaaS, byråer, logistik & betalpartners</div>
+                    </div>
+                    <button onclick="openTicketModal('Partnerpass 2027', '6 495 SEK')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs shrink-0">6 495 kr</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D-Congress Interactive Speakers & Schedule Builder -->
+      <div id="dc-program" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+
+        <!-- Featured Keynote Speakers -->
+        <div>
+          <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+            <div>
+              <span class="text-xs font-mono font-bold uppercase text-sweBlue">KEYNOTE LINEUP 2027</span>
+              <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-deepNavy-950">Utvalda talare på Main Stage</h2>
+            </div>
+            <span class="text-xs text-slate-500">Fler talare släpps löpande inför mars 2027</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="bento-card p-5 space-y-3">
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80"
+                     onerror="this.src='https://placehold.co/150x150/006AA7/FFFFFF?text=AL'"
+                     alt="Talare" class="w-14 h-14 rounded-2xl object-cover" />
+                <div>
+                  <h3 class="font-display font-bold text-deepNavy-950">Astrid Lindholm</h3>
+                  <p class="text-xs text-sweBlue font-semibold">VP Digital Commerce, Nordic Outdoor Group</p>
+                </div>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed"><strong>Keynote:</strong> Så skalade vi exporten i DACH med 180% genom lokaliserad AI-personalisering.</p>
+            </div>
+
+            <div class="bento-card p-5 space-y-3">
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=300&q=80"
+                     onerror="this.src='https://placehold.co/150x150/064E3B/FFFFFF?text=MB'"
+                     alt="Talare" class="w-14 h-14 rounded-2xl object-cover" />
+                <div>
+                  <h3 class="font-display font-bold text-deepNavy-950">Marcus Bergström</h3>
+                  <p class="text-xs text-nordicGreen-600 font-semibold">Head of Agentic AI, Klarna / Fintech Lab</p>
+                </div>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed"><strong>Keynote:</strong> Agentic Shopping 2027 – när konsumentens AI-agent förhandlar köpet åt kunden.</p>
+            </div>
+
+            <div class="bento-card p-5 space-y-3">
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=300&q=80"
+                     onerror="this.src='https://placehold.co/150x150/0A1628/FECC02?text=ES'"
+                     alt="Talare" class="w-14 h-14 rounded-2xl object-cover" />
+                <div>
+                  <h3 class="font-display font-bold text-deepNavy-950">Elin Söderberg</h3>
+                  <p class="text-xs text-sweBlue font-semibold">Chief Supply Chain Officer, Apotea</p>
+                </div>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed"><strong>Keynote:</strong> Robotisering, fossilfri last-mile och 99,8% leveransprecision i hela Sverige.</p>
+            </div>
+
+            <div class="bento-card p-5 space-y-3">
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=300&q=80"
+                     onerror="this.src='https://placehold.co/150x150/006AA7/FFFFFF?text=JK'"
+                     alt="Talare" class="w-14 h-14 rounded-2xl object-cover" />
+                <div>
+                  <h3 class="font-display font-bold text-deepNavy-950">Johan Kroon</h3>
+                  <p class="text-xs text-nordicGreen-600 font-semibold">Chefsanalytiker, Svensk Handel</p>
+                </div>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed"><strong>Keynote:</strong> E-handelsindikatorn 2027 – kampen mot lågprisimport och nya EU-regler.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Stage Program + "Mitt Schema" Sidebar -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-8 bento-card p-6 space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <span class="text-xs font-mono font-bold uppercase text-sweBlue">INTERAKTIVT SCENPROGRAM</span>
+                <h2 class="font-display text-2xl font-extrabold text-deepNavy-950">Program & Spår – 10–11 mars 2027</h2>
+              </div>
+              <!-- Track Filter -->
+              <div class="flex flex-wrap gap-1.5" id="dcTrackFilters">
+                <button onclick="filterDCSessions('all')" class="dc-track-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-deepNavy-950 text-white" data-track="all">Alla spår</button>
+                <button onclick="filterDCSessions('AI & Data')" class="dc-track-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200" data-track="AI & Data">AI & Data</button>
+                <button onclick="filterDCSessions('Cross-Border & Logistik')" class="dc-track-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200" data-track="Cross-Border & Logistik">Cross-Border</button>
+                <button onclick="filterDCSessions('Checkout & Tillväxt')" class="dc-track-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200" data-track="Checkout & Tillväxt">Checkout & Tillväxt</button>
+              </div>
+            </div>
+
+            <div id="dcSessionsList" class="space-y-3">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Personal Schedule Builder ("Mitt D-Congress Schema") -->
+          <div class="lg:col-span-4 bento-card p-6 bg-deepNavy-950 text-white border-deepNavy-800 flex flex-col justify-between space-y-5">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-sweYellow uppercase">MITT SCHEMA</span>
+                <span id="savedSessionCount" class="text-xs font-mono bg-white/10 px-2.5 py-0.5 rounded-full">0 valda</span>
+              </div>
+              <h3 class="font-display text-xl font-bold">Din personliga agenda</h3>
+              <p class="text-xs text-slate-400">Klicka på <strong class="text-white">+ Lägg till</strong> vid valfri programpunkt för att bygga ditt schema inför Göteborg.</p>
+
+              <div id="myScheduleList" class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                <div class="text-xs text-slate-400 bg-white/5 rounded-2xl p-4 border border-white/10">
+                  Inga programpunkter tillagda ännu. Välj pass i listan till vänster!
+                </div>
+              </div>
+            </div>
+
+            <button onclick="exportScheduleToast()" class="w-full py-3 rounded-2xl bg-sweYellow hover:bg-sweYellow-hover text-deepNavy-950 font-extrabold text-xs transition">
+              <i class="fa-solid fa-calendar-check mr-1.5"></i> Skicka schema till min e-post
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         VIEW 3: FRÅN PIXLAR TILL AI (TIMELINE & TIME MACHINE)
+         ======================================================================= -->
+    <section id="tab-historia" class="tab-section hidden">
+      <div class="bg-deepNavy-950 text-white grid-bg border-b border-white/10 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div class="lg:col-span-7 space-y-4">
+              <span class="font-mono text-xs bg-sweYellow text-deepNavy-950 font-extrabold px-3 py-1 rounded-full">1994 &rarr; 2027 EVOLUTION</span>
+              <h1 class="font-display text-3xl sm:text-5xl font-extrabold tracking-tight">
+                Från 8-bitars skärmpixlar till <span class="text-nordicGreen-500">Meta CAPI</span> & Agentic AI.
+              </h1>
+              <p class="text-slate-300 text-sm sm:text-base max-w-2xl leading-relaxed">
+                Tre decennier av svensk e-handelsteknik. Följ resan från 90-talets synliga GIF-pixlar och postförskott, via Facebook-pixelns guldålder, till dagens integritetssäkrade server-side spårning och AI-drivna köp.
+              </p>
+            </div>
+
+            <!-- Interactive Time Machine Comparator -->
+            <div class="lg:col-span-5 glass-dark rounded-3xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-sweYellow">INTERAKTIV JÄMFÖRELSE</span>
+                <div class="inline-flex bg-deepNavy-950 p-1 rounded-xl border border-white/10 text-xs font-bold">
+                  <button onclick="setTimeMachine('1998')" id="tm-btn-1998" class="px-3 py-1 rounded-lg bg-sweYellow text-deepNavy-950 transition">1998 (HTML 3.2)</button>
+                  <button onclick="setTimeMachine('2027')" id="tm-btn-2027" class="px-3 py-1 rounded-lg text-slate-300 hover:text-white transition">2027 (AI + CAPI)</button>
+                </div>
+              </div>
+              <div id="timeMachineView">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        <div class="flex flex-wrap gap-2">
+          <button onclick="filterTimeline('all')" class="era-btn px-4 py-2 rounded-xl text-xs font-bold bg-deepNavy-950 text-white" data-era="all">Alla epoker (1994–2027)</button>
+          <button onclick="filterTimeline('90s')" class="era-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200" data-era="90s">1994–1999: Pionjärer & Modem</button>
+          <button onclick="filterTimeline('00s')" class="era-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200" data-era="00s">2000–2009: Klarna & Bredband</button>
+          <button onclick="filterTimeline('10s')" class="era-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200" data-era="10s">2010–2019: Swish & Facebook-pixeln</button>
+          <button onclick="filterTimeline('20s')" class="era-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200" data-era="20s">2020–2027: Server-Side & Agentic AI</button>
+        </div>
+
+        <div id="timelineGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         VIEW 4: E-HANDLARE & TRUSTPILOT-BETYG
+         ======================================================================= -->
+    <section id="tab-ehandlare" class="tab-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+      <div class="bento-card p-6 sm:p-8 bg-deepNavy-950 text-white border-deepNavy-800">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <span class="font-mono text-xs text-nordicGreen-500 font-bold">VERIFIERAD BRANSCHKATALOG</span>
+            <h1 class="font-display text-3xl sm:text-4xl font-extrabold mt-1">Svenska E-handlare, Trustpilot & Certifiering</h1>
+            <p class="text-slate-300 text-sm mt-2 max-w-2xl">
+              Filtrera Sveriges ledande e-handlare på kundomdömen, <strong>Trygg E-handel</strong>, <strong>Certifierad E-handel</strong>, omsättningsklass och leveransalternativ.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2 text-xs font-bold">
+            <span class="px-3 py-1.5 rounded-xl bg-sweBlue/20 text-sweBlue-bright border border-sweBlue/30"><i class="fa-solid fa-shield-halved mr-1"></i> Trygg E-handel</span>
+            <span class="px-3 py-1.5 rounded-xl bg-nordicGreen-500/20 text-nordicGreen-500 border border-nordicGreen-500/30"><i class="fa-solid fa-circle-check mr-1"></i> Certifierad E-handel</span>
+            <span class="px-3 py-1.5 rounded-xl bg-sweYellow/20 text-sweYellow border border-sweYellow/30"><i class="fa-solid fa-star mr-1"></i> Trustpilot Score</span>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/10">
+          <input type="text" id="merchantSearch" oninput="renderMerchants()" placeholder="Sök butik, stad eller produkt..."
+            class="bg-white/10 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sweYellow" />
+          <select id="merchantCatFilter" onchange="renderMerchants()" class="bg-deepNavy-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white">
+            <option value="all">Alla branscher</option>
+            <option value="Apotek & Skönhet">Apotek & Skönhet</option>
+            <option value="Hemelektronik">Hemelektronik</option>
+            <option value="Mode & Outdoor">Mode & Outdoor</option>
+            <option value="Hem & Inredning">Hem & Inredning</option>
+            <option value="Sport & Fritid">Sport & Fritid</option>
+          </select>
+          <select id="merchantCertFilter" onchange="renderMerchants()" class="bg-deepNavy-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white">
+            <option value="all">Alla certifieringar</option>
+            <option value="Trygg E-handel">Trygg E-handel</option>
+            <option value="Certifierad E-handel">Certifierad E-handel</option>
+            <option value="Fossilfri frakt">Fossilfri frakt</option>
+          </select>
+          <select id="merchantSort" onchange="renderMerchants()" class="bg-deepNavy-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white">
+            <option value="rating">Sortera: Högst Trustpilot</option>
+            <option value="name">Sortera: A–Ö</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="merchantsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         VIEW 5: TECH & PARTNERS
+         ======================================================================= -->
+    <section id="tab-partners" class="tab-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+      <div class="bento-card p-6 sm:p-8 bg-gradient-to-br from-deepNavy-950 via-deepNavy-900 to-nordicGreen-950 text-white border-deepNavy-800">
+        <span class="font-mono text-xs text-sweYellow font-bold">NORDIC E-COMMERCE TECH STACK</span>
+        <h1 class="font-display text-3xl sm:text-4xl font-extrabold mt-1">Tekniska Partners & Infrastruktur</h1>
+        <p class="text-slate-300 text-sm sm:text-base mt-2 max-w-2xl">
+          Upptäck plattformarna, betalningslösningarna, logistikmotorerna och AI-verktygen som driver Sveriges mest lönsamma e-handlare.
+        </p>
+
+        <div class="flex flex-wrap gap-2 mt-6">
+          <button onclick="filterPartners('all')" class="partner-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-sweYellow text-deepNavy-950" data-pcat="all">Alla partners</button>
+          <button onclick="filterPartners('E-handelsplattform')" class="partner-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white" data-pcat="E-handelsplattform">E-handelsplattform</button>
+          <button onclick="filterPartners('Betalning & Checkout')" class="partner-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white" data-pcat="Betalning & Checkout">Betalning & Checkout</button>
+          <button onclick="filterPartners('Logistik & Last-mile')" class="partner-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white" data-pcat="Logistik & Last-mile">Logistik & Last-mile</button>
+          <button onclick="filterPartners('MarTech & AI')" class="partner-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white" data-pcat="MarTech & AI">MarTech & AI</button>
+        </div>
+      </div>
+
+      <div id="partnersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         VIEW 6: SVERIGES E-HANDEL NETWORK (MODERN COMMUNITY)
+         ======================================================================= -->
+    <section id="tab-community" class="tab-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      <!-- Community Hero -->
+      <div class="bento-card p-6 sm:p-10 bg-deepNavy-950 text-white border-deepNavy-800 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-7 space-y-4">
+          <div class="inline-flex items-center gap-2 bg-nordicGreen-500/20 border border-nordicGreen-500/40 text-nordicGreen-500 px-3 py-1 rounded-full text-xs font-mono font-bold">
+            <span class="w-2 h-2 rounded-full bg-nordicGreen-500 animate-ping"></span> SVERIGES E-HANDEL NETWORK
+          </div>
+          <h1 class="font-display text-3xl sm:text-5xl font-extrabold tracking-tight">
+            Där svenska e-handlare <span class="text-sweYellow">delar riktig data.</span>
+          </h1>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            Ett verifierat, leverantörsoberoende branschnätverk för e-handlare, E-commerce Managers, tillväxtteam och logistikledare. Utbyt erfarenheter utan säljpitchar – digitalt och på fysiska träffar i Göteborg, Stockholm, Borås och Malmö.
+          </p>
+          <div class="grid grid-cols-3 gap-3 pt-2">
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+              <div class="font-mono text-2xl font-extrabold text-sweYellow">1 640+</div>
+              <div class="text-xs text-slate-400">Verifierade handlare</div>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+              <div class="font-mono text-2xl font-extrabold text-nordicGreen-500">4 hubbar</div>
+              <div class="text-xs text-slate-400">Gbg, Sthlm, Borås, Malmö</div>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-3.5">
+              <div class="font-mono text-2xl font-extrabold text-white">0 SEK</div>
+              <div class="text-xs text-slate-400">Kostnadsfritt för handlare</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Membership Application Card -->
+        <div class="lg:col-span-5 bg-white text-deepNavy-950 rounded-3xl p-6 shadow-xl">
+          <h3 class="font-display text-xl font-extrabold">Ansök om verifierat medlemskap</h3>
+          <p class="text-xs text-slate-500 mt-1">Få access till våra Slack-kanaler, benchmark-rapporter och VIP-träffar under D-Congress 2027.</p>
+          <form onsubmit="handleCommunityJoin(event)" class="space-y-3 mt-4">
+            <input type="text" id="joinName" required placeholder="Ditt namn (t.ex. Maja Lindqvist)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sweBlue focus:outline-none" />
+            <input type="email" id="joinEmail" required placeholder="Arbetsmejl (maja@dinbutik.se)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sweBlue focus:outline-none" />
+            <div class="grid grid-cols-2 gap-2">
+              <select id="joinRole" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-white">
+                <option>E-handlare / Grundare</option>
+                <option>E-commerce Manager</option>
+                <option>Performance / Growth</option>
+                <option>CTO / Tech Lead</option>
+              </select>
+              <select id="joinCity" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-white">
+                <option>Göteborg / Borås</option>
+                <option>Stockholm / Uppsala</option>
+                <option>Malmö / Skåne</option>
+                <option>Norrland / Remote</option>
+              </select>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl bg-sweYellow hover:bg-sweYellow-hover text-deepNavy-950 font-extrabold text-sm transition">
+              Skicka ansökan &rarr;
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Community Workspace: Channels + Upvotable Feed + Swedish Networks -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left Channels & Networks -->
+        <div class="lg:col-span-4 space-y-6">
+          <div class="bento-card p-5 space-y-3">
+            <span class="text-xs font-mono font-bold uppercase text-sweBlue">ÄMNESKANALER</span>
+            <div class="space-y-1 text-xs font-mono font-bold" id="channelButtons">
+              <button onclick="filterChannel('all')" class="ch-btn w-full text-left px-3 py-2 rounded-xl bg-deepNavy-950 text-white" data-ch="all"># alla-kanaler</button>
+              <button onclick="filterChannel('#checkout-optimering')" class="ch-btn w-full text-left px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-100" data-ch="#checkout-optimering"># checkout-optimering</button>
+              <button onclick="filterChannel('#export-tull')" class="ch-btn w-full text-left px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-100" data-ch="#export-tull"># export-tull</button>
+              <button onclick="filterChannel('#ai-och-data')" class="ch-btn w-full text-left px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-100" data-ch="#ai-och-data"># ai-och-data</button>
+              <button onclick="filterChannel('#d-congress-2027')" class="ch-btn w-full text-left px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-100" data-ch="#d-congress-2027"># d-congress-2027</button>
+            </div>
+          </div>
+
+          <div class="bento-card p-5 space-y-3">
+            <span class="text-xs font-mono font-bold uppercase text-nordicGreen-600">SVENSKA BRANSCHNÄTVERK</span>
+            <div class="space-y-3 text-xs">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="font-bold text-deepNavy-950">E-handelsstaden Borås</div>
+                <p class="text-slate-600 mt-0.5">Sveriges ledande regionala kluster för handel, textil och logistikutveckling.</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="font-bold text-deepNavy-950">Svensk Handel – Digital Handel</div>
+                <p class="text-slate-600 mt-0.5">Arrangör av D-Congress och ansvarig för Trygg E-handel.</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="font-bold text-deepNavy-950">Women in E-Commerce Sweden</div>
+                <p class="text-slate-600 mt-0.5">Nätverk och mentorskapsprogram för kvinnliga ledare inom nordisk e-handel.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Live Discussion Feed -->
+        <div class="lg:col-span-8 bento-card p-6 space-y-5">
+          <div class="flex items-center justify-between">
+            <h2 class="font-display text-2xl font-extrabold text-deepNavy-950">Live-trådar i nätverket</h2>
+            <span class="text-xs font-mono text-nordicGreen-600 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i> 84 online nu</span>
+          </div>
+
+          <!-- Create New Thread -->
+          <form onsubmit="addCommunityPost(event)" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+            <input type="text" id="newPostTitle" required placeholder="Starta en ny diskussion eller ställ en fråga till nätverket..."
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-sweBlue" />
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <select id="newPostChannel" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-mono font-bold">
+                <option value="#checkout-optimering">#checkout-optimering</option>
+                <option value="#export-tull">#export-tull</option>
+                <option value="#ai-och-data">#ai-och-data</option>
+                <option value="#d-congress-2027">#d-congress-2027</option>
+              </select>
+              <button type="submit" class="px-4 py-2 rounded-xl bg-deepNavy-950 hover:bg-sweBlue text-white text-xs font-bold transition">
+                Publicera tråd &rarr;
+              </button>
+            </div>
+          </form>
+
+          <div id="communityFeedList" class="space-y-3">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODERN FOOTER -->
+  <footer class="bg-deepNavy-950 text-slate-400 border-t border-white/10 mt-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-white/10">
+        <div class="md:col-span-2 space-y-3">
+          <div class="font-display font-extrabold text-xl text-white">
+            sverigesehandel<span class="text-sweYellow">.se</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-400 max-w-md leading-relaxed">
+            Sveriges moderna kunskaps- och dataplattform för digital handel. Marknadsanalys, D-Congress 2027, verifierade e-handlare, tech-partners och branschnätverk.
+          </p>
+        </div>
+        <div>
+          <h4 class="text-xs font-mono font-bold uppercase text-sweYellow mb-3">Plattform</h4>
+          <ul class="space-y-2 text-xs">
+            <li><button onclick="switchTab('marknad')" class="hover:text-white transition">Marknad & Regional Data</button></li>
+            <li><button onclick="switchTab('dcongress')" class="hover:text-white transition">D-Congress 2027 Göteborg</button></li>
+            <li><button onclick="switchTab('historia')" class="hover:text-white transition">Från Pixlar till AI</button></li>
+            <li><button onclick="switchTab('ehandlare')" class="hover:text-white transition">E-handlare & Trustpilot</button></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-xs font-mono font-bold uppercase text-sweYellow mb-3">Ekosystem</h4>
+          <ul class="space-y-2 text-xs">
+            <li><button onclick="switchTab('partners')" class="hover:text-white transition">Tech & Logistikpartners</button></li>
+            <li><button onclick="switchTab('community')" class="hover:text-white transition">Sveriges E-handel Network</button></li>
+          </ul>
+        </div>
+      </div>
+      <div class="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <p>© 2026–2027 sverigesehandel.se • Byggd för svensk e-handel.</p>
+        <p class="font-mono">Data: Svensk Handel • PostNord • SCB • Trustpilot</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- CUSTOM MODAL (NO alert() USED) -->
+  <div id="customModal" class="hidden fixed inset-0 z-50 bg-deepNavy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between">
+        <span class="font-mono text-xs font-bold bg-sweYellow text-deepNavy-950 px-3 py-1 rounded-full">sverigesehandel.se</span>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-800 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <h3 id="modalTitle" class="font-display text-2xl font-extrabold text-deepNavy-950">Titel</h3>
+      <p id="modalBody" class="text-sm text-slate-600 leading-relaxed">Beskrivning</p>
+      <input type="email" id="modalEmail" placeholder="din@epost.se" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sweBlue" />
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Avbryt</button>
+        <button onclick="confirmModal()" class="px-5 py-2 rounded-xl text-xs font-bold bg-deepNavy-950 text-white hover:bg-sweBlue">Bekräfta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="hidden fixed bottom-5 right-5 z-50 bg-deepNavy-950 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-sweYellow/40 text-xs font-semibold flex items-center gap-3">
+    <i class="fa-solid fa-circle-check text-sweYellow text-base"></i>
+    <span id="toastText">Klart!</span>
+  </div>
+
+  <!-- =======================================================================
+       JAVASCRIPT: DATA, VISUALIZATIONS & INTERACTIVITY
+       ======================================================================= -->
+  <script>
+    // 1. TAB ROUTING & GLOBAL SEARCH
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-section').forEach(s => s.classList.add('hidden'));
+      const active = document.getElementById('tab-' + tabId);
+      if (active) active.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const isTarget = btn.dataset.tab === tabId;
+        if (isTarget) {
+          btn.className = 'nav-btn px-3 py-2 rounded-xl transition flex items-center gap-1.5 bg-white text-deepNavy-950 font-bold';
+        } else if (btn.dataset.tab === 'dcongress') {
+          btn.className = 'nav-btn px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-sweYellow hover:bg-white/10';
+        } else {
+          btn.className = 'nav-btn px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-slate-300 hover:bg-white/10 hover:text-white';
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleMobileMenu() {
+      document.getElementById('mobileNav').classList.toggle('hidden');
+    }
+
+    function handleGlobalSearch(e) {
+      if (e.key !== 'Enter') return;
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) return;
+      executeSmartSearch(q);
+    }
+
+    function runHeroSearch() {
+      const q = document.getElementById('heroSearch').value.trim().toLowerCase();
+      if (!q) {
+        switchTab('ehandlare');
+        return;
+      }
+      executeSmartSearch(q);
+    }
+
+    function executeSmartSearch(q) {
+      if (q.includes('congress') || q.includes('mässa') || q.includes('talare') || q.includes('biljett')) {
+        switchTab('dcongress');
+        showToast('Visar D-Congress 2027 i Göteborg');
+      } else if (q.includes('klarna') || q.includes('swish') || q.includes('centra') || q.includes('partner') || q.includes('logistik')) {
+        switchTab('partners');
+        showToast('Visar matchande Tech & Partners');
+      } else if (q.includes('pixel') || q.includes('historia') || q.includes('90-tal') || q.includes('ai')) {
+        switchTab('historia');
+        showToast('Visar tidslinjen Från Pixlar till AI');
+      } else if (q.includes('community') || q.includes('nätverk') || q.includes('slack')) {
+        switchTab('community');
+        showToast('Välkommen till Sveriges E-handel Network');
+      } else {
+        switchTab('ehandlare');
+        document.getElementById('merchantSearch').value = q;
+        renderMerchants();
+        showToast(`Sökte efter "${q}" bland svenska e-handlare`);
+      }
+    }
+
+    // 2. INTERACTIVE SWEDEN MAP
+    const regionData = {
+      vast: {
+        name: 'Västsverige (Göteborg & Borås)',
+        tag: 'E-HANDELSHJÄRTA & D-CONGRESS',
+        share: '22,4 %',
+        aov: '965 SEK',
+        hubs: 'Borås (Textil & D2C), Göteborg (Svenska Mässan & Hamnen), Landvetter',
+        desc: 'Nordens tätaste kluster för modehandlare (RevolutionRace, Nelly, Gina Tricot, NA-KD), 3PL-logistik och värdregion för D-Congress 2027.'
+      },
+      svealand: {
+        name: 'Svealand (Stockholm & Mälardalen)',
+        tag: 'FINTECH, SAAS & TILLVÄXTMOTOR',
+        share: '36,1 %',
+        aov: '1 040 SEK',
+        hubs: 'Stockholm (Klarna, Centra, Voyado), Morgongåva/Uppsala (Apotea), Rosersberg',
+        desc: 'Högst köpkraft per capita och centrum för svensk fintech, apotekse-handel och blixtsnabba same-day leveranser.'
+      },
+      smaland: {
+        name: 'Småland & Östergötland (E4-korridoren)',
+        tag: 'NORDENS LOGISTIKTRIANGEL',
+        share: '15,2 %',
+        aov: '920 SEK',
+        hubs: 'Jönköping (Torsvik), Kalmar (Nordic Nest/Outnorth), Linköping & Norrköping',
+        desc: 'Strategiskt läge där 80 % av Nordens befolkning nås inom 24 timmar. Hemvist för flera av landets största exportörer inom hem och outdoor.'
+      },
+      syd: {
+        name: 'Sydsverige (Malmö, Helsingborg & Skåne)',
+        tag: 'EXPORTPORTEN MOT KONTINENTEN',
+        share: '15,5 %',
+        aov: '910 SEK',
+        hubs: 'Helsingborg (Logistikhubb), Malmö (Tech & Cross-border), Ängelholm',
+        desc: 'Direktkoppling via Öresund till Danmark och Tyskland ger regionen landets högsta andel gränsöverskridande B2C-export.'
+      },
+      norrland: {
+        name: 'Norrland (Umeå, Luleå, Sundsvall & Åre)',
+        tag: 'HÖG DIGITAL FREKVENS & OUTDOOR',
+        share: '10,8 %',
+        aov: '890 SEK',
+        hubs: 'Umeå, Luleå (Grön datacenter-tech), Sundsvall, Åre/Östersund',
+        desc: 'Långa avstånd driver hög köpfrekvens online. Paketskåp och lantbrevbärare säkerställer hög leveransprecision i hela landsdelen.'
+      }
+    };
+
+    function selectRegion(key) {
+      document.querySelectorAll('.sweden-region').forEach(el => el.classList.remove('active'));
+      const activeEl = document.getElementById('reg-' + key);
+      if (activeEl) activeEl.classList.add('active');
+
+      const d = regionData[key];
+      document.getElementById('regionDetailPanel').innerHTML = `
+        <span class="inline-block font-mono text-[11px] font-bold bg-nordicGreen-100 text-nordicGreen-900 px-2.5 py-1 rounded-lg">${d.tag}</span>
+        <h3 class="font-display text-2xl font-extrabold text-deepNavy-950">${d.name}</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">${d.desc}</p>
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div class="bg-slate-50 border border-slate-200/80 p-3 rounded-2xl">
+            <div class="text-[11px] font-mono text-slate-500">ANDEL AV RIKET</div>
+            <div class="font-display text-xl font-extrabold text-sweBlue mt-0.5">${d.share}</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200/80 p-3 rounded-2xl">
+            <div class="text-[11px] font-mono text-slate-500">SNITTORDER (AOV)</div>
+            <div class="font-display text-xl font-extrabold text-deepNavy-950 mt-0.5">${d.aov}</div>
+          </div>
+        </div>
+        <div class="text-xs text-slate-500 bg-sweYellow/15 border border-sweYellow/30 p-3 rounded-xl">
+          <strong class="text-deepNavy-950">Nyckelhubbar:</strong> ${d.hubs}
+        </div>
+      `;
+    }
+
+    // 3. EXPORT / IMPORT VISUALIZER
+    function setTradeMode(mode) {
+      const btnExp = document.getElementById('trade-btn-export');
+      const btnImp = document.getElementById('trade-btn-import');
+      const title = document.getElementById('tradeTitle');
+      const sub = document.getElementById('tradeSubtitle');
+      const container = document.getElementById('tradeBarsContainer');
+
+      if (mode === 'export') {
+        btnExp.className = 'px-3 py-1 rounded-lg bg-deepNavy-950 text-white transition';
+        btnImp.className = 'px-3 py-1 rounded-lg text-slate-600 hover:text-deepNavy-950 transition';
+        title.textContent = 'Svenska exportmarknader (44,2 mdr SEK)';
+        sub.textContent = 'Toppländer dit svenska e-handlare exporterar mest.';
+
+        const items = [
+          { country: 'Norge (VOEC-marknad)', pct: '31%', w: '85%', color: 'bg-nordicGreen-600' },
+          { country: 'Tyskland & DACH', pct: '24%', w: '68%', color: 'bg-sweBlue' },
+          { country: 'Danmark & Finland', pct: '21%', w: '60%', color: 'bg-deepNavy-900' },
+          { country: 'USA & Storbritannien', pct: '16%', w: '46%', color: 'bg-sweYellow-hover' }
+        ];
+        container.innerHTML = items.map(i => `
+          <div>
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span>${i.country}</span>
+              <span class="font-mono text-slate-600">${i.pct}</span>
+            </div>
+            <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div class="${i.color} h-full rounded-full" style="width:${i.w}"></div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        btnImp.className = 'px-3 py-1 rounded-lg bg-deepNavy-950 text-white transition';
+        btnExp.className = 'px-3 py-1 rounded-lg text-slate-600 hover:text-deepNavy-950 transition';
+        title.textContent = 'Konsumentimport till Sverige (35,8 mdr SEK)';
+        sub.textContent = 'Ursprungsregioner för svenskarnas utlandsköp.';
+
+        const items = [
+          { country: 'Kina & Asien (Temu, Shein m.fl.)', pct: '39%', w: '88%', color: 'bg-sweBlue' },
+          { country: 'Tyskland (Zalando, Amazon.de)', pct: '28%', w: '66%', color: 'bg-deepNavy-900' },
+          { country: 'Övriga EU & Norden', pct: '21%', w: '50%', color: 'bg-nordicGreen-600' },
+          { country: 'Storbritannien & USA', pct: '12%', w: '32%', color: 'bg-slate-400' }
+        ];
+        container.innerHTML = items.map(i => `
+          <div>
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span>${i.country}</span>
+              <span class="font-mono text-slate-600">${i.pct}</span>
+            </div>
+            <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div class="${i.color} h-full rounded-full" style="width:${i.w}"></div>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // 4. DEMOGRAPHICS TABS
+    function setDemoTab(tab) {
+      ['generations', 'payments', 'delivery'].forEach(t => {
+        const el = document.getElementById('demo-tab-' + t);
+        if (t === tab) {
+          el.className = 'px-3.5 py-2 rounded-lg bg-white text-deepNavy-950 shadow-sm transition';
+        } else {
+          el.className = 'px-3.5 py-2 rounded-lg text-slate-600 hover:text-deepNavy-950 transition';
+        }
+      });
+
+      const body = document.getElementById('demoBentoBody');
+      if (tab === 'generations') {
+        body.innerHTML = `
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+              <div class="font-mono text-xs font-bold text-sweBlue">GEN Z (18–29 ÅR)</div>
+              <div class="font-display text-3xl font-extrabold text-deepNavy-950 mt-1">86 %</div>
+              <div class="text-xs font-semibold text-slate-500 mt-0.5">Handlar varje månad • Snitt: 1 980 kr</div>
+              <p class="text-xs text-slate-600 mt-3 leading-relaxed">Social commerce, second hand, skönhet och mode. 89% använder Swish + paketskåp.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-deepNavy-950 text-white">
+              <div class="font-mono text-xs font-bold text-sweYellow">MILLENNIALS (30–49 ÅR)</div>
+              <div class="font-display text-3xl font-extrabold text-white mt-1">88 %</div>
+              <div class="text-xs font-semibold text-slate-400 mt-0.5">Högst köpkraft • Snitt: 2 840 kr</div>
+              <p class="text-xs text-slate-300 mt-3 leading-relaxed">Barnfamiljer driver storhandel inom apotek, sport, barnkläder och heminredning.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+              <div class="font-mono text-xs font-bold text-nordicGreen-600">GEN X (50–64 ÅR)</div>
+              <div class="font-display text-3xl font-extrabold text-deepNavy-950 mt-1">74 %</div>
+              <div class="text-xs font-semibold text-slate-500 mt-0.5">Hög lojalitet • Snitt: 2 290 kr</div>
+              <p class="text-xs text-slate-600 mt-3 leading-relaxed">Värdesätter Trygg E-handel, Trustpilot-omdömen och tydlig kundservice över lägsta pris.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+              <div class="font-mono text-xs font-bold text-amber-700">BOOMERS (65–79 ÅR)</div>
+              <div class="font-display text-3xl font-extrabold text-deepNavy-950 mt-1">57 %</div>
+              <div class="text-xs font-semibold text-slate-500 mt-0.5">Snabbast tillväxt • Snitt: 1 650 kr</div>
+              <p class="text-xs text-slate-600 mt-3 leading-relaxed">Apoteksvaror, böcker och hemleverans till dörren driver stark digital adoption.</p>
+            </div>
+          </div>
+        `;
+      } else if (tab === 'payments') {
+        body.innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div class="p-5 rounded-2xl bg-sweBlue/5 border border-sweBlue/20">
+              <div class="flex justify-between items-center font-bold text-sm"><span>Swish (Mobilt BankID)</span><span class="font-mono text-sweBlue">42 %</span></div>
+              <p class="text-xs text-slate-600 mt-2">Överlägsen etta i mobilen. Högst konvertering vid direktköp under 1 500 kr.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+              <div class="flex justify-between items-center font-bold text-sm"><span>Faktura / BNPL (Klarna, Qliro, Walley)</span><span class="font-mono text-deepNavy-950">34 %</span></div>
+              <p class="text-xs text-slate-600 mt-2">Dominerar inom mode och skor där kunden vill prova hemma innan betalning.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-nordicGreen-100/40 border border-nordicGreen-500/20">
+              <div class="flex justify-between items-center font-bold text-sm"><span>Kort & Digitala Plånböcker (Apple Pay)</span><span class="font-mono text-nordicGreen-600">24 %</span></div>
+              <p class="text-xs text-slate-600 mt-2">Apple Pay växer snabbast bland iOS-användare vid internationella köp.</p>
+            </div>
+          </div>
+        `;
+      } else {
+        body.innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div class="p-5 rounded-2xl bg-nordicGreen-100/40 border border-nordicGreen-500/20">
+              <div class="flex justify-between items-center font-bold text-sm"><span>Paketskåp (Instabox, PostNord, Budbee)</span><span class="font-mono text-nordicGreen-600">46 %</span></div>
+              <p class="text-xs text-slate-600 mt-2">Svenskarnas favorit tack vare dygnet-runt-tillgänglighet utan kötid.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+              <div class="flex justify-between items-center font-bold text-sm"><span>Postombud i butik</span><span class="font-mono text-deepNavy-950">31 %</span></div>
+              <p class="text-xs text-slate-600 mt-2">Fortsatt starkt för större paket och på orter utanför storstadskärnorna.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-sweBlue/5 border border-sweBlue/20">
+              <div class="flex justify-between items-center font-bold text-sm"><span>Hemleverans (Kväll / Same-day)</span><span class="font-mono text-sweBlue">23 %</span></div>
+              <p class="text-xs text-slate-600 mt-2">Standard för dagligvaror, möbler, apotek och skrymmande hemelektronik.</p>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // 5. D-CONGRESS 2027 PROGRAM & SCHEDULE BUILDER
+    const dcSessions = [
+      { id: 'dc1', time: 'Dag 1 • 09:30', stage: 'Main Stage', track: 'AI & Data', title: 'Agentic Commerce 2027: När AI-agenter tar över kundresan', speaker: 'Marcus Bergström (Fintech AI Lab)' },
+      { id: 'dc2', time: 'Dag 1 • 11:00', stage: 'Global Stage', track: 'Cross-Border & Logistik', title: 'Exportraketen: Så vinner svenska varumärken Tyskland & USA', speaker: 'Astrid Lindholm (Nordic Outdoor Group)' },
+      { id: 'dc3', time: 'Dag 1 • 13:30', stage: 'Tech & Growth', track: 'Checkout & Tillväxt', title: 'Zero-Friction Checkout: Swish, BankID & biometrisk konvertering', speaker: 'Panel: Klarna, Ingrid & Lyko' },
+      { id: 'dc4', time: 'Dag 1 • 15:15', stage: 'Main Stage', track: 'Cross-Border & Logistik', title: 'Fossilfri robotlogistik i hela Sverige – från Skåne till Norrbotten', speaker: 'Elin Söderberg (Apotea)' },
+      { id: 'dc5', time: 'Dag 2 • 10:00', stage: 'Tech & Growth', track: 'AI & Data', title: 'Bortom Meta-pixeln: Server-Side CAPI, First-Party Data & GEO-sök', speaker: 'Sara Vestergaard (Funnel & Voyado)' },
+      { id: 'dc6', time: 'Dag 2 • 14:00', stage: 'Main Stage', track: 'Checkout & Tillväxt', title: 'Svensk Handels stora framtidsanalys: Handelns spelregler 2027–2030', speaker: 'Johan Kroon (Svensk Handel)' }
+    ];
+
+    let savedSchedule = [];
+
+    function filterDCSessions(track) {
+      document.querySelectorAll('.dc-track-btn').forEach(btn => {
+        if (btn.dataset.track === track) {
+          btn.className = 'dc-track-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-deepNavy-950 text-white';
+        } else {
+          btn.className = 'dc-track-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200';
+        }
+      });
+
+      const list = track === 'all' ? dcSessions : dcSessions.filter(s => s.track === track);
+      document.getElementById('dcSessionsList').innerHTML = list.map(s => {
+        const isSaved = savedSchedule.includes(s.id);
+        return `
+          <div class="p-4 rounded-2xl border border-slate-200 hover:border-sweBlue transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                <span class="font-bold text-deepNavy-950 bg-sweYellow/40 px-2 py-0.5 rounded">${s.time}</span>
+                <span class="text-sweBlue font-bold">${s.stage}</span>
+                <span class="text-slate-400">•</span>
+                <span class="text-nordicGreen-600 font-bold">${s.track}</span>
+              </div>
+              <h4 class="font-display font-bold text-sm sm:text-base text-deepNavy-950">${s.title}</h4>
+              <p class="text-xs text-slate-500">${s.speaker}</p>
+            </div>
+            <button onclick="toggleScheduleSession('${s.id}')"
+              class="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition ${isSaved ? 'bg-nordicGreen-600 text-white' : 'bg-slate-100 hover:bg-deepNavy-950 hover:text-white text-deepNavy-950'}">
+              ${isSaved ? '<i class="fa-solid fa-check mr-1"></i> Tillagd' : '+ Lägg till'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleScheduleSession(id) {
+      if (savedSchedule.includes(id)) {
+        savedSchedule = savedSchedule.filter(item => item !== id);
+      } else {
+        savedSchedule.push(id);
+        showToast('Programpunkt tillagd i ditt D-Congress 2027-schema!');
+      }
+      // Re-render current active track
+      const activeBtn = document.querySelector('.dc-track-btn.bg-deepNavy-950');
+      filterDCSessions(activeBtn ? activeBtn.dataset.track : 'all');
+      renderMySchedule();
+    }
+
+    function renderMySchedule() {
+      document.getElementById('savedSessionCount').textContent = `${savedSchedule.length} valda`;
+      const container = document.getElementById('myScheduleList');
+      if (savedSchedule.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-400 bg-white/5 rounded-2xl p-4 border border-white/10">Inga programpunkter tillagda ännu. Välj pass i listan till vänster!</div>`;
+        return;
+      }
+      const items = dcSessions.filter(s => savedSchedule.includes(s.id));
+      container.innerHTML = items.map(s => `
+        <div class="p-3 rounded-2xl bg-white/10 border border-white/15 flex items-start justify-between gap-2">
+          <div>
+            <div class="font-mono text-[10px] text-sweYellow">${s.time} • ${s.stage}</div>
+            <div class="text-xs font-bold text-white mt-0.5">${s.title}</div>
+          </div>
+          <button onclick="toggleScheduleSession('${s.id}')" class="text-slate-400 hover:text-white text-xs"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      `).join('');
+    }
+
+    function openTicketModal(tier, price) {
+      openModal(`Boka ${tier} (${price})`, 'Fyll i din e-post så reserverar vi din biljett till D-Congress 2027 på Svenska Mässan i Göteborg (10–11 mars 2027).');
+    }
+
+    function exportScheduleToast() {
+      if (savedSchedule.length === 0) {
+        showToast('Välj minst en programpunkt i schemat först!');
+        return;
+      }
+      openModal('Exportera D-Congress 2027-schema', `Du har valt ${savedSchedule.length} programpunkter. Ange din e-post för att få kalenderinbjudningar (.ics).`);
+    }
+
+    // 6. PIXLAR TILL AI TIMELINE & TIME MACHINE
+    function setTimeMachine(era) {
+      const b98 = document.getElementById('tm-btn-1998');
+      const b27 = document.getElementById('tm-btn-2027');
+      const view = document.getElementById('timeMachineView');
+
+      if (era === '1998') {
+        b98.className = 'px-3 py-1 rounded-lg bg-sweYellow text-deepNavy-950 transition';
+        b27.className = 'px-3 py-1 rounded-lg text-slate-300 hover:text-white transition';
+        view.innerHTML = `
+          <div class="bg-slate-200 text-slate-950 p-4 rounded-2xl font-mono text-xs space-y-2 border-2 border-slate-400">
+            <div class="bg-blue-900 text-white px-2 py-1 font-bold flex justify-between">
+              <span>NETSCAPE 4.0 • BOKHANDEL.SE</span><span>640x480px</span>
+            </div>
+            <p class="font-bold">Välkommen! Laddar produktbild.gif (18 KB via 28.8k modem)...</p>
+            <div class="bg-white p-2.5 border border-slate-400 space-y-1">
+              <div>Betalning: <strong>Postförskott (49 kr avgift)</strong></div>
+              <div>Leverans: 5–8 arbetsdagar till postkontor</div>
+              <div class="text-slate-500">Spårning: Serverloggar (ingen pixel)</div>
+            </div>
+          </div>
+        `;
+      } else {
+        b27.className = 'px-3 py-1 rounded-lg bg-sweYellow text-deepNavy-950 transition';
+        b98.className = 'px-3 py-1 rounded-lg text-slate-300 hover:text-white transition';
+        view.innerHTML = `
+          <div class="bg-white text-deepNavy-950 p-4 rounded-2xl text-xs space-y-2.5 shadow">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[10px] font-bold bg-nordicGreen-100 text-nordicGreen-900 px-2 py-0.5 rounded">META CAPI + AI AGENT READY</span>
+              <span class="font-bold text-emerald-600"><i class="fa-solid fa-star"></i> 4.9 Trustpilot</span>
+            </div>
+            <div class="font-display font-extrabold text-sm">Nordic Shell Jacket (AI-matchad storlek: L)</div>
+            <div class="text-slate-500">Leverans imorgon 07:00 till fossilfritt paketskåp • Swish 1-klick</div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="font-mono font-extrabold text-base text-sweBlue">2 695 SEK</span>
+              <span class="px-3 py-1.5 rounded-xl bg-deepNavy-950 text-white font-bold">Betala med BankID</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    const timelineEvents = [
+      { era: '90s', year: '1994–1997', badge: 'SYNILGA PIXLAR', title: 'Modem, HTML-tabeller & första nätbutikerna', desc: 'Bokus och Adlibris grundas. Varje bild optimeras pixel för pixel för att ladda på uppringda modem.', stack: '28.8k modem • GIF-pixlar • Postförskott' },
+      { era: '90s', year: '1998–1999', badge: 'VOLYMHANDEL', title: 'CDON & Dustin bevisar e-handelns kraft', desc: 'Svenskarna börjar köpa skivor, spel och elektronik på nätet. SSL-kryptering skapar första digitala tryggheten.', stack: 'SSL 128-bit • Perl/CGI • Postpaket' },
+      { era: '00s', year: '2005–2009', badge: 'FINTECH-SKIFTET', title: 'Klarna, Prisjakt & E-barometern', desc: 'Faktura efter leverans och blixtsnabba personnummeruppslag i kassan sänker friktionen dramatiskt.', stack: 'Klarna Checkout • Google AdWords • Prisjakt' },
+      { era: '10s', year: '2012–2016', badge: 'FACEBOOK-PIXELN', title: 'Swish & 1×1-pixeln förändrar marknadsföringen', desc: 'Med smartphones och Facebook-pixeln får e-handlare exakt konverteringsdata, retargeting och ROAS-styrning.', stack: 'Meta Pixel • Swish Handel • Responsiv webb' },
+      { era: '10s', year: '2017–2019', badge: 'LAST-MILE BOOM', title: 'Instabox, Budbee & smarta paketskåp', desc: 'Svenska logistikbolag revolutionerar leveransen med realtidskarta och PIN-kodsöppnade skåp över hela landet.', stack: 'Ingrid • nShift • Paketskåps-API' },
+      { era: '20s', year: '2020–2027', badge: 'AGENTIC AI & CAPI', title: 'Server-side tracking, GEO-sök & AI-agenter', desc: 'Tredjepartscookies ersätts av server-side CAPI, förstapartsdata och AI-assistenter som rekommenderar och genomför köp.', stack: 'Meta CAPI • Headless • Agentic Commerce' }
+    ];
+
+    function filterTimeline(era) {
+      document.querySelectorAll('.era-btn').forEach(btn => {
+        if (btn.dataset.era === era) {
+          btn.className = 'era-btn px-4 py-2 rounded-xl text-xs font-bold bg-deepNavy-950 text-white';
+        } else {
+          btn.className = 'era-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200';
+        }
+      });
+
+      const list = era === 'all' ? timelineEvents : timelineEvents.filter(e => e.era === era);
+      document.getElementById('timelineGrid').innerHTML = list.map(item => `
+        <div class="bento-card p-6 flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <span class="font-mono text-xs font-extrabold bg-deepNavy-950 text-sweYellow px-3 py-1 rounded-lg">${item.year}</span>
+              <span class="font-mono text-[11px] font-bold text-nordicGreen-600">${item.badge}</span>
+            </div>
+            <h3 class="font-display text-xl font-extrabold text-deepNavy-950">${item.title}</h3>
+            <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">${item.desc}</p>
+          </div>
+          <div class="pt-3 border-t border-slate-100 font-mono text-[11px] text-sweBlue font-semibold">
+            ${item.stack}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 7. E-HANDLARE & TRUSTPILOT
+    const merchantsData = [
+      { name: 'Apotea', city: 'Morgongåva / Uppsala', category: 'Apotek & Skönhet', trustpilot: 4.8, reviews: '148 000+', revenue: '> 5 mdr SEK', certs: ['Trygg E-handel', 'Fossilfri frakt'], desc: 'Sveriges största nätapotek med robotlager och leverans inom 24h i hela landet.' },
+      { name: 'Inet', city: 'Göteborg', category: 'Hemelektronik', trustpilot: 4.9, reviews: '67 400+', revenue: '1–5 mdr SEK', certs: ['Trygg E-handel', 'Fossilfri frakt'], desc: 'Branschledande kundnöjdhet inom datorer, komponenter och gaming.' },
+      { name: 'Lyko', city: 'Vansbro / Stockholm', category: 'Apotek & Skönhet', trustpilot: 4.6, reviews: '94 100+', revenue: '1–5 mdr SEK', certs: ['Trygg E-handel', 'Certifierad E-handel'], desc: 'Nordens ledande aktör inom hårvård och skönhet med starkt digitalt community.' },
+      { name: 'RevolutionRace', city: 'Borås', category: 'Mode & Outdoor', trustpilot: 4.6, reviews: '122 000+', revenue: '1–5 mdr SEK', certs: ['Trygg E-handel', 'Fossilfri frakt'], desc: 'Snabbväxande D2C-varumärke inom friluftskläder med majoriteten av försäljningen på export.' },
+      { name: 'Nordic Nest', city: 'Kalmar', category: 'Hem & Inredning', trustpilot: 4.4, reviews: '76 500+', revenue: '1–5 mdr SEK', certs: ['Trygg E-handel', 'Certifierad E-handel'], desc: 'Exporterar skandinavisk design och heminredning till över 70 länder.' },
+      { name: 'Outnorth', city: 'Växjö / Kalmar', category: 'Mode & Outdoor', trustpilot: 4.5, reviews: '54 200+', revenue: '1–5 mdr SEK', certs: ['Trygg E-handel', 'Fossilfri frakt'], desc: 'Ledande nordisk outdoor-aktör med starkt fäste i Sverige, Norge och Tyskland.' }
+    ];
+
+    function renderMerchants() {
+      const q = document.getElementById('merchantSearch').value.toLowerCase();
+      const cat = document.getElementById('merchantCatFilter').value;
+      const cert = document.getElementById('merchantCertFilter').value;
+      const sort = document.getElementById('merchantSort').value;
+
+      let list = merchantsData.filter(m => {
+        const matchQ = m.name.toLowerCase().includes(q) || m.city.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q);
+        const matchCat = cat === 'all' || m.category === cat;
+        const matchCert = cert === 'all' || m.certs.includes(cert);
+        return matchQ && matchCat && matchCert;
+      });
+
+      if (sort === 'rating') list.sort((a, b) => b.trustpilot - a.trustpilot);
+      if (sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name, 'sv'));
+
+      const grid = document.getElementById('merchantsGrid');
+      if (list.length === 0) {
+        grid.innerHTML = `<div class="col-span-full bento-card p-8 text-center text-slate-500">Inga e-handlare matchade sökningen.</div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(m => `
+        <div class="bento-card p-6 flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="font-mono text-[11px] font-bold text-sweBlue">${m.category}</span>
+                <h3 class="font-display text-2xl font-extrabold text-deepNavy-950">${m.name}</h3>
+                <p class="text-xs text-slate-500 mt-0.5"><i class="fa-solid fa-location-dot mr-1"></i>${m.city} • <span class="font-mono">${m.revenue}</span></p>
+              </div>
+              <div class="bg-nordicGreen-100/70 border border-nordicGreen-500/30 px-3 py-1.5 rounded-2xl text-right">
+                <div class="font-mono font-extrabold text-sm text-nordicGreen-900"><i class="fa-solid fa-star text-nordicGreen-600 mr-1"></i>${m.trustpilot.toFixed(1)}</div>
+                <div class="text-[10px] text-slate-600">${m.reviews}</div>
+              </div>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-600 mt-3 leading-relaxed">${m.desc}</p>
+          </div>
+          <div class="pt-3 border-t border-slate-100 flex flex-wrap gap-1.5">
+            ${m.certs.map(c => `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-deepNavy-950"><i class="fa-solid fa-shield-check text-nordicGreen-600 mr-1"></i>${c}</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 8. TECH & PARTNERS
+    const partnersData = [
+      { name: 'Centra', cat: 'E-handelsplattform', origin: 'Stockholm', stack: 'Headless • Global D2C & B2B', desc: 'Marknadsledande headless-plattform för mode- och livsstilsvarumärken som skalar globalt.' },
+      { name: 'Klarna', cat: 'Betalning & Checkout', origin: 'Stockholm', stack: 'BNPL • Direktbetalning • AI', desc: 'Global betalningsjätte som driver konvertering för över 500 000 handlare världen över.' },
+      { name: 'Swish Handel', cat: 'Betalning & Checkout', origin: 'Stockholm', stack: 'Mobilt BankID • Direktbetalning', desc: 'Sveriges snabbaste mobila betalsätt med över 8,5 miljoner anslutna användare.' },
+      { name: 'Ingrid', cat: 'Logistik & Last-mile', origin: 'Stockholm', stack: 'Delivery Checkout • Tracking', desc: 'Intelligent fraktväljare och leveransplattform som optimerar marginal och kundupplevelse.' },
+      { name: 'Instabox / Budbee', cat: 'Logistik & Last-mile', origin: 'Stockholm', stack: 'Paketskåp • Fossilfri hemleverans', desc: 'Nordens tätaste nätverk av smarta paketskåp och kvällsleveranser med eldrivna fordon.' },
+      { name: 'Voyado', cat: 'MarTech & AI', origin: 'Norrköping', stack: 'CDP • CRM • AI-personalisering', desc: 'Nordisk kunddataplattform och lojalitetsmotor byggd specifikt för retail och e-handel.' }
+    ];
+
+    function filterPartners(cat) {
+      document.querySelectorAll('.partner-cat-btn').forEach(btn => {
+        if (btn.dataset.pcat === cat) {
+          btn.className = 'partner-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-sweYellow text-deepNavy-950';
+        } else {
+          btn.className = 'partner-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white';
+        }
+      });
+
+      const list = cat === 'all' ? partnersData : partnersData.filter(p => p.cat === cat);
+      document.getElementById('partnersGrid').innerHTML = list.map(p => `
+        <div class="bento-card p-6 flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-center justify-between text-xs mb-2">
+              <span class="font-mono font-bold text-sweBlue bg-sweBlue-light px-2.5 py-0.5 rounded-lg">${p.cat}</span>
+              <span class="font-mono text-slate-400"><i class="fa-solid fa-location-dot mr-1"></i>${p.origin}</span>
+            </div>
+            <h3 class="font-display text-2xl font-extrabold text-deepNavy-950">${p.name}</h3>
+            <div class="font-mono text-[11px] text-nordicGreen-600 font-bold mt-1">${p.stack}</div>
+            <p class="text-xs sm:text-sm text-slate-600 mt-2.5 leading-relaxed">${p.desc}</p>
+          </div>
+          <button onclick="openModal('Kontakta ${p.name}', 'Ange din e-post så kopplar vi ihop dig med rätt partneransvarig hos ${p.name}.')"
+            class="self-start text-xs font-bold text-deepNavy-950 hover:text-sweBlue transition">
+            Begär partnerintro &rarr;
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // 9. COMMUNITY FEED & UPVOTES
+    let communityThreads = [
+      { id: 1, channel: '#ai-och-data', author: 'Erik S. • E-commerce Manager (Göteborg)', title: 'Resultat efter 90 dagar med Meta Server-Side CAPI + första-parts kunddata: +19% attribuerad ROAS', votes: 42, replies: 16, time: '2h sedan' },
+      { id: 2, channel: '#export-tull', author: 'Sofia L. • Grundare (Borås)', title: 'Bästa upplägget för returer från Tyskland & Norge utan att äta upp bruttomarginalen?', votes: 31, replies: 11, time: '4h sedan' },
+      { id: 3, channel: '#d-congress-2027', author: 'Johan K. • Head of Tech (Stockholm)', title: 'Vilka bokar middag i Göteborg kvällen före D-Congress 10 mars 2027? Vi samlar 30 handlare!', votes: 54, replies: 23, time: 'Idag' },
+      { id: 4, channel: '#checkout-optimering', author: 'Hanna B. • Growth Lead (Malmö)', title: 'A/B-test: Swish som förvalt betalsätt i mobilen ökade checkout-completion med 6,4%', votes: 38, replies: 9, time: 'Igår' }
+    ];
+    let activeChannel = 'all';
+
+    function filterChannel(ch) {
+      activeChannel = ch;
+      document.querySelectorAll('.ch-btn').forEach(btn => {
+        if (btn.dataset.ch === ch) {
+          btn.className = 'ch-btn w-full text-left px-3 py-2 rounded-xl bg-deepNavy-950 text-white';
+        } else {
+          btn.className = 'ch-btn w-full text-left px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-100';
+        }
+      });
+      renderCommunityFeed();
+    }
+
+    function renderCommunityFeed() {
+      const list = activeChannel === 'all' ? communityThreads : communityThreads.filter(t => t.channel === activeChannel);
+      document.getElementById('communityFeedList').innerHTML = list.map(t => `
+        <div class="p-4 rounded-2xl border border-slate-200 hover:border-sweBlue/50 transition flex items-start gap-4">
+          <button onclick="upvoteThread(${t.id})" class="shrink-0 flex flex-col items-center justify-center w-12 py-2 rounded-xl bg-slate-50 hover:bg-sweYellow/30 border border-slate-200 transition">
+            <i class="fa-solid fa-caret-up text-deepNavy-950"></i>
+            <span class="font-mono text-xs font-extrabold text-deepNavy-950">${t.votes}</span>
+          </button>
+          <div class="flex-1 space-y-1.5">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="font-mono font-bold text-sweBlue bg-sweBlue-light px-2 py-0.5 rounded">${t.channel}</span>
+              <span class="text-slate-400">•</span>
+              <span class="text-slate-500 font-medium">${t.author}</span>
+              <span class="text-slate-400 text-[11px]">${t.time}</span>
+            </div>
+            <h4 class="font-display font-bold text-sm sm:text-base text-deepNavy-950">${t.title}</h4>
+            <div class="text-xs text-slate-500 font-semibold">
+              <i class="fa-regular fa-comment mr-1"></i> ${t.replies} kommentarer i tråden
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function upvoteThread(id) {
+      const item = communityThreads.find(t => t.id === id);
+      if (item) {
+        item.votes += 1;
+        renderCommunityFeed();
+      }
+    }
+
+    function addCommunityPost(e) {
+      e.preventDefault();
+      const input = document.getElementById('newPostTitle');
+      const channel = document.getElementById('newPostChannel').value;
+      if (!input.value.trim()) return;
+
+      communityThreads.unshift({
+        id: Date.now(),
+        channel,
+        author: 'Du • Verifierad Medlem',
+        title: input.value.trim(),
+        votes: 1,
+        replies: 0,
+        time: 'Just nu'
+      });
+      input.value = '';
+      renderCommunityFeed();
+      showToast('Din tråd har publicerats i nätverket!');
+    }
+
+    function handleCommunityJoin(e) {
+      e.preventDefault();
+      const name = document.getElementById('joinName').value;
+      const city = document.getElementById('joinCity').value;
+      e.target.reset();
+      showToast(`Tack ${name}! Inbjudan till Sveriges E-handel Network (${city}) är skickad.`);
+    }
+
+    // 10. MODAL & TOAST
+    function openModal(title, body) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').textContent = body;
+      document.getElementById('customModal').classList.remove('hidden');
+    }
+    function closeModal() {
+      document.getElementById('customModal').classList.add('hidden');
+    }
+    function confirmModal() {
+      closeModal();
+      showToast('Bekräftat! Information har skickats till din e-post.');
+    }
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toastText').textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 3800);
+    }
+
+    // INIT ON LOAD
+    window.addEventListener('DOMContentLoaded', () => {
+      selectRegion('vast');
+      setTradeMode('export');
+      setDemoTab('generations');
+      filterDCSessions('all');
+      renderMySchedule();
+      setTimeMachine('1998');
+      filterTimeline('all');
+      renderMerchants();
+      filterPartners('all');
+      renderCommunityFeed();
+    });
+  </script>
+</body>
+</html>
