@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Check, ExternalLink, Loader2, Search, Sparkles, X } from 'lucide-react';
 import { api } from '../api';
-import { useFirebase } from '../contexts/FirebaseContext';
-import { syncMerchantToFirestore, syncPartnerToFirestore } from '../firebaseSync';
 import type {
   DiscoveredJobCandidate,
   DiscoveredMerchantCandidate,
@@ -135,7 +133,6 @@ export function DiscoveryModal({
   onImported,
   onNotify,
 }: DiscoveryModalProps) {
-  const { user, isAdmin } = useFirebase();
   const [target, setTarget] = useState<DiscoveryTargetType>(initialTarget);
   const [query, setQuery] = useState('');
   const [count, setCount] = useState(8);
@@ -223,9 +220,6 @@ export function DiscoveryModal({
           status: 'published' as const,
         }));
         const result = await api.batchAddMerchants(items);
-        if (user && isAdmin) {
-          await Promise.all(result.added.map((m) => syncMerchantToFirestore(user, m)));
-        }
         await onImported();
         onNotify(
           `${result.added.length} e-handlare tillagda i CMS${
@@ -238,9 +232,6 @@ export function DiscoveryModal({
           status: 'published' as const,
         }));
         const result = await api.batchAddPartners(items);
-        if (user && isAdmin) {
-          await Promise.all(result.added.map((p) => syncPartnerToFirestore(user, p)));
-        }
         await onImported();
         onNotify(
           `${result.added.length} tech-partners tillagda i CMS${
