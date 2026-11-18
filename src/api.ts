@@ -1,3 +1,4 @@
+import { auth } from './firebase';
 import type {
   AdBanner,
   CategoryOrderBenchmark,
@@ -23,11 +24,16 @@ import type {
 } from './types';
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-  const data = await res.json().catch(() => ({}));
+  await auth.authStateReady();
+  const token = await auth.currentUser?.getIdToken();
+  const headers = new Headers(options?.headers);
+  headers.set('Content-Type', 'application/json');
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const res = await fetch(url, { ...options, headers });
+  if (!res.headers.get('content-type')?.includes('application/json')) {
+    throw new Error('CMS-API:t svarade inte med JSON. Kontrollera att Vercel API-funktionen är driftsatt.');
+  }
+  const data = await res.json();
   if (!res.ok) {
     throw new Error(data.error || `Request failed (${res.status})`);
   }

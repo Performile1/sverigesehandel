@@ -1,14 +1,14 @@
 import { initializeApp } from 'firebase/app';
 import { GoogleAuthProvider, getAuth } from 'firebase/auth';
 import { doc, getDocFromServer, getFirestore } from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json';
+import { firebaseConfig } from '../shared/firebaseSettings';
+export { ADMIN_EMAIL } from '../shared/firebaseSettings';
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-export const ADMIN_EMAIL = 'wigrund81@gmail.com';
 export const FIREBASE_PROJECT_ID = firebaseConfig.projectId;
 export const FIRESTORE_DATABASE_ID = firebaseConfig.firestoreDatabaseId;
 

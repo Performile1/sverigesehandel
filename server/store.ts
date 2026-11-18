@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import fs from 'fs';
 import path from 'path';
 import type {
@@ -20,6 +21,16 @@ import type {
   TechPartner,
 } from '../src/types.ts';
 import { INITIAL_CMS_DATA } from './seedData.ts';
+
+// Keep each Firestore transaction's synchronous domain operations isolated.
+// The file adapter below remains available for the original local data tooling.
+const requestStore = new AsyncLocalStorage<{ store: CMSStore; changed: boolean }>();
+
+export function withStore<T>(store: CMSStore, operation: () => T) {
+  const state = { store: structuredClone(store), changed: false };
+  const value = requestStore.run(state, operation);
+  return { value, ...state };
+}
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'cms-db.json');
@@ -217,6 +228,8 @@ function mergeAndValidateJobs(existing: EcommerceJob[]): { list: EcommerceJob[];
 }
 
 function ensureStoreFile(): CMSStore {
+  const state = requestStore.getStore();
+  if (state) return state.store;
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
@@ -308,6 +321,13 @@ function ensureStoreFile(): CMSStore {
 }
 
 function saveStore(store: CMSStore): CMSStore {
+  const state = requestStore.getStore();
+  if (state) {
+    store.updatedAt = new Date().toISOString();
+    state.store = store;
+    state.changed = true;
+    return store;
+  }
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
@@ -325,7 +345,7 @@ export function replaceStore(newStore: CMSStore): CMSStore {
 }
 
 export function resetStore(): CMSStore {
-  return saveStore(structuredClone(INITIAL_CMS_DATA));
+  return saveStore({ ...structuredClone(INITIAL_CMS_DATA), contactMessages: [], communityMembers: [] });
 }
 
 export function upsertMerchant(input: Partial<Merchant> & { name: string }): { merchant: Merchant; created: boolean } {
@@ -906,9 +926,10 @@ export function deleteLaw(id: string): boolean {
   return true;
 }
 
-export function addCommunityThread(input: { channel: string; author: string; title: string }): CommunityThread {
+export function addCommunityThread(input: { channel: string; author: string; title: string; authorUid?: string }): CommunityThread {
   const store = ensureStoreFile();
   const thread: CommunityThread = {
+    ...(input.authorUid ? { authorUid: input.authorUid } : {}),
     id: `c-${Date.now()}`,
     channel: input.channel || '#ai-och-data',
     author: input.author || 'Verifierad Medlem',
@@ -995,6 +1016,7 @@ export function deleteAdBanner(id: string): boolean {
 }
 
 export function addContactMessage(input: {
+  authorUid?: string;
   name: string;
   email: string;
   company?: string;
@@ -1004,6 +1026,7 @@ export function addContactMessage(input: {
 }): ContactMessage {
   const store = ensureStoreFile();
   const item: ContactMessage = {
+    ...(input.authorUid ? { authorUid: input.authorUid } : {}),
     id: `msg-${Date.now()}`,
     name: input.name.trim(),
     email: input.email.trim(),

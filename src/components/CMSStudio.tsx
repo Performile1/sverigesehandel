@@ -24,12 +24,6 @@ import {
 } from 'lucide-react';
 import { api } from '../api';
 import { useFirebase } from '../contexts/FirebaseContext';
-import {
-  deleteCatalogDocFromFirestore,
-  syncAdBannerToFirestore,
-  syncMerchantToFirestore,
-  syncPartnerToFirestore,
-} from '../firebaseSync';
 import type {
   AdBanner,
   CMSSection,
@@ -333,9 +327,6 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
           status: 'published' as const,
         }));
         const res = await api.batchAddMerchants(items);
-        if (user && isAdmin) {
-          await Promise.all(res.added.map((m) => syncMerchantToFirestore(user, m)));
-        }
         await onRefresh();
         onNotify(
           `${res.added.length} e-handlare importerade i CMS${
@@ -355,9 +346,6 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
           status: 'published' as const,
         }));
         const res = await api.batchAddPartners(items);
-        if (user && isAdmin) {
-          await Promise.all(res.added.map((p) => syncPartnerToFirestore(user, p)));
-        }
         await onRefresh();
         onNotify(
           `${res.added.length} tech-partners importerade i CMS${
@@ -425,38 +413,26 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
 
   async function toggleMerchantStatus(m: Merchant) {
     const nextStatus = m.status === 'published' ? 'draft' : 'published';
-    const res = await api.upsertMerchant({ ...m, status: nextStatus });
-    if (user && isAdmin) {
-      await syncMerchantToFirestore(user, res.merchant);
-    }
+    await api.upsertMerchant({ ...m, status: nextStatus });
     await onRefresh();
     onNotify(`${m.name} ändrad till ${nextStatus === 'published' ? 'Publicerad' : 'Utkast'}.`);
   }
 
   async function togglePartnerStatus(p: TechPartner) {
     const nextStatus = p.status === 'published' ? 'draft' : 'published';
-    const res = await api.upsertPartner({ ...p, status: nextStatus });
-    if (user && isAdmin) {
-      await syncPartnerToFirestore(user, res.partner);
-    }
+    await api.upsertPartner({ ...p, status: nextStatus });
     await onRefresh();
     onNotify(`${p.name} ändrad till ${nextStatus === 'published' ? 'Publicerad' : 'Utkast'}.`);
   }
 
   async function handleDeleteMerchant(m: Merchant) {
     await api.deleteMerchant(m.id);
-    if (user && isAdmin) {
-      await deleteCatalogDocFromFirestore(user, 'merchants', m.id);
-    }
     await onRefresh();
     onNotify(`${m.name} borttagen från CMS.`);
   }
 
   async function handleDeletePartner(p: TechPartner) {
     await api.deletePartner(p.id);
-    if (user && isAdmin) {
-      await deleteCatalogDocFromFirestore(user, 'partners', p.id);
-    }
     await onRefresh();
     onNotify(`${p.name} borttagen från CMS.`);
   }
@@ -2494,7 +2470,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                       onSubmit={async (e) => {
                         e.preventDefault();
                         const form = new FormData(e.currentTarget);
-                        const savedBanner = await api.upsertAdBanner({
+                        await api.upsertAdBanner({
                           ...banner,
                           sponsorName: String(form.get('sponsorName') || banner.sponsorName),
                           headline: String(form.get('headline') || banner.headline),
@@ -2504,9 +2480,6 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                           theme: (String(form.get('theme') || banner.theme) as AdBanner['theme']),
                           mode: (String(form.get('mode') || banner.mode) as AdBanner['mode']),
                         });
-                        if (user && isAdmin) {
-                          await syncAdBannerToFirestore(user, savedBanner);
-                        }
                         await onRefresh();
                         onNotify(`Annonsplats "${banner.placementLabel}" uppdaterad.`);
                       }}
@@ -2524,13 +2497,10 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                         <button
                           type="button"
                           onClick={async () => {
-                            const savedBanner = await api.upsertAdBanner({
+                            await api.upsertAdBanner({
                               ...banner,
                               active: !banner.active,
                             });
-                            if (user && isAdmin) {
-                              await syncAdBannerToFirestore(user, savedBanner);
-                            }
                             await onRefresh();
                             onNotify(
                               !banner.active

@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { CMSAccess } from './components/CMSAccess';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Loader2, X } from 'lucide-react';
 import { api } from './api';
+import { useFirebase } from './contexts/FirebaseContext';
 import { CMSStudio } from './components/CMSStudio';
 import { CommunityView } from './components/CommunityView';
 import { DiscoveryModal, type DiscoveryTargetType } from './components/DiscoveryModal';
@@ -13,11 +15,6 @@ import { MarknadView } from './components/MarknadView';
 import { MerchantsView } from './components/MerchantsView';
 import { Navbar } from './components/Navbar';
 import { PartnersView } from './components/PartnersView';
-import { useFirebase } from './contexts/FirebaseContext';
-import {
-  saveCommunityThreadToFirestore,
-  saveContactMessageToFirestore,
-} from './firebaseSync';
 import type { CMSStore, JobRoleCategory, Merchant, PortalTab, TechPartner } from './types';
 
 const TAB_TITLES: Record<PortalTab, string> = {
@@ -38,7 +35,8 @@ function getInitialTab(): PortalTab {
 }
 
 export default function App() {
-  const { user, authError } = useFirebase();
+  const { user, authReady, isAdmin, authError } = useFirebase();
+  const fetchSequence = useRef(0);
   const [store, setStore] = useState<CMSStore | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -95,20 +93,29 @@ export default function App() {
   }, []);
 
   const fetchStore = useCallback(async () => {
+    const sequence = ++fetchSequence.current;
     try {
       const data = await api.getStore();
+      if (sequence !== fetchSequence.current) return;
       setStore(data);
       setLoadError(null);
     } catch (err) {
-      setLoadError((err as Error).message);
+      if (sequence === fetchSequence.current) setLoadError((err as Error).message);
     } finally {
-      setLoading(false);
+      if (sequence === fetchSequence.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchStore();
-  }, [fetchStore]);
+    setStore(null);
+    setLoading(true);
+    setEditorModal((previous) => ({ ...previous, open: false }));
+    setDiscoveryModal((previous) => ({ ...previous, open: false }));
+    setJobModalOpen(false);
+    if (!authReady) return;
+    void fetchStore();
+    return () => { fetchSequence.current++; };
+  }, [fetchStore, authReady, user?.uid, isAdmin]);
 
   useEffect(() => {
     document.title =
@@ -118,9 +125,7 @@ export default function App() {
   }, [activeTab, mode]);
 
   useEffect(() => {
-    if (authError) {
-      notify(authError);
-    }
+    if (authError) notify(authError);
   }, [authError, notify]);
 
   function handleNavigate(tab: PortalTab, searchQuery?: string) {
@@ -169,7 +174,7 @@ export default function App() {
     notify('Jobbannons publicerad!');
   }
 
-  if (loading) {
+  if (loading || !authReady) {
     return (
       <div className="min-h-screen bg-[#040B16] text-white flex items-center justify-center">
         <div className="flex items-center gap-3 text-sm font-medium">
@@ -211,26 +216,28 @@ export default function App() {
 
       <main className="flex-1">
         {mode === 'cms' ? (
-          <CMSStudio
-            store={store}
-            onRefresh={fetchStore}
-            onOpenEditor={(editorMode, item) => {
-              if (editorMode === 'merchant') {
-                setEditorModal({
-                  open: true,
-                  mode: 'merchant',
-                  merchant: (item as Merchant) || null,
-                });
-              } else {
-                setEditorModal({
-                  open: true,
-                  mode: 'partner',
-                  partner: (item as TechPartner) || null,
-                });
-              }
-            }}
-            onNotify={notify}
-          />
+          <CMSAccess isAdmin={isAdmin}>
+            <CMSStudio
+              store={store}
+              onRefresh={fetchStore}
+              onOpenEditor={(editorMode, item) => {
+                if (editorMode === 'merchant') {
+                  setEditorModal({
+                    open: true,
+                    mode: 'merchant',
+                    merchant: (item as Merchant) || null,
+                  });
+                } else {
+                  setEditorModal({
+                    open: true,
+                    mode: 'partner',
+                    partner: (item as TechPartner) || null,
+                  });
+                }
+              }}
+              onNotify={notify}
+            />
+          </CMSAccess>
         ) : (
           <>
             {activeTab === 'marknad' && (
@@ -271,14 +278,14 @@ export default function App() {
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
                 onOpenDiscover={() =>
-                  setDiscoveryModal({ open: true, target: 'merchants' })
+                  isAdmin ? setDiscoveryModal({ open: true, target: 'merchants' }) : setMode('cms')
                 }
                 onOpenEditor={(merchant) =>
-                  setEditorModal({
+                  isAdmin ? setEditorModal({
                     open: true,
                     mode: 'merchant',
                     merchant: merchant || null,
-                  })
+                  }) : setMode('cms')
                 }
               />
             )}
@@ -290,14 +297,14 @@ export default function App() {
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
                 onOpenDiscover={() =>
-                  setDiscoveryModal({ open: true, target: 'partners' })
+                  isAdmin ? setDiscoveryModal({ open: true, target: 'partners' }) : setMode('cms')
                 }
                 onOpenEditor={(partner) =>
-                  setEditorModal({
+                  isAdmin ? setEditorModal({
                     open: true,
                     mode: 'partner',
                     partner: partner || null,
-                  })
+                  }) : setMode('cms')
                 }
                 onRequestIntro={(partnerName) =>
                   setInfoModal({
@@ -317,12 +324,12 @@ export default function App() {
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
                 onOpenDiscoverJobs={() =>
-                  setDiscoveryModal({ open: true, target: 'jobs' })
+                  isAdmin ? setDiscoveryModal({ open: true, target: 'jobs' }) : setMode('cms')
                 }
                 onOpenDiscoverRecruiters={() =>
-                  setDiscoveryModal({ open: true, target: 'recruiters' })
+                  isAdmin ? setDiscoveryModal({ open: true, target: 'recruiters' }) : setMode('cms')
                 }
-                onOpenJobModal={() => setJobModalOpen(true)}
+                onOpenJobModal={() => isAdmin ? setJobModalOpen(true) : setMode('cms')}
                 onApplyJob={(job) =>
                   setInfoModal({
                     open: true,
@@ -338,9 +345,6 @@ export default function App() {
                 threads={store.communityThreads}
                 onAddThread={async (payload) => {
                   await api.addThread(payload);
-                  if (user?.emailVerified) {
-                    await saveCommunityThreadToFirestore(user, payload);
-                  }
                   await fetchStore();
                   notify('Din tråd har publicerats i nätverket.');
                 }}
@@ -361,9 +365,6 @@ export default function App() {
                 initialAdSlot={selectedAdSlot}
                 onSubmitContact={async (payload) => {
                   await api.submitContactMessage(payload);
-                  if (user?.emailVerified) {
-                    await saveContactMessageToFirestore(user, payload);
-                  }
                   await fetchStore();
                 }}
                 onNotify={notify}
@@ -585,7 +586,7 @@ export default function App() {
       {/* AI Discovery Modal */}
       <DiscoveryModal
         key={`${discoveryModal.open}-${discoveryModal.target}`}
-        open={discoveryModal.open}
+        open={isAdmin && discoveryModal.open}
         initialTarget={discoveryModal.target}
         onClose={() => setDiscoveryModal((prev) => ({ ...prev, open: false }))}
         onImported={fetchStore}
@@ -594,7 +595,7 @@ export default function App() {
 
       {/* Entity Editor Modal */}
       <EntityEditorModal
-        open={editorModal.open}
+        open={isAdmin && editorModal.open}
         mode={editorModal.mode}
         merchant={editorModal.merchant}
         partner={editorModal.partner}
@@ -604,7 +605,7 @@ export default function App() {
       />
 
       {/* Publish Job Modal */}
-      {jobModalOpen && (
+      {isAdmin && jobModalOpen && (
         <div className="fixed inset-0 z-50 bg-[#040B16]/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between">

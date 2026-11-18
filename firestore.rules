@@ -222,6 +222,11 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    // Server-owned snapshot. Never expose private CMS data directly to clients.
+    match /cmsSnapshots/{snapshotId} {
+      allow read, write: if false;
+    }
+
     // --- CONNECTIVITY CHECK ---
     match /test/connection {
       allow get: if true;

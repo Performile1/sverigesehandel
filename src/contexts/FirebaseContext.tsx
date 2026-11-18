@@ -1,5 +1,5 @@
 import {
-  onAuthStateChanged,
+  onIdTokenChanged,
   signInWithPopup,
   signOut,
   type User,
@@ -12,7 +12,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { auth, googleProvider } from '../firebase';
+import { auth, googleProvider, db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import {
   ensureUserProfile,
   isVerifiedAdmin,
@@ -37,14 +38,26 @@ const FirebaseContext = createContext<FirebaseContextValue | null>(null);
 
 export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [savedSessionIds, setSavedSessionIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const unsubAuth = onAuthStateChanged(auth, async (nextUser) => {
+    let generation = 0;
+    const unsubAuth = onIdTokenChanged(auth, async (nextUser) => {
+      const current = ++generation;
+      setAuthReady(false);
+      setAdmin(false);
       setUser(nextUser);
+      let admin = isVerifiedAdmin(nextUser);
+      if (nextUser?.emailVerified && !admin) {
+        try { admin = (await getDoc(doc(db, 'admins', nextUser.uid))).exists(); }
+        catch { admin = false; }
+      }
+      if (current !== generation) return;
+      setAdmin(admin);
       setAuthReady(true);
       if (nextUser && nextUser.emailVerified) {
         try {
@@ -56,7 +69,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
         setSavedSessionIds([]);
       }
     });
-    return () => unsubAuth();
+    return () => { generation++; unsubAuth(); };
   }, []);
 
   useEffect(() => {
@@ -117,7 +130,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         authReady,
-        isAdmin: isVerifiedAdmin(user),
+        isAdmin,
         signingIn,
         authError,
         savedSessionIds,
