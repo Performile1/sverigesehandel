@@ -89,6 +89,7 @@ production. This PR does not create backups or provision a separate database.
 ```sh
 bun install --frozen-lockfile
 bun run check:cms
+bun run check:startup
 bun run lint
 bun run build
 ```
@@ -119,3 +120,17 @@ live database or signed-in flows work.
 References: [Firebase Admin setup](https://firebase.google.com/docs/admin/setup),
 [Firestore IAM versus client Rules](https://firebase.google.com/docs/firestore/security/overview),
 [Vercel Functions](https://vercel.com/docs/functions/quickstart).
+
+### Firebase Admin runtime compatibility
+
+Firebase Admin is pinned to `13.10.0` because the 14.5.1 dependency chain uses
+`jwks-rsa@4` with a CommonJS `require()` of ESM-only `jose@6`. That throws
+`ERR_REQUIRE_ESM` in the deployed runtime before the API handler starts. The
+13.10.0 dependency chain uses `jwks-rsa@3` and CommonJS-compatible `jose@4`,
+without overriding a transitive dependency outside its declared range.
+
+`check:startup` runs the real API entrypoint in a fresh Node process with
+`--no-experimental-require-module`, then checks an unauthenticated write returns
+JSON 401 rather than crashing. It requires Node 22.18+ (native TypeScript
+stripping), runs without Firebase credentials, and must pass before upgrading
+Firebase Admin. This is not verification of live Google login or database access.
