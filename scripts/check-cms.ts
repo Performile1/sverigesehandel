@@ -3,6 +3,7 @@ import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { MarknadView } from '../src/components/MarknadView.tsx';
 import { ThreePlView } from '../src/components/ThreePlView.tsx';
+import { CommunityView } from '../src/components/CommunityView.tsx';
 import { publicStore } from '../server/publicStore.ts';
 import type { AddressInfo } from 'node:net';
 import { createCmsApp } from '../server/app.ts';
@@ -83,6 +84,16 @@ try {
     onRequestIntro: () => {},
   }));
   assert.ok(threePlHtml.includes('Bring Shelfless'));
+  const communityHtml = renderToString(createElement(CommunityView, {
+    threads: visible.communityThreads,
+    memberCount: visible.communityMemberCount,
+    memberCities: visible.communityMemberCities,
+    onAddThread: async () => {},
+    onUpvote: async () => {},
+    onJoinMember: async () => {},
+  }));
+  assert.ok(!communityHtml.includes('1 640+'));
+  assert.ok(communityHtml.replace(/<!-- -->/g, '').includes(`${visible.communityMemberCount} sökande`));
   assert.deepEqual(upgraded.merchants, legacy.merchants);
   assert.deepEqual(upgraded.contactMessages, legacy.contactMessages);
   assert.equal(JSON.stringify(snapshot), legacyJson, 'Read migration must not mutate or persist stored data');
@@ -112,6 +123,8 @@ try {
   assert.equal(publicData.logisticsProviders.length, snapshot.logisticsProviders.length - 1);
   assert.deepEqual(publicData.contactMessages, []);
   assert.deepEqual(publicData.communityMembers, []);
+  assert.equal(publicData.communityMemberCount, 1);
+  assert.deepEqual(publicData.communityMemberCities, ['Test']);
   assert.ok(!publicData.merchants.some((item: { id: string }) => item.id === draftId));
   assert.equal(snapshot.contactMessages.length, 1, 'Public filtering must not mutate stored data');
   const beforeDenied = calls;
@@ -149,6 +162,13 @@ try {
   assert.equal((await request('/api/community/threads', 'POST', {
     channel: '#test', author: 'Visitor', title: 'Fixture thread',
   }, 'member-fixture')).status, 201);
+  assert.equal((await request('/api/community/members', 'POST', {
+    name: 'Maja', email: 'maja@example.invalid', role: 'E-handlare / Grundare', city: 'Göteborg / Borås',
+  }, 'member-fixture')).status, 201);
+  const updatedPublic = await (await request('/api/cms/store')).json();
+  assert.deepEqual(updatedPublic.communityMembers, []);
+  assert.equal(updatedPublic.communityMemberCount, 2);
+  assert.deepEqual(updatedPublic.communityMemberCities, ['Göteborg / Borås', 'Test']);
   assert.ok(transactions >= 3, 'Writes must pass through Firestore transactions');
   const contactCount = snapshot.contactMessages.length;
   const isolated = operations.withStore(snapshot, () => operations.resetStore());

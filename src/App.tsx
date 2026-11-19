@@ -37,7 +37,7 @@ function getInitialTab(): PortalTab {
 }
 
 export default function App() {
-  const { user, authReady, isAdmin, authError } = useFirebase();
+  const { user, authReady, isAdmin, authError, signInWithGoogle } = useFirebase();
   const fetchSequence = useRef(0);
   const [store, setStore] = useState<CMSStore | null>(null);
   const [loading, setLoading] = useState(true);
@@ -372,6 +372,19 @@ export default function App() {
             {activeTab === 'community' && (
               <CommunityView
                 threads={store.communityThreads}
+                memberCount={store.communityMemberCount ?? store.communityMembers.length}
+                memberCities={
+                  store.communityMemberCities ??
+                  Array.from(
+                    new Set(store.communityMembers.map((m) => m.city.trim()).filter(Boolean))
+                  )
+                }
+                userDisplayName={user?.displayName || null}
+                userEmail={user?.email || null}
+                isSignedIn={Boolean(user)}
+                onSignIn={() => {
+                  void signInWithGoogle();
+                }}
                 onAddThread={async (payload) => {
                   await api.addThread(payload);
                   await fetchStore();
@@ -384,7 +397,7 @@ export default function App() {
                 onJoinMember={async (payload) => {
                   await api.addMember(payload);
                   await fetchStore();
-                  notify(`Tack ${payload.name}! Inbjudan till nätverket (${payload.city}) är skickad.`);
+                  notify(`Tack ${payload.name}! Din ansökan till nätverket (${payload.city}) är mottagen.`);
                 }}
               />
             )}

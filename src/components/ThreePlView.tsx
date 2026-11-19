@@ -432,15 +432,15 @@ export function ThreePlView({
           </button>
         </div>
       ) : viewMode === 'list' ? (
-        /* Structured Scannable List / Comparison Table */
+        /* Structured Scannable List / Comparison Table without horizontal overflow */
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <div className="px-4 sm:px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 className="font-display text-lg font-extrabold text-[#040B16]">
+              <h2 className="font-display text-base sm:text-lg font-extrabold text-[#040B16]">
                 Komplett lista: 3PL &amp; 4PL i Sverige ({filtered.length} aktörer)
               </h2>
-              <p className="text-xs text-slate-500">
-                Jämför lageryta, lagerorter, stopptider, WMS och automation sida vid sida.
+              <p className="text-[11px] sm:text-xs text-slate-500">
+                Kompakt översikt över lagerorter, yta, WMS, automation, stopptid och minsta volym.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -455,105 +455,190 @@ export function ThreePlView({
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+          {/* Desktop compact fixed table (fits 100% width with zero scrollbar) */}
+          <div className="hidden lg:block">
+            <table className="w-full table-fixed text-left border-collapse text-[11px]">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
-                  <th className="py-3 px-4 font-semibold">Aktör &amp; Domän</th>
-                  <th className="py-3 px-3 font-semibold">Typ</th>
-                  <th className="py-3 px-3 font-semibold">Lagerorter &amp; Region</th>
-                  <th className="py-3 px-3 font-semibold">Lageryta / Kapacitet</th>
-                  <th className="py-3 px-3 font-semibold">WMS &amp; Automation</th>
-                  <th className="py-3 px-3 font-semibold whitespace-nowrap">Stopptid</th>
-                  <th className="py-3 px-3 font-semibold">Min. volym</th>
-                  <th className="py-3 px-4 font-semibold text-right">Åtgärd</th>
+                  <th className="w-[22%] py-2.5 pl-4 pr-2 font-semibold">Aktör &amp; Domän</th>
+                  <th className="w-[8%] py-2.5 px-2 font-semibold">Typ</th>
+                  <th className="w-[19%] py-2.5 px-2 font-semibold">Lagerorter &amp; Yta</th>
+                  <th className="w-[19%] py-2.5 px-2 font-semibold">WMS &amp; Automation</th>
+                  <th className="w-[9%] py-2.5 px-2 font-semibold">Stopptid</th>
+                  <th className="w-[13%] py-2.5 px-2 font-semibold">Min. volym</th>
+                  <th className="w-[10%] py-2.5 pl-2 pr-4 font-semibold text-right">Åtgärd</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filtered.map((lp) => (
-                  <tr key={lp.id} className="hover:bg-slate-50 align-top">
-                    <td className="py-3.5 px-4 min-w-[210px]">
-                      <div className="font-display font-extrabold text-sm text-[#040B16]">
-                        {lp.name}
-                      </div>
-                      <div className="text-[11px] font-mono text-[#006AA7] mt-0.5">
-                        {lp.domain} · HQ {lp.hqCity}
-                      </div>
-                      {lp.notableClients.length > 0 && (
-                        <div className="text-[11px] text-slate-500 mt-1">
-                          Kunder: {lp.notableClients.slice(0, 3).join(', ')}
+                {filtered.map((lp) => {
+                  const shortDomain = lp.domain.replace(/^https?:\/\//, '').split('/')[0];
+                  return (
+                    <tr key={lp.id} className="hover:bg-slate-50 align-top">
+                      <td className="py-2.5 pl-4 pr-2 break-words">
+                        <div className="font-display font-bold text-xs text-[#040B16] leading-tight">
+                          {lp.name}
                         </div>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-3 whitespace-nowrap font-mono font-bold">
-                      <span
-                        className={
-                          lp.logisticsType === '4PL'
-                            ? 'text-[#059669]'
-                            : lp.logisticsType === '3PL & 4PL'
-                            ? 'text-amber-700'
-                            : 'text-[#006AA7]'
-                        }
-                      >
-                        {lp.logisticsType}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-3 min-w-[180px]">
-                      <div className="font-semibold text-[#040B16]">
-                        {lp.warehouseCities.join(', ')}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        {REGION_LABEL_MAP[lp.region] || lp.region}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-3 font-mono font-semibold text-[#040B16] tabular-nums min-w-[140px]">
-                      {lp.warehouseSqm}
-                    </td>
-                    <td className="py-3.5 px-3 min-w-[190px]">
-                      <div className="font-mono font-semibold text-[#059669]">{lp.wmsPlatform}</div>
-                      <div className="text-[11px] text-slate-600 mt-0.5">{lp.automation}</div>
-                    </td>
-                    <td className="py-3.5 px-3 font-mono font-bold text-[#040B16] tabular-nums whitespace-nowrap">
-                      {lp.cutoffTime}
-                    </td>
-                    <td className="py-3.5 px-3 text-slate-700 min-w-[150px]">
-                      <div>{lp.minOrderVolume}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">{lp.pricingModel}</div>
-                    </td>
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => onRequestIntro(lp.name)}
-                          className="px-3 py-1.5 rounded-lg bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer"
+                        <div className="text-[10px] font-mono text-[#006AA7] mt-0.5 leading-snug truncate">
+                          {shortDomain} · {lp.hqCity}
+                        </div>
+                        {lp.notableClients.length > 0 && (
+                          <div className="text-[10px] text-slate-500 mt-0.5 truncate" title={lp.notableClients.join(', ')}>
+                            {lp.notableClients.slice(0, 2).join(', ')}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-2 font-mono font-bold leading-snug">
+                        <span
+                          className={
+                            lp.logisticsType === '4PL'
+                              ? 'text-[#059669]'
+                              : lp.logisticsType === '3PL & 4PL'
+                              ? 'text-amber-700'
+                              : 'text-[#006AA7]'
+                          }
                         >
-                          Intro
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openEditor(lp)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-[#040B16] hover:bg-slate-100 cursor-pointer"
-                          title={`Redigera ${lp.name}`}
-                          aria-label={`Redigera ${lp.name}`}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <a
-                          href={`https://${lp.domain.replace(/^https?:\/\//, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-[#006AA7] hover:bg-slate-100"
-                          title={`Besök ${lp.domain}`}
-                          aria-label={`Besök ${lp.name}`}
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {lp.logisticsType}
+                        </span>
+                        <div className="text-[10px] font-sans font-normal text-slate-500 mt-0.5 leading-tight">
+                          {REGION_LABEL_MAP[lp.region] || lp.region}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-2 break-words leading-snug">
+                        <div className="font-semibold text-[#040B16]">
+                          {lp.warehouseCities.join(', ')}
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-600 mt-0.5 tabular-nums">
+                          {lp.warehouseSqm}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-2 break-words leading-snug">
+                        <div className="font-mono font-semibold text-[#059669]">{lp.wmsPlatform}</div>
+                        <div className="text-[10px] text-slate-600 mt-0.5">{lp.automation}</div>
+                      </td>
+                      <td className="py-2.5 px-2 font-mono font-bold text-[#040B16] tabular-nums leading-snug break-words">
+                        {lp.cutoffTime}
+                      </td>
+                      <td className="py-2.5 px-2 text-slate-700 break-words leading-snug">
+                        <div className="font-medium text-[#040B16]">{lp.minOrderVolume}</div>
+                        <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-2" title={lp.pricingModel}>
+                          {lp.pricingModel}
+                        </div>
+                      </td>
+                      <td className="py-2.5 pl-2 pr-4 text-right">
+                        <div className="inline-flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => onRequestIntro(lp.name)}
+                            className="px-2 py-1 rounded-md bg-[#040B16] hover:bg-[#006AA7] text-white text-[11px] font-bold cursor-pointer"
+                          >
+                            Intro
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEditor(lp)}
+                            className="p-1 rounded-md text-slate-500 hover:text-[#040B16] hover:bg-slate-100 cursor-pointer"
+                            title={`Redigera ${lp.name}`}
+                            aria-label={`Redigera ${lp.name}`}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                          <a
+                            href={`https://${lp.domain.replace(/^https?:\/\//, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded-md text-slate-500 hover:text-[#006AA7] hover:bg-slate-100"
+                            title={`Besök ${lp.domain}`}
+                            aria-label={`Besök ${lp.name}`}
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile & Tablet compact list rows (zero horizontal scroll) */}
+          <div className="lg:hidden divide-y divide-slate-100">
+            {filtered.map((lp) => {
+              const shortDomain = lp.domain.replace(/^https?:\/\//, '').split('/')[0];
+              return (
+                <div key={lp.id} className="p-3.5 space-y-2 text-xs">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <span className="font-display font-bold text-sm text-[#040B16]">
+                          {lp.name}
+                        </span>
+                        <span
+                          className={`font-mono text-[11px] font-bold ${
+                            lp.logisticsType === '4PL'
+                              ? 'text-[#059669]'
+                              : lp.logisticsType === '3PL & 4PL'
+                              ? 'text-amber-700'
+                              : 'text-[#006AA7]'
+                          }`}
+                        >
+                          {lp.logisticsType}
+                        </span>
+                      </div>
+                      <div className="text-[11px] font-mono text-[#006AA7] truncate">
+                        {shortDomain} · {lp.hqCity}
+                      </div>
+                    </div>
+                    <div className="inline-flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => onRequestIntro(lp.name)}
+                        className="px-2.5 py-1 rounded-lg bg-[#040B16] hover:bg-[#006AA7] text-white text-[11px] font-bold cursor-pointer"
+                      >
+                        Intro
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openEditor(lp)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-[#040B16] hover:bg-slate-100 cursor-pointer"
+                        aria-label={`Redigera ${lp.name}`}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <a
+                        href={`https://${lp.domain.replace(/^https?:\/\//, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-[#006AA7] hover:bg-slate-100"
+                        aria-label={`Besök ${lp.name}`}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] leading-snug bg-slate-50 rounded-xl p-2.5">
+                    <div>
+                      <span className="text-slate-500 font-mono block text-[10px]">Lager &amp; Yta</span>
+                      <span className="font-semibold text-[#040B16]">{lp.warehouseCities.join(', ')}</span>
+                      <span className="block text-slate-600 font-mono">{lp.warehouseSqm}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-mono block text-[10px]">WMS &amp; Auto</span>
+                      <span className="font-mono font-semibold text-[#059669]">{lp.wmsPlatform}</span>
+                      <span className="block text-slate-600">{lp.automation}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-mono block text-[10px]">Stopptid</span>
+                      <span className="font-mono font-bold text-[#040B16]">{lp.cutoffTime}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-mono block text-[10px]">Min. volym</span>
+                      <span className="font-medium text-[#040B16]">{lp.minOrderVolume}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : (

@@ -407,6 +407,8 @@ export interface CMSStore {
   timeline: TimelineMilestone[];
   communityThreads: CommunityThread[];
   communityMembers: CommunityMember[];
+  communityMemberCount?: number;
+  communityMemberCities?: string[];
   updatedAt: string;
 }
 
