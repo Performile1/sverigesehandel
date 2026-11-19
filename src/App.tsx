@@ -22,6 +22,7 @@ const TAB_TITLES: Record<PortalTab, string> = {
   event: 'Event & Mässor 2027 – D-Congress, E-commerce Expo & Retail Tech | sverigesehandel.se',
   ehandlare: 'Svenska E-handlare – Omsättning, Tillväxt & Tech-stack | sverigesehandel.se',
   partners: 'Jämför Betallösningar, Transportörer, TA-system & Plattformar | sverigesehandel.se',
+  '3pl': '3PL & 4PL – Logistikpartners | sverigesehandel.se',
   jobb: 'Jobb inom Sveriges E-handel & Rekryteringssidor | sverigesehandel.se',
   historia: 'Svensk E-handelshistoria – Från Pixlar till AI | sverigesehandel.se',
   community: 'Sveriges E-handel Network – Branschforum & Nätverk | sverigesehandel.se',
@@ -242,6 +243,8 @@ export default function App() {
           <>
             {activeTab === 'marknad' && (
               <MarknadView
+                merchants={store.merchants}
+                logisticsProviders={store.logisticsProviders}
                 regions={store.regions}
                 orderBenchmarks={store.orderBenchmarks}
                 shippingTiers={store.shippingTiers}
@@ -272,6 +275,7 @@ export default function App() {
             {activeTab === 'historia' && <HistoriaView timeline={store.timeline} />}
             {activeTab === 'ehandlare' && (
               <MerchantsView
+                orderBenchmarks={store.orderBenchmarks}
                 merchants={store.merchants}
                 adBanners={store.adBanners}
                 initialSearch={initialSearch}

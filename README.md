@@ -134,3 +134,16 @@ without overriding a transitive dependency outside its declared range.
 JSON 401 rather than crashing. It requires Node 22.18+ (native TypeScript
 stripping), runs without Firebase credentials, and must pass before upgrading
 Firebase Admin. This is not verification of live Google login or database access.
+
+### Older snapshots and logistics
+
+Snapshots/backups created before `logisticsProviders` existed are upgraded on
+read and admin import: only the absent field is filled from the bundled logistics
+seed. Existing lists (including empty lists), edits, deletions, private records
+and other CMS fields are preserved. Reads do not write to Firestore; the next
+normal transactional edit persists the upgraded snapshot. Malformed non-array
+logistics fields are rejected rather than silently replaced. Public responses
+exclude draft logistics providers, matching the other catalogs.
+
+The focused CMS check includes legacy read/import, preservation, public filtering
+and server-rendering the market/logistics map with the migrated payload.
