@@ -43,7 +43,7 @@ const PARTNER_PRESETS = [
   {
     label: 'Logistik, 3PL & Returer',
     query:
-      'Svenska logistikpartners, 3PL och returplattformar för e-handel (t.ex. Shelfless, Bonver Logistics, Aditro Logistics, Returnado, Yaytrade)',
+      'Svenska logistikpartners, 3PL och returplattformar för e-handel (t.ex. Bring Shelfless, Bonver Logistics, Aditro Logistics, Returnado, Yaytrade)',
   },
   {
     label: 'MarTech, Sök & Personalisering',

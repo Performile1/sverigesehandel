@@ -80,7 +80,7 @@ const DISCOVERY_QUICK_BATCHES: Array<{
     target: 'partners',
     label: 'Logistik, 3PL & returer',
     query:
-      'Svenska logistikpartners, 3PL och returlösningar (t.ex. Shelfless, Aditro Logistics, Bonver Logistics, Gordon Delivery, Returnado, Early Bird)',
+      'Svenska logistikpartners, 3PL och returlösningar (t.ex. Bring Shelfless, Aditro Logistics, Bonver Logistics, Gordon Delivery, Returnado, Early Bird)',
   },
   {
     target: 'partners',

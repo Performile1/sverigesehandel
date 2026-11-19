@@ -20,9 +20,9 @@ interface MerchantsViewProps {
 }
 
 export function MerchantsView({
-  merchants,
-  orderBenchmarks,
-  adBanners,
+  merchants = [],
+  orderBenchmarks = [],
+  adBanners = [],
   initialSearch = '',
   onNavigate,
   onBookAdSlot,
@@ -35,7 +35,7 @@ export function MerchantsView({
   const [sortBy, setSortBy] = useState<'revenue' | 'parcels' | 'growth' | 'rating' | 'name'>('revenue');
 
   const published = useMemo(
-    () => merchants.filter((m) => m.status === 'published'),
+    () => (merchants || []).filter((m) => m.status === 'published'),
     [merchants]
   );
 

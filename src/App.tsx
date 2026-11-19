@@ -15,6 +15,7 @@ import { MarknadView } from './components/MarknadView';
 import { MerchantsView } from './components/MerchantsView';
 import { Navbar } from './components/Navbar';
 import { PartnersView } from './components/PartnersView';
+import { ThreePlView } from './components/ThreePlView';
 import type { CMSStore, JobRoleCategory, Merchant, PortalTab, TechPartner } from './types';
 
 const TAB_TITLES: Record<PortalTab, string> = {
@@ -22,7 +23,7 @@ const TAB_TITLES: Record<PortalTab, string> = {
   event: 'Event & Mässor 2027 – D-Congress, E-commerce Expo & Retail Tech | sverigesehandel.se',
   ehandlare: 'Svenska E-handlare – Omsättning, Tillväxt & Tech-stack | sverigesehandel.se',
   partners: 'Jämför Betallösningar, Transportörer, TA-system & Plattformar | sverigesehandel.se',
-  '3pl': '3PL & 4PL – Logistikpartners | sverigesehandel.se',
+  '3pl': '3PL & 4PL i Sverige – Logistikpartners, Fulfillment & WMS | sverigesehandel.se',
   jobb: 'Jobb inom Sveriges E-handel & Rekryteringssidor | sverigesehandel.se',
   historia: 'Svensk E-handelshistoria – Från Pixlar till AI | sverigesehandel.se',
   community: 'Sveriges E-handel Network – Branschforum & Nätverk | sverigesehandel.se',
@@ -98,7 +99,10 @@ export default function App() {
     try {
       const data = await api.getStore();
       if (sequence !== fetchSequence.current) return;
-      setStore(data);
+      setStore({
+        ...data,
+        logisticsProviders: Array.isArray(data.logisticsProviders) ? data.logisticsProviders : [],
+      });
       setLoadError(null);
     } catch (err) {
       if (sequence === fetchSequence.current) setLoadError((err as Error).message);
@@ -320,6 +324,27 @@ export default function App() {
                 }
               />
             )}
+            {activeTab === '3pl' && (
+              <ThreePlView
+                logisticsProviders={store.logisticsProviders}
+                adBanners={store.adBanners}
+                initialSearch={initialSearch}
+                isAdmin={isAdmin}
+                onRequireAdmin={() => setMode('cms')}
+                onNavigate={handleNavigate}
+                onBookAdSlot={handleBookAdSlot}
+                onRefresh={fetchStore}
+                onNotify={notify}
+                onRequestIntro={(providerName) =>
+                  setInfoModal({
+                    open: true,
+                    title: `Kontakta ${providerName}`,
+                    body: `Ange din e-post så kopplar vi ihop dig med rätt logistikansvarig hos ${providerName}.`,
+                    email: '',
+                  })
+                }
+              />
+            )}
             {activeTab === 'jobb' && (
               <JobsView
                 jobs={store.jobs}
@@ -484,6 +509,18 @@ export default function App() {
                   </li>
                   <li>
                     <a
+                      href="#3pl"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleNavigate('3pl');
+                      }}
+                      className="hover:text-white"
+                    >
+                      3PL & 4PL i Sverige
+                    </a>
+                  </li>
+                  <li>
+                    <a
                       href="#jobb"
                       onClick={(e) => {
                         e.preventDefault();
@@ -580,7 +617,7 @@ export default function App() {
             <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
               <p>© 2026–2027 sverigesehandel.se · hej@sverigesehandel.se · Byggd för svensk e-handel.</p>
               <p className="font-mono tabular-nums">
-                Katalog: {store.merchants.length} e-handlare · {store.partners.length} tech-partners · {store.events.length} event · {store.jobs.length} jobb
+                Katalog: {store.merchants.length} e-handlare · {store.partners.length} tech-partners · {(store.logisticsProviders || []).length} 3PL/4PL · {store.events.length} event · {store.jobs.length} jobb
               </p>
             </div>
           </div>

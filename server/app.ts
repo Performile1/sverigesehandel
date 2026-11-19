@@ -183,6 +183,34 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.json({ deleted: true });
   }));
 
+  // --- 3PL & 4PL LOGISTICS PROVIDERS ---
+  app.post('/api/logistics', route(async (req, res) => {
+    if (!req.body?.name) {
+      res.status(400).json({ error: 'Namn på logistikpartner krävs.' });
+      return;
+    }
+    const result = await store.upsertLogisticsProvider(req.body);
+    res.status(result.created ? 201 : 200).json(result);
+  }));
+
+  app.put('/api/logistics/:id', route(async (req, res) => {
+    if (!req.body?.name) {
+      res.status(400).json({ error: 'Namn på logistikpartner krävs.' });
+      return;
+    }
+    const result = await store.upsertLogisticsProvider({ ...req.body, id: req.params.id });
+    res.json(result);
+  }));
+
+  app.delete('/api/logistics/:id', route(async (req, res) => {
+    const ok = await store.deleteLogisticsProvider(req.params.id);
+    if (!ok) {
+      res.status(404).json({ error: 'Logistikpartner hittades inte.' });
+      return;
+    }
+    res.json({ deleted: true });
+  }));
+
   // --- EVENTS & MÄSSOR ---
   app.post('/api/events', route(async (req, res) => {
     if (!req.body?.name) {

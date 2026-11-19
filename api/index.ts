@@ -1,5 +1,9 @@
 import { createCmsApp } from '../server/app.ts';
-import { createFirestoreStore } from '../server/firestoreStore.ts';
-import { verifyCmsToken } from '../server/firebaseAdmin.ts';
+import { createFirestoreStore, createLocalCmsStore } from '../server/firestoreStore.ts';
+import { hasExplicitAdminCredentials, verifyCmsToken } from '../server/firebaseAdmin.ts';
 
-export default createCmsApp(createFirestoreStore(), verifyCmsToken);
+const store = hasExplicitAdminCredentials() || process.env.USE_FIRESTORE_ADMIN === 'true'
+  ? createFirestoreStore()
+  : createLocalCmsStore();
+
+export default createCmsApp(store, verifyCmsToken);

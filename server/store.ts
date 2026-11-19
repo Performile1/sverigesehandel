@@ -35,6 +35,7 @@ export function withStore<T>(store: CMSStore, operation: () => T) {
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'cms-db.json');
+let memoryFallbackStore: CMSStore | null = null;
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -231,12 +232,20 @@ function mergeAndValidateJobs(existing: EcommerceJob[]): { list: EcommerceJob[];
 function ensureStoreFile(): CMSStore {
   const state = requestStore.getStore();
   if (state) return state.store;
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (memoryFallbackStore && !fs.existsSync(DB_FILE)) {
+    return memoryFallbackStore;
   }
-  if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(INITIAL_CMS_DATA, null, 2), 'utf-8');
-    return structuredClone(INITIAL_CMS_DATA);
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (!fs.existsSync(DB_FILE)) {
+      fs.writeFileSync(DB_FILE, JSON.stringify(INITIAL_CMS_DATA, null, 2), 'utf-8');
+      return structuredClone(INITIAL_CMS_DATA);
+    }
+  } catch {
+    if (!memoryFallbackStore) memoryFallbackStore = structuredClone(INITIAL_CMS_DATA);
+    return memoryFallbackStore;
   }
   try {
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
@@ -254,11 +263,31 @@ function ensureStoreFile(): CMSStore {
     const baseLogistics = Array.isArray(parsed.logisticsProviders)
       ? parsed.logisticsProviders
       : INITIAL_CMS_DATA.logisticsProviders;
-    const existingLogIds = new Set(baseLogistics.map((l) => l.id));
+    const hadDream = baseLogistics.some(
+      (l) => l.id === 'lp-dreamlogistics' || l.name.toLowerCase() === 'dreamlogistics'
+    );
+    const seedShelfless = INITIAL_CMS_DATA.logisticsProviders.find((s) => s.id === 'lp-shelfless');
+    let shelflessUpgraded = false;
+    const cleanedLogistics = baseLogistics
+      .filter((l) => l.id !== 'lp-dreamlogistics' && l.name.toLowerCase() !== 'dreamlogistics')
+      .map((l) => {
+        if (
+          l.id === 'lp-shelfless' &&
+          seedShelfless &&
+          !l.desc.includes('tidigare DreamLogistics')
+        ) {
+          shelflessUpgraded = true;
+          return { ...seedShelfless, updatedAt: l.updatedAt };
+        }
+        return l;
+      });
+    const existingLogIds = new Set(cleanedLogistics.map((l) => l.id));
     const missingSeedLogistics = INITIAL_CMS_DATA.logisticsProviders.filter(
       (s) => !existingLogIds.has(s.id)
     );
-    const mergedLogistics = [...baseLogistics, ...missingSeedLogistics];
+    const mergedLogistics = [...cleanedLogistics, ...missingSeedLogistics];
+    const logisticsChanged =
+      hadDream || shelflessUpgraded || missingSeedLogistics.length > 0 || !parsed.logisticsProviders;
 
     const rawRegions = parsed.regions ?? INITIAL_CMS_DATA.regions;
     let regionsChanged = !parsed.regions;
@@ -362,15 +391,23 @@ function ensureStoreFile(): CMSStore {
       !parsed.intelligenceSources ||
       !parsed.techStackShares ||
       !parsed.adBanners ||
-      !parsed.logisticsProviders ||
-      missingSeedLogistics.length > 0
+      logisticsChanged
     ) {
-      fs.writeFileSync(DB_FILE, JSON.stringify(hydrated, null, 2), 'utf-8');
+      try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(hydrated, null, 2), 'utf-8');
+      } catch {
+        memoryFallbackStore = hydrated;
+      }
     }
     return hydrated;
   } catch {
-    fs.writeFileSync(DB_FILE, JSON.stringify(INITIAL_CMS_DATA, null, 2), 'utf-8');
-    return structuredClone(INITIAL_CMS_DATA);
+    const fresh = structuredClone(INITIAL_CMS_DATA);
+    try {
+      fs.writeFileSync(DB_FILE, JSON.stringify(fresh, null, 2), 'utf-8');
+    } catch {
+      memoryFallbackStore = fresh;
+    }
+    return fresh;
   }
 }
 
@@ -382,11 +419,16 @@ function saveStore(store: CMSStore): CMSStore {
     state.changed = true;
     return store;
   }
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
   store.updatedAt = new Date().toISOString();
-  fs.writeFileSync(DB_FILE, JSON.stringify(store, null, 2), 'utf-8');
+  memoryFallbackStore = store;
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(DB_FILE, JSON.stringify(store, null, 2), 'utf-8');
+  } catch {
+    // Keep memoryFallbackStore in read-only environments
+  }
   return store;
 }
 

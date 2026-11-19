@@ -24,6 +24,8 @@ interface ThreePlViewProps {
   logisticsProviders: LogisticsProvider[];
   adBanners: AdBanner[];
   initialSearch?: string;
+  isAdmin?: boolean;
+  onRequireAdmin?: () => void;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
   onRefresh: () => Promise<void>;
@@ -49,9 +51,11 @@ const REGION_LABEL_MAP: Record<string, string> = {
 };
 
 export function ThreePlView({
-  logisticsProviders,
-  adBanners,
+  logisticsProviders = [],
+  adBanners = [],
   initialSearch = '',
+  isAdmin = false,
+  onRequireAdmin,
   onNavigate,
   onBookAdSlot,
   onRefresh,
@@ -89,7 +93,7 @@ export function ThreePlView({
   }, [initialSearch]);
 
   const published = useMemo(
-    () => logisticsProviders.filter((lp) => lp.status === 'published'),
+    () => (logisticsProviders || []).filter((lp) => lp.status === 'published'),
     [logisticsProviders]
   );
 
@@ -134,6 +138,10 @@ export function ThreePlView({
   }, [published, typeFilter, regionFilter, search]);
 
   function openEditor(provider?: LogisticsProvider) {
+    if (!isAdmin && onRequireAdmin) {
+      onRequireAdmin();
+      return;
+    }
     if (provider) {
       setEditingId(provider.id);
       setFormName(provider.name);
@@ -380,7 +388,7 @@ export function ThreePlView({
             3PL (Tredjepartslogistik)
           </h2>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Partnern äger och driver lagret, personalen och AutoStore-robotiken (t.ex. DreamLogistics, Nowaste, PostNord TPL, Bring Shelfless). Du betalar per pallplats, plock och frakt.
+            Partnern äger och driver lagret, personalen och AutoStore-robotiken (t.ex. Bring Shelfless, Nowaste, PostNord TPL, Aditro Logistics). Du betalar per pallplats, plock och frakt.
           </p>
         </div>
 
@@ -715,7 +723,7 @@ export function ThreePlView({
                   type="text"
                   value={formDomain}
                   onChange={(e) => setFormDomain(e.target.value)}
-                  placeholder="Domän (t.ex. dreamlogistics.se)"
+                  placeholder="Domän (t.ex. shelfless.se)"
                   className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs"
                 />
                 <select

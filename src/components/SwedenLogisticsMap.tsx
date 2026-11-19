@@ -607,7 +607,7 @@ export function SwedenLogisticsMap({
   regions,
   selectedRegion,
   onSelectRegion,
-  logisticsProviders,
+  logisticsProviders = [],
   onNavigate,
   onOpenDensitySection,
 }: SwedenLogisticsMapProps) {
@@ -619,7 +619,7 @@ export function SwedenLogisticsMap({
   const activeRegion = regions[selectedRegion] || Object.values(regions)[0];
 
   const publishedLogistics = useMemo(
-    () => logisticsProviders.filter((l) => l.status === 'published'),
+    () => (logisticsProviders || []).filter((l) => l.status === 'published'),
     [logisticsProviders]
   );
 

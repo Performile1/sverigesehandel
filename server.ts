@@ -3,10 +3,14 @@ import express from 'express';
 import path from 'node:path';
 import { createServer as createViteServer } from 'vite';
 import { createCmsApp } from './server/app.ts';
-import { createFirestoreStore } from './server/firestoreStore.ts';
-import { verifyCmsToken } from './server/firebaseAdmin.ts';
+import { createFirestoreStore, createLocalCmsStore } from './server/firestoreStore.ts';
+import { hasExplicitAdminCredentials, verifyCmsToken } from './server/firebaseAdmin.ts';
 
-const app = createCmsApp(createFirestoreStore(), verifyCmsToken);
+const store = hasExplicitAdminCredentials() || process.env.USE_FIRESTORE_ADMIN === 'true'
+  ? createFirestoreStore()
+  : createLocalCmsStore();
+
+const app = createCmsApp(store, verifyCmsToken);
 if (process.env.NODE_ENV !== 'production') {
   const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
   app.use(vite.middlewares);

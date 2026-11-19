@@ -16,9 +16,21 @@ function adminApp() {
     ? cert({ projectId, clientEmail, privateKey }) : applicationDefault() }, 'cms');
 }
 
+export function hasExplicitAdminCredentials() {
+  return Boolean(process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY);
+}
+
 export function cmsFirestore() { return getFirestore(adminApp(), firebaseConfig.firestoreDatabaseId); }
 export function cmsFirebaseAuth() { return getAuth(adminApp()); }
 export async function verifyCmsToken(token: string) {
-  const claims = await cmsFirebaseAuth().verifyIdToken(token, true);
-  return resolveCmsIdentity(claims, async (uid) => (await cmsFirestore().doc(`admins/${uid}`).get()).exists);
+  // verifyIdToken(token) works without IAM permissions on Google-hosted Starter Tier projects.
+  const claims = await cmsFirebaseAuth().verifyIdToken(token);
+  return resolveCmsIdentity(claims, async (uid) => {
+    if (!hasExplicitAdminCredentials()) return false;
+    try {
+      return (await cmsFirestore().doc(`admins/${uid}`).get()).exists;
+    } catch {
+      return false;
+    }
+  });
 }

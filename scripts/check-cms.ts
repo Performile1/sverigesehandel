@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { MarknadView } from '../src/components/MarknadView.tsx';
+import { ThreePlView } from '../src/components/ThreePlView.tsx';
 import { publicStore } from '../server/publicStore.ts';
 import type { AddressInfo } from 'node:net';
 import { createCmsApp } from '../server/app.ts';
@@ -72,6 +73,16 @@ try {
     onNavigate: () => {}, onBookAdSlot: () => {},
   }));
   assert.ok(marketHtml.includes('Sveriges'));
+  const threePlHtml = renderToString(createElement(ThreePlView, {
+    logisticsProviders: visible.logisticsProviders,
+    adBanners: visible.adBanners,
+    onNavigate: () => {},
+    onBookAdSlot: () => {},
+    onRefresh: async () => {},
+    onNotify: () => {},
+    onRequestIntro: () => {},
+  }));
+  assert.ok(threePlHtml.includes('Bring Shelfless'));
   assert.deepEqual(upgraded.merchants, legacy.merchants);
   assert.deepEqual(upgraded.contactMessages, legacy.contactMessages);
   assert.equal(JSON.stringify(snapshot), legacyJson, 'Read migration must not mutate or persist stored data');

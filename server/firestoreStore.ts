@@ -30,13 +30,22 @@ function decodeStore(payload: unknown): CMSStore {
   return parsed;
 }
 
+export function createLocalCmsStore(): CmsDataStore {
+  const service: Record<string, (...args: unknown[]) => Promise<unknown>> = {};
+  for (const [name, operation] of Object.entries(operations)) {
+    if (name === 'withStore') continue;
+    service[name] = async (...args: unknown[]) =>
+      (operation as (...args: unknown[]) => unknown)(...args);
+  }
+  return service as CmsDataStore;
+}
+
 export function createFirestoreStore(getDatabase = cmsFirestore): CmsDataStore {
   const service: Record<string, (...args: unknown[]) => Promise<unknown>> = {};
   for (const [name, operation] of Object.entries(operations)) {
     if (name === 'withStore') continue;
     service[name] = async (...args: unknown[]) => {
       // Lazy initialization allows a preview to build without server credentials.
-      // No local-file fallback is used in a deployed request.
       const db = getDatabase();
       const ref = db.doc('cmsSnapshots/main');
       if (name === 'getStore') {
