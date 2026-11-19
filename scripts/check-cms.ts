@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import { createElement } from 'react';
+import { renderToString } from 'react-dom/server';
+import { MarknadView } from '../src/components/MarknadView.tsx';
+import { publicStore } from '../server/publicStore.ts';
 import type { AddressInfo } from 'node:net';
 import { createCmsApp } from '../server/app.ts';
 import { createFirestoreStore, encodeStore } from '../server/firestoreStore.ts';
@@ -6,7 +10,7 @@ import { INITIAL_CMS_DATA } from '../server/seedData.ts';
 import * as operations from '../server/store.ts';
 import { resolveCmsIdentity } from '../server/authPolicy.ts';
 import { ADMIN_EMAIL } from '../shared/firebaseSettings.ts';
-import { validateSnapshot } from '../server/snapshot.ts';
+import { upgradeSnapshot, validateSnapshot } from '../server/snapshot.ts';
 import type { cmsFirestore } from '../server/firebaseAdmin.ts';
 
 // Synthetic identities only: no Firebase access or real credentials in this check.
@@ -53,6 +57,35 @@ async function request(path: string, method = 'GET', body?: unknown, identity?: 
   }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
 }
 try {
+  const currentSnapshot = structuredClone(snapshot);
+  const legacy = structuredClone(snapshot) as Partial<typeof snapshot>;
+  delete legacy.logisticsProviders;
+  snapshot = legacy as typeof snapshot;
+  const legacyJson = JSON.stringify(snapshot);
+  const writesBeforeUpgrade = transactions;
+  const upgraded = await service.getStore();
+  assert.deepEqual(upgraded.logisticsProviders, INITIAL_CMS_DATA.logisticsProviders);
+  // The same migrated public payload must render the market/map, not merely pass types.
+  const visible = publicStore(upgraded);
+  const marketHtml = renderToString(createElement(MarknadView, {
+    ...visible, merchantCount: visible.merchants.length, partnerCount: visible.partners.length,
+    onNavigate: () => {}, onBookAdSlot: () => {},
+  }));
+  assert.ok(marketHtml.includes('Sveriges'));
+  assert.deepEqual(upgraded.merchants, legacy.merchants);
+  assert.deepEqual(upgraded.contactMessages, legacy.contactMessages);
+  assert.equal(JSON.stringify(snapshot), legacyJson, 'Read migration must not mutate or persist stored data');
+  assert.equal(transactions, writesBeforeUpgrade);
+  await service.upsertMerchant({ name: 'Migration fixture' });
+  assert.deepEqual(snapshot.logisticsProviders, INITIAL_CMS_DATA.logisticsProviders);
+  const empty = { ...currentSnapshot, logisticsProviders: [] };
+  assert.deepEqual(upgradeSnapshot(empty), empty, 'An intentionally empty list stays empty');
+  const custom = { ...currentSnapshot, logisticsProviders: [{ ...currentSnapshot.logisticsProviders[0], name: 'Edited provider' }] };
+  assert.deepEqual(upgradeSnapshot(custom), custom, 'Do not restore deleted providers or overwrite edits');
+  assert.ok(!validateSnapshot({ ...currentSnapshot, logisticsProviders: null }));
+  assert.ok(!validateSnapshot({ ...currentSnapshot, logisticsProviders: {} }));
+  snapshot = currentSnapshot;
+  snapshot.logisticsProviders[0].status = 'draft';
   const noRegistry = async () => false;
   assert.equal((await resolveCmsIdentity({ uid: 'owner', email: ADMIN_EMAIL, email_verified: false }, async () => true)).admin, false);
   assert.equal((await resolveCmsIdentity({ uid: 'owner', email: ADMIN_EMAIL, email_verified: true }, noRegistry)).admin, true);
@@ -64,6 +97,8 @@ try {
   assert.match(response.headers.get('content-type')!, /application\/json/);
   assert.equal(response.headers.get('cache-control'), 'private, no-store');
   const publicData = await response.json();
+  assert.ok(publicData.logisticsProviders.every((item: { status: string }) => item.status === 'published'));
+  assert.equal(publicData.logisticsProviders.length, snapshot.logisticsProviders.length - 1);
   assert.deepEqual(publicData.contactMessages, []);
   assert.deepEqual(publicData.communityMembers, []);
   assert.ok(!publicData.merchants.some((item: { id: string }) => item.id === draftId));
@@ -115,6 +150,14 @@ try {
   assert.ok(validateSnapshot(snapshot));
   assert.ok(!validateSnapshot({ merchants: [], partners: [] }));
   assert.throws(() => encodeStore({ ...snapshot, updatedAt: 'x'.repeat(900_001) }), /safety limit/);
+  // Legacy admin backups also use the same migration without discarding private data.
+  const backup = structuredClone(snapshot) as Partial<typeof snapshot>;
+  delete backup.logisticsProviders;
+  const imported = await request('/api/cms/import', 'POST', backup, 'admin-fixture');
+  assert.equal(imported.status, 200);
+  const restored = await imported.json();
+  assert.deepEqual(restored.logisticsProviders, INITIAL_CMS_DATA.logisticsProviders);
+  assert.deepEqual(restored.contactMessages, backup.contactMessages);
   // A missing snapshot starts from editorial seed without persisting on read.
   exists = false;
   const writesBeforeSeedRead = transactions;

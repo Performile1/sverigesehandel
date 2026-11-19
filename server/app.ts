@@ -2,7 +2,7 @@ import express, { type RequestHandler, type ErrorRequestHandler } from 'express'
 import type { CmsDataStore } from './firestoreStore.ts';
 import { publicStore } from './publicStore.ts';
 import type { CmsIdentity } from './authPolicy.ts';
-import { validateSnapshot } from './snapshot.ts';
+import { upgradeSnapshot, validateSnapshot } from './snapshot.ts';
 import {
   discoverJobsWithAI,
   discoverMerchantsWithAI,
@@ -87,11 +87,12 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   }));
 
   app.post('/api/cms/import', route(async (req, res) => {
-    if (!validateSnapshot(req.body)) {
+    const imported = upgradeSnapshot(req.body);
+    if (!validateSnapshot(imported)) {
       res.status(400).json({ error: 'Ogiltigt CMS-format. Exportera en fullständig CMS-backup och försök igen.' });
       return;
     }
-    res.json(await store.replaceStore(req.body));
+    res.json(await store.replaceStore(imported));
   }));
 
   app.post('/api/cms/reset', route(async (_req, res) => {

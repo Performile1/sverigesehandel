@@ -1,7 +1,7 @@
 import * as operations from './store.ts';
 import type { CMSStore } from '../src/types.ts';
 import { INITIAL_CMS_DATA } from './seedData.ts';
-import { validateSnapshot } from './snapshot.ts';
+import { upgradeSnapshot, validateSnapshot } from './snapshot.ts';
 import { cmsFirestore } from './firebaseAdmin.ts';
 
 type Operations = Omit<typeof operations, 'withStore'>;
@@ -25,7 +25,7 @@ export function encodeStore(store: CMSStore) {
 }
 
 function decodeStore(payload: unknown): CMSStore {
-  const parsed = JSON.parse(String(payload));
+  const parsed = upgradeSnapshot(JSON.parse(String(payload)));
   if (!validateSnapshot(parsed)) throw new Error('Invalid CMS snapshot');
   return parsed;
 }
