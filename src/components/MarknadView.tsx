@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -15,15 +15,27 @@ import type {
   CategoryOrderBenchmark,
   DeliveryStatsData,
   EcommerceLaw,
+  LogisticsProvider,
   MarketIntelligenceSource,
+  Merchant,
   PortalTab,
   RegionMetric,
   ShippingCostTier,
   TechStackShare,
 } from '../types';
+import {
+  PARCEL_VOLUME_TIERS,
+  estimateMerchantParcels,
+  formatParcelCountCompact,
+  formatSekCompact,
+  getVolumeTierById,
+  getVolumeTierForCount,
+  type ParcelVolumeTierId,
+} from '../utils/shippingEconomics';
 import { AdBannerSlot } from './AdBannerSlot';
 import { CheckoutStrategyCTA } from './CheckoutStrategyCTA';
 import { ResilientImage } from './ResilientImage';
+import { SwedenLogisticsMap } from './SwedenLogisticsMap';
 
 interface MarknadViewProps {
   regions: Record<string, RegionMetric>;
@@ -34,6 +46,8 @@ interface MarknadViewProps {
   intelligenceSources: MarketIntelligenceSource[];
   techStackShares: TechStackShare[];
   adBanners: AdBanner[];
+  merchants: Merchant[];
+  logisticsProviders: LogisticsProvider[];
   merchantCount: number;
   partnerCount: number;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
@@ -49,6 +63,8 @@ export function MarknadView({
   intelligenceSources,
   techStackShares,
   adBanners,
+  merchants,
+  logisticsProviders,
   merchantCount,
   partnerCount,
   onNavigate,
@@ -57,8 +73,10 @@ export function MarknadView({
   const [selectedRegion, setSelectedRegion] = useState<string>('vast');
   const [tradeMode, setTradeMode] = useState<'export' | 'import'>('export');
   const [demoTab, setDemoTab] = useState<'generations' | 'payments' | 'delivery'>('generations');
-  const [econTab, setEconTab] = useState<'tiers' | 'categories' | 'calculator'>('tiers');
-  const [deliverySubTab, setDeliverySubTab] = useState<'timing' | 'parcel'>('timing');
+  const [econTab, setEconTab] = useState<'tiers' | 'categories' | 'parcels' | 'calculator'>('tiers');
+  const [selectedVolumeTierId, setSelectedVolumeTierId] = useState<ParcelVolumeTierId>('scaleup');
+  const [parcelMerchantSearch, setParcelMerchantSearch] = useState<string>('');
+  const [deliverySubTab, setDeliverySubTab] = useState<'timing' | 'parcel' | 'coverage'>('coverage');
   const [lawCategory, setLawCategory] = useState<string>('Alla');
   const [selectedSourceId, setSelectedSourceId] = useState<string>('ecdb');
   const [techLayerFilter, setTechLayerFilter] = useState<
@@ -68,11 +86,39 @@ export function MarknadView({
   const [calcOrderValue, setCalcOrderValue] = useState<number>(850);
   const [calcFreeThreshold, setCalcFreeThreshold] = useState<number>(599);
   const [calcBaseShippingFee, setCalcBaseShippingFee] = useState<number>(49);
+  const [calcAnnualParcels, setCalcAnnualParcels] = useState<number>(50000);
+  const [calcSelectedMerchantId, setCalcSelectedMerchantId] = useState<string>('');
   const [heroQuery, setHeroQuery] = useState('');
 
-  const activeRegion = regions[selectedRegion] || Object.values(regions)[0];
   const calcCategory =
     orderBenchmarks.find((b) => b.id === calcCategoryId) || orderBenchmarks[0];
+  const activeVolumeTier = getVolumeTierById(selectedVolumeTierId);
+
+  const merchantParcelRows = useMemo(() => {
+    return merchants
+      .filter((m) => m.status === 'published')
+      .map((m) => ({
+        merchant: m,
+        estimate: estimateMerchantParcels(m, orderBenchmarks),
+      }))
+      .sort((a, b) => b.estimate.annualParcels - a.estimate.annualParcels);
+  }, [merchants, orderBenchmarks]);
+
+  const filteredParcelRows = useMemo(() => {
+    const q = parcelMerchantSearch.trim().toLowerCase();
+    if (!q) return merchantParcelRows;
+    return merchantParcelRows.filter(
+      ({ merchant }) =>
+        merchant.name.toLowerCase().includes(q) ||
+        merchant.category.toLowerCase().includes(q) ||
+        merchant.city.toLowerCase().includes(q)
+    );
+  }, [merchantParcelRows, parcelMerchantSearch]);
+
+  const totalCatalogParcels = useMemo(
+    () => merchantParcelRows.reduce((acc, row) => acc + row.estimate.annualParcels, 0),
+    [merchantParcelRows]
+  );
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -234,112 +280,19 @@ export function MarknadView({
 
         {/* Interactive Sweden Map + Cross-Border */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
-              <div>
-                <div className="text-xs font-mono text-[#006AA7] font-semibold">Geografisk analys</div>
-                <h2 className="font-display text-2xl font-extrabold text-[#040B16] mt-0.5">
-                  Sveriges e-handelsregioner & logistiknav
-                </h2>
-              </div>
-              <div className="text-xs text-slate-500">Klicka på en region i kartan</div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
-              <div className="sm:col-span-5 bg-[#040B16] rounded-xl p-4 flex justify-center items-center">
-                <svg viewBox="0 0 220 440" className="w-44 h-auto" aria-label="Interaktiv karta över Sverige">
-                  <path
-                    onClick={() => setSelectedRegion('norrland')}
-                    className="cursor-pointer transition-colors"
-                    fill={selectedRegion === 'norrland' ? '#FECC02' : '#064E3B'}
-                    stroke="#1E293B"
-                    strokeWidth="1.5"
-                    d="M115,15 L155,25 L175,65 L165,115 L145,155 L125,195 L72,190 L68,145 L85,95 L98,45 Z"
-                  />
-                  <path
-                    onClick={() => setSelectedRegion('svealand')}
-                    className="cursor-pointer transition-colors"
-                    fill={selectedRegion === 'svealand' ? '#FECC02' : '#006AA7'}
-                    stroke="#1E293B"
-                    strokeWidth="1.5"
-                    d="M72,190 L125,195 L138,235 L132,272 L68,268 L58,230 Z"
-                  />
-                  <path
-                    onClick={() => setSelectedRegion('vast')}
-                    className="cursor-pointer transition-colors"
-                    fill={selectedRegion === 'vast' ? '#FECC02' : '#0284C7'}
-                    stroke="#1E293B"
-                    strokeWidth="1.5"
-                    d="M52,268 L88,268 L86,335 L48,332 L44,295 Z"
-                  />
-                  <path
-                    onClick={() => setSelectedRegion('smaland')}
-                    className="cursor-pointer transition-colors"
-                    fill={selectedRegion === 'smaland' ? '#FECC02' : '#059669'}
-                    stroke="#1E293B"
-                    strokeWidth="1.5"
-                    d="M88,268 L132,272 L124,342 L86,335 Z"
-                  />
-                  <path
-                    onClick={() => setSelectedRegion('syd')}
-                    className="cursor-pointer transition-colors"
-                    fill={selectedRegion === 'syd' ? '#FECC02' : '#0369A1'}
-                    stroke="#1E293B"
-                    strokeWidth="1.5"
-                    d="M56,335 L112,342 L106,385 L58,382 Z"
-                  />
-                  <path
-                    onClick={() => setSelectedRegion('smaland')}
-                    className="cursor-pointer transition-colors"
-                    fill={selectedRegion === 'smaland' ? '#FECC02' : '#059669'}
-                    stroke="#1E293B"
-                    strokeWidth="1.2"
-                    d="M148,305 L158,302 L155,332 L145,330 Z"
-                  />
-
-                  <circle cx="122" cy="242" r="4.5" fill="#FFFFFF" stroke="#040B16" strokeWidth="1.5" />
-                  <text x="130" y="245" fontSize="9" fontWeight="bold" fill="#FFFFFF">Stockholm</text>
-                  <circle cx="58" cy="312" r="4.5" fill="#040B16" stroke="#FFFFFF" strokeWidth="1.5" />
-                  <text x="8" y="315" fontSize="9" fontWeight="bold" fill="#FFFFFF">Gbg / Borås</text>
-                  <circle cx="98" cy="304" r="4" fill="#FECC02" stroke="#040B16" strokeWidth="1.2" />
-                  <text x="90" y="296" fontSize="8" fontWeight="bold" fill="#FFFFFF">Jönköping</text>
-                  <circle cx="68" cy="370" r="4.5" fill="#FECC02" stroke="#040B16" strokeWidth="1.5" />
-                  <text x="76" y="373" fontSize="9" fontWeight="bold" fill="#FFFFFF">Malmö</text>
-                  <circle cx="145" cy="110" r="4" fill="#FECC02" stroke="#040B16" strokeWidth="1.2" />
-                  <text x="96" y="106" fontSize="8" fontWeight="bold" fill="#FFFFFF">Umeå / Luleå</text>
-                </svg>
-              </div>
-
-              {activeRegion && (
-                <div className="sm:col-span-7 space-y-4">
-                  <div className="text-xs font-mono text-[#059669] font-semibold">
-                    {activeRegion.tag}
-                  </div>
-                  <h3 className="font-display text-2xl font-extrabold text-[#040B16]">
-                    {activeRegion.name}
-                  </h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">{activeRegion.desc}</p>
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-                    <div>
-                      <div className="text-xs font-mono text-slate-500">Andel av riket</div>
-                      <div className="font-display text-2xl font-extrabold text-[#006AA7] mt-0.5 tabular-nums">
-                        {activeRegion.share}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-mono text-slate-500">Snittorder (AOV)</div>
-                      <div className="font-display text-2xl font-extrabold text-[#040B16] mt-0.5 tabular-nums">
-                        {activeRegion.aov}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-600 pt-2 border-t border-slate-100">
-                    <strong className="text-[#040B16]">Nyckelhubbar:</strong> {activeRegion.hubs}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <SwedenLogisticsMap
+            regions={regions}
+            selectedRegion={selectedRegion}
+            onSelectRegion={setSelectedRegion}
+            logisticsProviders={logisticsProviders}
+            onNavigate={onNavigate}
+            onOpenDensitySection={() => {
+              setDeliverySubTab('coverage');
+              document
+                .getElementById('hemleverans-densitet')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+          />
 
           <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 flex flex-col justify-between space-y-6">
             <div>
@@ -570,7 +523,7 @@ export function MarknadView({
               </p>
             </div>
 
-            <div className="inline-flex bg-slate-100 p-1 rounded-lg text-xs font-semibold self-start shrink-0">
+            <div className="inline-flex flex-wrap bg-slate-100 p-1 rounded-lg text-xs font-semibold self-start shrink-0 gap-1">
               <button
                 type="button"
                 onClick={() => setEconTab('tiers')}
@@ -595,6 +548,18 @@ export function MarknadView({
               </button>
               <button
                 type="button"
+                onClick={() => setEconTab('parcels')}
+                className={`px-3.5 py-2 rounded-md transition-colors cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
+                  econTab === 'parcels'
+                    ? 'bg-[#040B16] text-white'
+                    : 'text-slate-600 hover:text-[#040B16]'
+                }`}
+              >
+                <Package className="w-3.5 h-3.5" />
+                Paketvolym & E-handlare
+              </button>
+              <button
+                type="button"
                 onClick={() => setEconTab('calculator')}
                 className={`px-3.5 py-2 rounded-md transition-colors cursor-pointer whitespace-nowrap ${
                   econTab === 'calculator'
@@ -607,9 +572,39 @@ export function MarknadView({
             </div>
           </div>
 
-          {/* Sub-view 1: Shipping Cost by Order Value Bracket */}
+          {/* Sub-view 1: Shipping Cost by Order Value Bracket (Volume-Adjusted) */}
           {econTab === 'tiers' && (
             <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="text-xs font-bold text-[#040B16]">
+                    Handlarens paketvolym styr frakttaxan (antal skickade paket / år)
+                  </div>
+                  <div className="text-[11px] text-slate-600">
+                    Välj årlig paketvolym nedan för att se hur fraktavtal, plock &amp; subvention ändras per ordernivå.
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {PARCEL_VOLUME_TIERS.map((vt) => {
+                    const active = vt.id === selectedVolumeTierId;
+                    return (
+                      <button
+                        key={vt.id}
+                        type="button"
+                        onClick={() => setSelectedVolumeTierId(vt.id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
+                          active
+                            ? 'bg-[#040B16] text-white border-[#040B16]'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
+                        }`}
+                      >
+                        {vt.rangeLabel.replace(' paket/år', ' pkt')}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
@@ -625,7 +620,10 @@ export function MarknadView({
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {shippingTiers.map((tier) => {
-                      const subsidy = Math.max(0, tier.merchantShippingCostSek - tier.customerShippingFeeSek);
+                      const adjustedMerchantCost = Math.round(
+                        tier.merchantShippingCostSek * activeVolumeTier.costMultiplier
+                      );
+                      const subsidy = Math.max(0, adjustedMerchantCost - tier.customerShippingFeeSek);
                       return (
                         <tr key={tier.id} className="hover:bg-slate-50">
                           <td className="py-3.5 pr-4">
@@ -640,7 +638,12 @@ export function MarknadView({
                             {tier.customerShippingFeeSek} SEK
                           </td>
                           <td className="py-3.5 px-4 text-right font-mono font-bold text-[#040B16] tabular-nums whitespace-nowrap">
-                            {tier.merchantShippingCostSek} SEK
+                            {adjustedMerchantCost} SEK
+                            {activeVolumeTier.id !== 'scaleup' && (
+                              <span className="block text-[10px] font-normal text-slate-500">
+                                Rikssnitt {tier.merchantShippingCostSek} SEK
+                              </span>
+                            )}
                           </td>
                           <td className="py-3.5 px-4 text-right font-mono font-semibold text-amber-700 tabular-nums whitespace-nowrap">
                             -{subsidy} SEK
@@ -660,13 +663,17 @@ export function MarknadView({
                   </tbody>
                 </table>
               </div>
-              <div className="text-xs text-slate-500 pt-2 border-t border-slate-100 flex flex-wrap justify-between gap-2">
+              <div className="text-xs text-slate-500 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
                 <span>
-                  Handlarens kostnad inkluderar transportavgift till ombud/paketskåp/dörr samt genomsnittlig emballage- och plockkostnad.
+                  Aktiv volymnivå: <strong className="text-[#040B16]">{activeVolumeTier.label}</strong> ({activeVolumeTier.rangeLabel}) · {activeVolumeTier.carrierAgreementNote}.
                 </span>
-                <span className="font-mono text-[#040B16] font-semibold tabular-nums">
-                  Svenskt rikssnitt: AOV 945 SEK · 2,4 artiklar/order
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setEconTab('parcels')}
+                  className="font-mono text-[#006AA7] font-bold hover:underline cursor-pointer"
+                >
+                  Se e-handlarnas antal paket/år &rarr;
+                </button>
               </div>
             </div>
           )}
@@ -727,23 +734,184 @@ export function MarknadView({
                 </table>
               </div>
               <div className="text-xs text-slate-500 pt-2 border-t border-slate-100">
-                Data avser svenska B2C-ehandlare (2026–2027). Alla siffror kan justeras i CMS Studio under Regioner & Data.
+                Data avser svenska B2C-ehandlare (2026–2027). Alla siffror kan justeras i CMS Studio under Annons, Data &amp; Inkorg.
               </div>
             </div>
           )}
 
-          {/* Sub-view 3: Interactive Order & Shipping Margin Calculator */}
+          {/* Sub-view 3: Parcel Volume Tiers & Per-Merchant Parcel Estimates */}
+          {econTab === 'parcels' && (
+            <div className="space-y-8">
+              {/* Part A: Swedish Carrier Volume Pricing Curve */}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="font-display font-bold text-lg text-[#040B16]">
+                      1. Volymtrappa: Antal paket per år avgör handlarens fraktkostnad
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Transportörernas nettotaxa och plockkostnad sjunker med upp till 41% när års-volymen går från uppstart till robotlager.
+                    </p>
+                  </div>
+                  <span className="font-mono text-xs font-bold text-[#059669] tabular-nums">
+                    Totalt i CMS-katalogen: {formatParcelCountCompact(totalCatalogParcels)}/år
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-500 font-mono">
+                        <th className="py-2.5 pr-4 font-semibold">Volymnivå (Paket / år)</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Transportavgift</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Plock &amp; emballage</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Total kostnad / paket</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Volymrabatt</th>
+                        <th className="py-2.5 pl-4 font-semibold">Typiskt transportupplägg</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {PARCEL_VOLUME_TIERS.map((vt) => (
+                        <tr key={vt.id} className="hover:bg-slate-50">
+                          <td className="py-3 pr-4">
+                            <div className="font-display font-bold text-sm text-[#040B16]">
+                              {vt.rangeLabel}
+                            </div>
+                            <div className="text-[11px] text-slate-500">
+                              {vt.label} · Omsättning {vt.typicalMerchantRevenue}
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-semibold text-slate-700 tabular-nums whitespace-nowrap">
+                            {vt.transportFeeSek} SEK
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                            {vt.pickPackPackagingSek} SEK
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-extrabold text-[#006AA7] tabular-nums whitespace-nowrap">
+                            {vt.totalPerParcelSek} SEK
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-bold text-[#059669] tabular-nums whitespace-nowrap">
+                            {vt.discountVsStarterPct === 0 ? 'Baspris' : `-${vt.discountVsStarterPct} %`}
+                          </td>
+                          <td className="py-3 pl-4 text-slate-600">{vt.carrierAgreementNote}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Part B: Estimated Parcel Volume & Freight Cost per Merchant */}
+              <div className="space-y-3 pt-4 border-t border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-display font-bold text-lg text-[#040B16]">
+                      2. Hur många paket skickar Sveriges e-handlare? ({merchantParcelRows.length} bolag)
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Beräknat via (Omsättning exkl. moms ÷ Bransch-AOV × 1,06 kollin/order) eller rapporterad volym i CMS. Klicka på Simulera för exakt kalkyl.
+                    </p>
+                  </div>
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={parcelMerchantSearch}
+                      onChange={(e) => setParcelMerchantSearch(e.target.value)}
+                      placeholder="Filtrera e-handlare eller bransch..."
+                      className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#006AA7]"
+                    />
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto max-h-[420px] overflow-y-auto border border-slate-200 rounded-xl">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead className="sticky top-0 bg-slate-50 z-10">
+                      <tr className="border-b border-slate-200 text-slate-500 font-mono">
+                        <th className="py-2.5 px-4 font-semibold">E-handlare</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Omsättning</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Est. paket / år</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Paket / dag</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Kostnad / paket</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Est. fraktbudget / år</th>
+                        <th className="py-2.5 px-4 font-semibold text-right">Kalkyl</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {filteredParcelRows.map(({ merchant, estimate }) => (
+                        <tr key={merchant.id} className="hover:bg-slate-50">
+                          <td className="py-3 px-4">
+                            <div className="font-display font-bold text-sm text-[#040B16]">
+                              {merchant.name}
+                            </div>
+                            <div className="text-[11px] text-slate-500">
+                              {merchant.category} · Snitt AOV {estimate.categoryAovSek} SEK
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-semibold text-slate-700 tabular-nums whitespace-nowrap">
+                            {merchant.revenue}
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-extrabold text-[#040B16] tabular-nums whitespace-nowrap">
+                            {formatParcelCountCompact(estimate.annualParcels)}
+                            <span className="block text-[10px] font-normal text-slate-500">
+                              {estimate.volumeTier.label}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                            {estimate.parcelsPerDay.toLocaleString('sv-SE')} / dag
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-bold text-[#006AA7] tabular-nums whitespace-nowrap">
+                            {estimate.estimatedCostPerParcelSek} SEK
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-bold text-[#059669] tabular-nums whitespace-nowrap">
+                            {formatSekCompact(estimate.estimatedAnnualFreightCostSek)}
+                          </td>
+                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const bench =
+                                  orderBenchmarks.find((b) => b.category === merchant.category) ||
+                                  orderBenchmarks[0];
+                                if (bench) {
+                                  setCalcCategoryId(bench.id);
+                                  setCalcOrderValue(bench.avgOrderValueSek);
+                                  setCalcFreeThreshold(bench.freeShippingThresholdSek);
+                                }
+                                setCalcSelectedMerchantId(merchant.id);
+                                setCalcAnnualParcels(estimate.annualParcels);
+                                setEconTab('calculator');
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-[#040B16] hover:text-white text-[#040B16] font-bold text-[11px] transition-colors cursor-pointer"
+                            >
+                              Simulera &rarr;
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-view 4: Interactive Order, Parcel Volume & Shipping Margin Calculator */}
           {econTab === 'calculator' && calcCategory && (() => {
+            const calcVolumeTier = getVolumeTierForCount(calcAnnualParcels);
+            const volumeAdjustedMerchantCostSek = Math.round(
+              calcCategory.merchantShippingCostSek * calcVolumeTier.costMultiplier
+            );
             const customerPaysShipping =
               calcOrderValue >= calcFreeThreshold ? 0 : calcBaseShippingFee;
             const grossMarginSek = Math.round(
               calcOrderValue * (calcCategory.grossMarginPct / 100)
             );
             const shippingNetCost =
-              calcCategory.merchantShippingCostSek - customerPaysShipping;
+              volumeAdjustedMerchantCostSek - customerPaysShipping;
             const expectedReturnHandlingCost = Math.round(
               (calcCategory.returnRatePct / 100) *
-                (calcCategory.merchantShippingCostSek + 38)
+                (volumeAdjustedMerchantCostSek + 38)
             );
             const contributionAfterLogistics =
               grossMarginSek - shippingNetCost - expectedReturnHandlingCost;
@@ -751,31 +919,142 @@ export function MarknadView({
               (contributionAfterLogistics / Math.max(1, calcOrderValue)) * 1000
             ) / 10;
 
+            const totalAnnualFreightCostSek =
+              calcAnnualParcels * volumeAdjustedMerchantCostSek;
+            const totalAnnualNetSubsidySek =
+              calcAnnualParcels * Math.max(0, shippingNetCost);
+            const nextTierIndex =
+              PARCEL_VOLUME_TIERS.findIndex((t) => t.id === calcVolumeTier.id) + 1;
+            const nextTier =
+              nextTierIndex < PARCEL_VOLUME_TIERS.length
+                ? PARCEL_VOLUME_TIERS[nextTierIndex]
+                : null;
+            const nextTierCostPerParcel = nextTier
+              ? Math.round(calcCategory.merchantShippingCostSek * nextTier.costMultiplier)
+              : volumeAdjustedMerchantCostSek;
+            const nextTierAnnualSavingsSek = nextTier
+              ? Math.max(
+                  0,
+                  calcAnnualParcels * (volumeAdjustedMerchantCostSek - nextTierCostPerParcel)
+                )
+              : 0;
+
             return (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 <div className="lg:col-span-6 space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Välj bransch (styr marginal, fraktkostnad & returgrad)
-                    </label>
-                    <select
-                      value={calcCategory.id}
-                      onChange={(e) => {
-                        const next = orderBenchmarks.find((b) => b.id === e.target.value);
-                        setCalcCategoryId(e.target.value);
-                        if (next) {
-                          setCalcOrderValue(next.avgOrderValueSek);
-                          setCalcFreeThreshold(next.freeShippingThresholdSek);
-                        }
-                      }}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
-                    >
-                      {orderBenchmarks.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.category} (Snitt AOV {b.avgOrderValueSek} SEK · {b.itemsPerOrder} st/order)
-                        </option>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Välj bransch (marginal &amp; returgrad)
+                      </label>
+                      <select
+                        value={calcCategory.id}
+                        onChange={(e) => {
+                          const next = orderBenchmarks.find((b) => b.id === e.target.value);
+                          setCalcCategoryId(e.target.value);
+                          setCalcSelectedMerchantId('');
+                          if (next) {
+                            setCalcOrderValue(next.avgOrderValueSek);
+                            setCalcFreeThreshold(next.freeShippingThresholdSek);
+                          }
+                        }}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                      >
+                        {orderBenchmarks.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.category} (AOV {b.avgOrderValueSek} SEK)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Hämta volym från e-handlare (valfritt)
+                      </label>
+                      <select
+                        value={calcSelectedMerchantId}
+                        onChange={(e) => {
+                          const mId = e.target.value;
+                          setCalcSelectedMerchantId(mId);
+                          const row = merchantParcelRows.find((r) => r.merchant.id === mId);
+                          if (row) {
+                            const bench = orderBenchmarks.find(
+                              (b) => b.category === row.merchant.category
+                            );
+                            if (bench) {
+                              setCalcCategoryId(bench.id);
+                              setCalcOrderValue(bench.avgOrderValueSek);
+                              setCalcFreeThreshold(bench.freeShippingThresholdSek);
+                            }
+                            setCalcAnnualParcels(row.estimate.annualParcels);
+                          }
+                        }}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-white"
+                      >
+                        <option value="">Egen paketvolym...</option>
+                        {merchantParcelRows.map(({ merchant, estimate }) => (
+                          <option key={merchant.id} value={merchant.id}>
+                            {merchant.name} ({formatParcelCountCompact(estimate.annualParcels)}/år)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Annual Parcel Volume Control */}
+                  <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200 space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-700">
+                      <span>Antal skickade paket per år (styr fraktavtalet)</span>
+                      <span className="font-mono text-[#006AA7] font-bold tabular-nums">
+                        {calcAnnualParcels.toLocaleString('sv-SE')} pkt/år · {calcVolumeTier.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min={1000}
+                        max={1000000}
+                        step={5000}
+                        value={Math.min(1000000, calcAnnualParcels)}
+                        onChange={(e) => {
+                          setCalcSelectedMerchantId('');
+                          setCalcAnnualParcels(Number(e.target.value));
+                        }}
+                        className="flex-1 accent-[#006AA7]"
+                      />
+                      <input
+                        type="number"
+                        min={100}
+                        max={25000000}
+                        step={1000}
+                        value={calcAnnualParcels}
+                        onChange={(e) => {
+                          setCalcSelectedMerchantId('');
+                          setCalcAnnualParcels(Math.max(100, Number(e.target.value) || 1000));
+                        }}
+                        className="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono font-bold text-right"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[3000, 15000, 50000, 250000, 750000].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => {
+                            setCalcSelectedMerchantId('');
+                            setCalcAnnualParcels(preset);
+                          }}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold cursor-pointer border ${
+                            calcAnnualParcels === preset
+                              ? 'bg-[#040B16] text-white border-[#040B16]'
+                              : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
+                          }`}
+                        >
+                          {preset.toLocaleString('sv-SE')} pkt
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
                   <div>
@@ -837,14 +1116,18 @@ export function MarknadView({
                     Branschbenchmark för <strong>{calcCategory.category}</strong>: Bruttomarginal{' '}
                     <span className="font-mono tabular-nums">{calcCategory.grossMarginPct}%</span> ·{' '}
                     Returgrad <span className="font-mono tabular-nums">{calcCategory.returnRatePct}%</span> ·{' '}
-                    Handlarfrakt <span className="font-mono tabular-nums">{calcCategory.merchantShippingCostSek} SEK</span>
+                    Volymjusterad kostnad/pkt{' '}
+                    <span className="font-mono tabular-nums font-bold text-[#040B16]">
+                      {volumeAdjustedMerchantCostSek} SEK
+                    </span>{' '}
+                    (rikssnitt {calcCategory.merchantShippingCostSek} SEK).
                   </div>
                 </div>
 
                 <div className="lg:col-span-6 bg-[#040B16] text-white rounded-2xl p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-semibold text-[#FECC02]">
-                      Simulerad orderekonomi
+                      Simulerad order- &amp; årsekonomi
                     </span>
                     <span className="text-xs font-mono text-slate-300 tabular-nums">
                       {customerPaysShipping === 0
@@ -861,7 +1144,7 @@ export function MarknadView({
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-slate-400">Nettobidrag efter frakt & retur</div>
+                      <div className="text-xs text-slate-400">Nettobidrag efter frakt &amp; retur</div>
                       <div
                         className={`font-display text-2xl font-extrabold tabular-nums ${
                           contributionAfterLogistics > 0 ? 'text-[#10B981]' : 'text-red-400'
@@ -874,7 +1157,15 @@ export function MarknadView({
 
                   <div className="pt-3 border-t border-white/10 space-y-2 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-300">Handlarens fraktsubvention</span>
+                      <span className="text-slate-300">
+                        Handlarens paketkostnad ({calcVolumeTier.label})
+                      </span>
+                      <span className="font-mono tabular-nums text-white font-bold">
+                        {volumeAdjustedMerchantCostSek} SEK / paket
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-300">Handlarens fraktsubvention / order</span>
                       <span className="font-mono tabular-nums text-amber-300">
                         {shippingNetCost > 0 ? `-${shippingNetCost} SEK` : `+${Math.abs(shippingNetCost)} SEK`}
                       </span>
@@ -894,28 +1185,71 @@ export function MarknadView({
                       </span>
                     </div>
                   </div>
+
+                  <div className="pt-3 border-t border-white/10 space-y-2 text-xs">
+                    <div className="text-[11px] font-mono text-[#FECC02] font-semibold">
+                      Årsekonomi vid {formatParcelCountCompact(calcAnnualParcels)}/år
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 bg-white/5 border border-white/10 rounded-xl p-3.5">
+                      <div>
+                        <div className="text-[11px] text-slate-400">Total frakt- &amp; plockkostnad</div>
+                        <div className="font-display text-lg font-extrabold text-white tabular-nums mt-0.5">
+                          {formatSekCompact(totalAnnualFreightCostSek)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-slate-400">Total fraktsubvention / år</div>
+                        <div className="font-display text-lg font-extrabold text-amber-300 tabular-nums mt-0.5">
+                          {formatSekCompact(totalAnnualNetSubsidySek)}
+                        </div>
+                      </div>
+                    </div>
+                    {nextTier && nextTierAnnualSavingsSek > 0 && (
+                      <div className="text-[11px] text-[#10B981] font-medium">
+                        Nästa volymtrappa ({nextTier.rangeLabel}) sänker kostnaden till {nextTierCostPerParcel} SEK/paket – motsvarar{' '}
+                        <strong className="font-mono tabular-nums">
+                          {formatSekCompact(nextTierAnnualSavingsSek)}/år
+                        </strong>{' '}
+                        i lägre logistikkostnad.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })()}
         </div>
 
-        {/* Delivery Timing, Reception Preferences & Parcel Size/Weight */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
+        {/* Delivery Timing, Reception Preferences, Density & Carrier Coverage */}
+        <div
+          id="hemleverans-densitet"
+          className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 scroll-mt-20"
+        >
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100">
             <div>
               <div className="text-xs font-mono font-semibold text-[#006AA7]">
-                Leveranspreferenser & Paketprofil · {deliveryStats.updatedNote}
+                Leveranspreferenser, Densitet &amp; Täckning · {deliveryStats.updatedNote}
               </div>
               <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#040B16] mt-1">
-                När vill kunden ha paketet, hur vill man ta emot det & snittvikt?
+                Befolkningsdensitet, paketskåpsdensitet &amp; hemleveranstäckning
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-3xl">
-                Data över svenskarnas önskade leveranstider, val mellan paketskåp, ombud och dörrleverans samt paketens faktiska snittstorlek och vikt per order.
+                Jämför svensk befolkningstäthet, utbyggnaden av paketskåp per 10 000 invånare och hushållstäckning för hemleverans – både samlat och per transportör.
               </p>
             </div>
 
-            <div className="inline-flex bg-slate-100 p-1 rounded-lg text-xs font-semibold self-start shrink-0">
+            <div className="inline-flex flex-wrap bg-slate-100 p-1 rounded-lg text-xs font-semibold self-start shrink-0 gap-1">
+              <button
+                type="button"
+                onClick={() => setDeliverySubTab('coverage')}
+                className={`px-3.5 py-2 rounded-md transition-colors cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
+                  deliverySubTab === 'coverage'
+                    ? 'bg-[#040B16] text-white'
+                    : 'text-slate-600 hover:text-[#040B16]'
+                }`}
+              >
+                Skåpdensitet &amp; Hemleverans
+              </button>
               <button
                 type="button"
                 onClick={() => setDeliverySubTab('timing')}
@@ -926,7 +1260,7 @@ export function MarknadView({
                 }`}
               >
                 <Clock className="w-3.5 h-3.5" />
-                Tidpunkt & Mottagning
+                Tidpunkt &amp; Mottagning
               </button>
               <button
                 type="button"
@@ -938,7 +1272,7 @@ export function MarknadView({
                 }`}
               >
                 <Package className="w-3.5 h-3.5" />
-                Storlek & Paketvikt
+                Storlek &amp; Paketvikt
               </button>
             </div>
           </div>
@@ -946,36 +1280,244 @@ export function MarknadView({
           {/* 4 Headline KPI Strip */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200">
-              <div className="text-[11px] font-mono text-slate-500">Vanligaste hemleveranstid</div>
+              <div className="text-[11px] font-mono text-slate-500">Befolkningsdensitet (SCB)</div>
               <div className="font-display text-lg sm:text-xl font-extrabold text-[#040B16] mt-1 tabular-nums">
-                {deliveryStats.homeDeliveryPreferredSlot}
+                {(deliveryStats.nationalPopulationDensityKm2 ?? 25.9).toFixed(1).replace('.', ',')} inv/km²
               </div>
-              <div className="text-xs text-slate-600 mt-0.5">54% föredrar kväll efter arbetstid</div>
+              <div className="text-xs text-slate-600 mt-0.5">348 i Stockholms län · 2,6 i Norrbotten</div>
             </div>
             <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200">
-              <div className="text-[11px] font-mono text-slate-500">"Lämna utanför dörren"</div>
-              <div className="font-display text-lg sm:text-xl font-extrabold text-[#059669] mt-1 tabular-nums">
-                {deliveryStats.leaveOutsideDoorSharePct} %
-              </div>
-              <div className="text-xs text-slate-600 mt-0.5">Av alla hemleveranser sker utan kvittens</div>
-            </div>
-            <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200">
-              <div className="text-[11px] font-mono text-slate-500">Snittvikt / Medianvikt</div>
+              <div className="text-[11px] font-mono text-slate-500">Paketskåpsdensitet i Sverige</div>
               <div className="font-display text-lg sm:text-xl font-extrabold text-[#006AA7] mt-1 tabular-nums">
-                {deliveryStats.avgWeightKg.toFixed(1).replace('.', ',')} kg · Median {deliveryStats.medianWeightKg.toFixed(1).replace('.', ',')} kg
+                {(deliveryStats.lockersPer10kNational ?? 10.2).toFixed(1).replace('.', ',')} skåp / 10k inv
               </div>
-              <div className="text-xs text-slate-600 mt-0.5">{deliveryStats.varubrevOrSmallBoxSharePct}% ryms i Varubrev / S-fack</div>
+              <div className="text-xs text-slate-600 mt-0.5 tabular-nums">
+                {(deliveryStats.totalParcelLockerStations ?? 10850).toLocaleString('sv-SE')}+ stationer ·{' '}
+                {deliveryStats.combinedLockerReachPct ?? 86}% tätortsnärhet
+              </div>
             </div>
             <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200">
-              <div className="text-[11px] font-mono text-slate-500">Vanligaste kartongmått</div>
-              <div className="font-display text-lg sm:text-xl font-extrabold text-[#040B16] mt-1 tabular-nums">
-                {deliveryStats.mostCommonDimensionsCm}
+              <div className="text-[11px] font-mono text-slate-500">Samlad hemleveranstäckning</div>
+              <div className="font-display text-lg sm:text-xl font-extrabold text-[#059669] mt-1 tabular-nums">
+                {deliveryStats.combinedAnyHomeDeliveryPct ?? 100} % av hushåll
               </div>
-              <div className="text-xs text-slate-600 mt-0.5">M-fack i Instabox / PostNord / Budbee</div>
+              <div className="text-xs text-slate-600 mt-0.5">
+                {deliveryStats.combinedEveningHomeDeliveryPct ?? 76}% nås även av kväll/express (17–22)
+              </div>
+            </div>
+            <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200">
+              <div className="text-[11px] font-mono text-slate-500">Snittvikt &amp; Dörrlämning</div>
+              <div className="font-display text-lg sm:text-xl font-extrabold text-[#040B16] mt-1 tabular-nums">
+                {deliveryStats.avgWeightKg.toFixed(1).replace('.', ',')} kg · {deliveryStats.leaveOutsideDoorSharePct}% utan kvittens
+              </div>
+              <div className="text-xs text-slate-600 mt-0.5">Standardmått {deliveryStats.mostCommonDimensionsCm}</div>
             </div>
           </div>
 
-          {deliverySubTab === 'timing' ? (
+          {deliverySubTab === 'coverage' ? (
+            <div className="space-y-8">
+              {/* 1. Per-Carrier & Combined Home Delivery Coverage Table */}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="font-display font-bold text-lg text-[#040B16]">
+                      1. Hemleveranstäckning &amp; skåpnätverk per transportör (samt samlat)
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Kombinerar en e-handlare en rikstäckande aktör (PostNord, Early Bird eller Bring) med en nischad kvällsdistributör (Budbee, Airmee) nås 100% av landets hushåll.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('partners', 'Transportör')}
+                    className="text-xs font-bold text-[#006AA7] hover:underline cursor-pointer"
+                  >
+                    Jämför transportörsavtal &rarr;
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-500 font-mono">
+                        <th className="py-3 pr-4 font-semibold">Transportör</th>
+                        <th className="py-3 px-3 font-semibold">Hemleverans (Hushåll)</th>
+                        <th className="py-3 px-3 font-semibold">Kväll / Tidig morgon</th>
+                        <th className="py-3 px-3 font-semibold text-right">Paketskåp</th>
+                        <th className="py-3 px-3 font-semibold text-right">Ombud</th>
+                        <th className="py-3 pl-4 font-semibold">Leveranstid &amp; Glesbygd</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {(deliveryStats.carrierCoverage || []).map((cc) => (
+                        <tr key={cc.id} className="hover:bg-slate-50 align-top">
+                          <td className="py-3.5 pr-4 min-w-[200px]">
+                            <div className="font-display font-bold text-sm text-[#040B16]">
+                              {cc.carrierName}
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-0.5">{cc.boxNetworkNote}</div>
+                          </td>
+                          <td className="py-3.5 px-3 min-w-[140px]">
+                            <div className="flex items-center justify-between font-mono font-bold text-[#059669] tabular-nums mb-1">
+                              <span>{cc.homeDeliveryHouseholdPct} %</span>
+                            </div>
+                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[#059669] rounded-full"
+                                style={{ width: `${cc.homeDeliveryHouseholdPct}%` }}
+                              />
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-3 min-w-[140px]">
+                            <div className="flex items-center justify-between font-mono font-bold text-[#006AA7] tabular-nums mb-1">
+                              <span>{cc.eveningOrExpressPct} %</span>
+                            </div>
+                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[#006AA7] rounded-full"
+                                style={{ width: `${cc.eveningOrExpressPct}%` }}
+                              />
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-3 text-right font-mono font-semibold text-[#040B16] tabular-nums whitespace-nowrap">
+                            {cc.parcelLockersCount.toLocaleString('sv-SE')} st
+                          </td>
+                          <td className="py-3.5 px-3 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                            {cc.pickupAgentsCount > 0
+                              ? `${cc.pickupAgentsCount.toLocaleString('sv-SE')} st`
+                              : '–'}
+                          </td>
+                          <td className="py-3.5 pl-4 min-w-[210px]">
+                            <div className="font-semibold text-[#040B16]">{cc.timeWindow}</div>
+                            <div className="text-[11px] text-slate-500 mt-0.5">{cc.ruralCoverage}</div>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="bg-[#040B16] text-white font-semibold">
+                        <td className="py-3.5 px-4 rounded-bl-xl">
+                          Samlat svenskt nätverk (Multi-carrier i checkout)
+                        </td>
+                        <td className="py-3.5 px-3 font-mono font-extrabold text-[#FECC02] tabular-nums">
+                          100 % av alla hushåll
+                        </td>
+                        <td className="py-3.5 px-3 font-mono font-bold text-[#10B981] tabular-nums">
+                          76 % kväll · 97 % morgon
+                        </td>
+                        <td className="py-3.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
+                          10 850+ stationer
+                        </td>
+                        <td className="py-3.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
+                          7 200+ ombud
+                        </td>
+                        <td className="py-3.5 px-4 text-[11px] text-slate-300 rounded-br-xl">
+                          Optimal mix: 1 rikstäckande + 1 kvälls-/boxspecialist via TA-system
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 2. Locker Networks Breakdown + Regional Density Correlation */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-6 p-5 rounded-2xl border border-slate-200 space-y-4">
+                  <div>
+                    <div className="text-xs font-mono font-semibold text-[#006AA7]">
+                      Paketskåpsdensitet i Sverige
+                    </div>
+                    <h3 className="font-display font-bold text-lg text-[#040B16]">
+                      2. Största paketskåpsnätverken (Slutna vs Öppna)
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    {(deliveryStats.lockerNetworks || []).map((ln) => (
+                      <div key={ln.id} className="p-3.5 rounded-xl bg-[#F4F6F9] border border-slate-200 space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-display font-bold text-sm text-[#040B16]">
+                            {ln.operator}
+                          </span>
+                          <span className="font-mono font-extrabold text-xs text-[#006AA7] tabular-nums shrink-0">
+                            {ln.stationsSweden.toLocaleString('sv-SE')} skåp · {ln.estimatedCompartments}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
+                          <span>{ln.networkType}</span>
+                          <span className="font-semibold text-[#059669] tabular-nums">
+                            Når ~{ln.populationReachPct}% av befolkningen
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed">{ln.highlight}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="lg:col-span-6 p-5 rounded-2xl border border-slate-200 space-y-4">
+                  <div>
+                    <div className="text-xs font-mono font-semibold text-[#059669]">
+                      Regional korrelation (SCB × Logistik)
+                    </div>
+                    <h3 className="font-display font-bold text-lg text-[#040B16]">
+                      3. Befolkningstäthet vs Skåpdensitet &amp; Hemleverans
+                    </h3>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-500 font-mono">
+                          <th className="py-2.5 pr-3 font-semibold">Region</th>
+                          <th className="py-2.5 px-2.5 font-semibold text-right">Inv / km²</th>
+                          <th className="py-2.5 px-2.5 font-semibold text-right">Skåp / 10k inv</th>
+                          <th className="py-2.5 px-2.5 font-semibold text-right">Skåp / 100 km²</th>
+                          <th className="py-2.5 pl-2.5 font-semibold text-right">Kvällshemlev.</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {(['syd', 'vast', 'svealand', 'smaland', 'norrland'] as const).map((rKey) => {
+                          const reg = regions[rKey];
+                          if (!reg) return null;
+                          return (
+                            <tr
+                              key={rKey}
+                              onClick={() => setSelectedRegion(rKey)}
+                              className="hover:bg-slate-50 cursor-pointer"
+                            >
+                              <td className="py-3 pr-3">
+                                <div className="font-bold text-[#040B16]">
+                                  {reg.name.split(' (')[0]}
+                                </div>
+                                <div className="text-[11px] text-slate-500">
+                                  {reg.populationLabel} · {reg.parcelLockersTotal?.toLocaleString('sv-SE')} skåp
+                                </div>
+                              </td>
+                              <td className="py-3 px-2.5 text-right font-mono font-bold text-[#040B16] tabular-nums whitespace-nowrap">
+                                {(reg.populationDensityPerKm2 ?? 0).toFixed(1).replace('.', ',')}
+                              </td>
+                              <td className="py-3 px-2.5 text-right font-mono font-bold text-[#006AA7] tabular-nums whitespace-nowrap">
+                                {(reg.lockersPer10kResidents ?? 0).toFixed(1).replace('.', ',')}
+                              </td>
+                              <td className="py-3 px-2.5 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                                {(reg.lockersPer100Km2 ?? 0).toFixed(1).replace('.', ',')}
+                              </td>
+                              <td className="py-3 pl-2.5 text-right font-mono font-extrabold text-[#059669] tabular-nums whitespace-nowrap">
+                                {reg.homeDeliveryEveningPct ?? 0} %
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p className="text-xs text-slate-600 leading-relaxed pt-2 border-t border-slate-100">
+                    I tätbefolkade regioner (Sydsverige, Göteborg/Borås och Mälardalen) driver hög befolkningsdensitet upp både antalet paketskåp per ytenhet och konkurrensen mellan kvällshemleverantörer (81–89% hushållstäckning). I Norrland kompenserar PostNords lantbrevbäring och Early Birds tidningsnät med 97–100% grundtäckning.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : deliverySubTab === 'timing' ? (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Time Windows */}
               <div className="lg:col-span-6 space-y-4">

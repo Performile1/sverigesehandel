@@ -36,6 +36,7 @@ export function EntityEditorModal({
   const [mReviews, setMReviews] = useState('10 000+');
   const [mRevenue, setMRevenue] = useState('100–500M SEK');
   const [mRevenueNumericM, setMRevenueNumericM] = useState('');
+  const [mAnnualPackages, setMAnnualPackages] = useState('');
   const [mYoyGrowth, setMYoyGrowth] = useState('+10% YoY');
   const [mYoyGrowthPct, setMYoyGrowthPct] = useState('10');
   const [mRevenueYear, setMRevenueYear] = useState('2025');
@@ -75,6 +76,9 @@ export function EntityEditorModal({
       setMRevenue(merchant?.revenue ?? '100–500M SEK');
       setMRevenueNumericM(
         typeof merchant?.revenueNumericM === 'number' ? String(merchant.revenueNumericM) : ''
+      );
+      setMAnnualPackages(
+        typeof merchant?.annualPackages === 'number' ? String(merchant.annualPackages) : ''
       );
       setMYoyGrowth(merchant?.yoyGrowth ?? '+10% YoY');
       setMYoyGrowthPct(
@@ -165,6 +169,7 @@ export function EntityEditorModal({
     try {
       if (mode === 'merchant') {
         const parsedRevM = Number(mRevenueNumericM);
+        const parsedPackages = Number(mAnnualPackages);
         const parsedGrowth = Number(mYoyGrowthPct);
         await api.upsertMerchant({
           id: merchant?.id,
@@ -177,6 +182,7 @@ export function EntityEditorModal({
           reviews: mReviews.trim(),
           revenue: mRevenue.trim(),
           revenueNumericM: Number.isFinite(parsedRevM) && parsedRevM > 0 ? parsedRevM : undefined,
+          annualPackages: Number.isFinite(parsedPackages) && parsedPackages > 0 ? parsedPackages : undefined,
           yoyGrowth: mYoyGrowth.trim() || undefined,
           yoyGrowthPct: Number.isFinite(parsedGrowth) ? parsedGrowth : undefined,
           revenueYear: mRevenueYear.trim() || undefined,
@@ -387,7 +393,7 @@ export function EntityEditorModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Tillväxt (YoY)
@@ -402,13 +408,25 @@ export function EntityEditorModal({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Omsättning (MSEK siffra)
+                    Omsättning (MSEK)
                   </label>
                   <input
                     type="number"
                     value={mRevenueNumericM}
                     onChange={(e) => setMRevenueNumericM(e.target.value)}
                     placeholder="t.ex. 3400"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Paket / år (valfritt)
+                  </label>
+                  <input
+                    type="number"
+                    value={mAnnualPackages}
+                    onChange={(e) => setMAnnualPackages(e.target.value)}
+                    placeholder="Auto via AOV"
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-mono"
                   />
                 </div>

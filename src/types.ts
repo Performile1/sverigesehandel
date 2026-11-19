@@ -36,6 +36,7 @@ export interface Merchant {
   reviews: string;
   revenue: string;
   revenueNumericM?: number;
+  annualPackages?: number;
   yoyGrowth?: string;
   yoyGrowthPct?: number;
   revenueYear?: string;
@@ -75,6 +76,30 @@ export interface TechPartner {
   desc: string;
   status: PublishStatus;
   sourceUrl?: string;
+  updatedAt: string;
+}
+
+export type LogisticsRoleType = '3PL' | '4PL' | '3PL & 4PL';
+
+export interface LogisticsProvider {
+  id: string;
+  name: string;
+  domain: string;
+  logisticsType: LogisticsRoleType;
+  hqCity: string;
+  warehouseCities: string[];
+  region: 'vast' | 'svealand' | 'smaland' | 'syd' | 'norrland' | string;
+  warehouseSqm: string;
+  automation: string;
+  wmsPlatform: string;
+  minOrderVolume: string;
+  cutoffTime: string;
+  integrations: string[];
+  specialties: string[];
+  notableClients: string[];
+  pricingModel: string;
+  desc: string;
+  status: PublishStatus;
   updatedAt: string;
 }
 
@@ -145,6 +170,13 @@ export interface RegionMetric {
   aov: string;
   hubs: string;
   desc: string;
+  populationLabel?: string;
+  populationDensityPerKm2?: number;
+  parcelLockersTotal?: number;
+  lockersPer10kResidents?: number;
+  lockersPer100Km2?: number;
+  homeDeliveryTotalPct?: number;
+  homeDeliveryEveningPct?: number;
 }
 
 export interface CategoryOrderBenchmark {
@@ -199,6 +231,28 @@ export interface ParcelSizeTier {
   dominantCarrierOption: string;
 }
 
+export interface CarrierDeliveryCoverage {
+  id: string;
+  carrierName: string;
+  homeDeliveryHouseholdPct: number;
+  eveningOrExpressPct: number;
+  parcelLockersCount: number;
+  pickupAgentsCount: number;
+  timeWindow: string;
+  ruralCoverage: string;
+  boxNetworkNote: string;
+}
+
+export interface LockerNetworkStat {
+  id: string;
+  operator: string;
+  stationsSweden: number;
+  estimatedCompartments: string;
+  networkType: 'Eget slutet nätverk' | 'Öppet transportörsoberoende';
+  populationReachPct: number;
+  highlight: string;
+}
+
 export interface DeliveryStatsData {
   avgWeightKg: number;
   medianWeightKg: number;
@@ -206,9 +260,17 @@ export interface DeliveryStatsData {
   varubrevOrSmallBoxSharePct: number;
   leaveOutsideDoorSharePct: number;
   homeDeliveryPreferredSlot: string;
+  nationalPopulationDensityKm2?: number;
+  totalParcelLockerStations?: number;
+  lockersPer10kNational?: number;
+  combinedAnyHomeDeliveryPct?: number;
+  combinedEveningHomeDeliveryPct?: number;
+  combinedLockerReachPct?: number;
   timeWindows: DeliveryTimeWindow[];
   receptionChannels: DeliveryReceptionChannel[];
   parcelSizeTiers: ParcelSizeTier[];
+  carrierCoverage?: CarrierDeliveryCoverage[];
+  lockerNetworks?: LockerNetworkStat[];
   updatedNote: string;
 }
 
@@ -328,6 +390,7 @@ export interface ContactMessage {
 export interface CMSStore {
   merchants: Merchant[];
   partners: TechPartner[];
+  logisticsProviders: LogisticsProvider[];
   events: EcommerceEvent[];
   sessions: DCSession[];
   jobs: EcommerceJob[];
@@ -362,6 +425,7 @@ export interface DiscoveredMerchantCandidate {
   reviews: string;
   revenue: string;
   revenueNumericM?: number;
+  annualPackages?: number;
   yoyGrowth?: string;
   yoyGrowthPct?: number;
   revenueYear?: string;
@@ -420,6 +484,7 @@ export type PortalTab =
   | 'historia'
   | 'ehandlare'
   | 'partners'
+  | '3pl'
   | 'jobb'
   | 'community'
   | 'kontakt';

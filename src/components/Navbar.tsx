@@ -15,6 +15,7 @@ const NAV_ITEMS: Array<{ id: PortalTab; label: string }> = [
   { id: 'event', label: 'Event' },
   { id: 'ehandlare', label: 'E-handlare' },
   { id: 'partners', label: 'Partners' },
+  { id: '3pl', label: '3PL & 4PL' },
   { id: 'jobb', label: 'Jobb' },
   { id: 'community', label: 'Community' },
   { id: 'kontakt', label: 'Kontakt' },
@@ -42,7 +43,7 @@ export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarPro
           sverigesehandel<span className="text-[#FECC02]">.se</span>
         </a>
 
-        <nav className="hidden lg:flex items-center gap-5 text-sm font-medium">
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-5 text-sm font-medium">
           {NAV_ITEMS.map((item) => {
             const isActive =
               mode === 'portal' &&

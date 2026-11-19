@@ -1853,6 +1853,688 @@
       "updatedAt": "2026-11-18T10:00:00.000Z"
     }
   ],
+  "logisticsProviders": [
+    {
+      "id": "lp-postnord-tpl",
+      "name": "PostNord TPL",
+      "domain": "postnord.se/foretagslosningar/tredjepartslogistik",
+      "logisticsType": "3PL & 4PL",
+      "hqCity": "Norrköping / Stockholm",
+      "warehouseCities": [
+        "Norrköping",
+        "Ljungby",
+        "Helsingborg",
+        "Rosersberg",
+        "Göteborg"
+      ],
+      "region": "smaland",
+      "warehouseSqm": "600 000+ m² (Norden)",
+      "automation": "AutoStore · Sortermaskiner · Högautomation",
+      "wmsPlatform": "Astro WMS / SAP EWM",
+      "minOrderVolume": "Från 5 000 ordrar/mån",
+      "cutoffTime": "18:00 (20:00 via hubb)",
+      "integrations": [
+        "Centra",
+        "Norce",
+        "SAP",
+        "nShift",
+        "Ingrid"
+      ],
+      "specialties": [
+        "Storskalig retail & B2C",
+        "Tempererat/Apotek",
+        "Direktkoppling terminal",
+        "Omni/Butikspåfyllning"
+      ],
+      "notableClients": [
+        "Elgiganten",
+        "Apoteket",
+        "Stadium",
+        "Kronans Apotek"
+      ],
+      "pricingModel": "Skräddarsytt avtal (plock/orderrad + pall/hyllplats)",
+      "desc": "Nordens största aktör inom tredjepartslogistik med strategiskt belägna e-handelslager direkt intill PostNords paketterminaler för sena stopptider.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-shelfless",
+      "name": "Bring Shelfless",
+      "domain": "shelfless.se",
+      "logisticsType": "3PL",
+      "hqCity": "Stockholm / Rosersberg",
+      "warehouseCities": [
+        "Rosersberg",
+        "Jönköping",
+        "Oslo"
+      ],
+      "region": "svealand",
+      "warehouseSqm": "85 000+ m² (AutoStore)",
+      "automation": "AutoStore · Automatiserad packning",
+      "wmsPlatform": "Ongoing WMS · Shelfless Portal",
+      "minOrderVolume": "Från 250 ordrar/mån",
+      "cutoffTime": "17:00 samma dag",
+      "integrations": [
+        "Shopify Plus",
+        "Centra",
+        "WooCommerce",
+        "Magento",
+        "nShift",
+        "Ingrid"
+      ],
+      "specialties": [
+        "Transportoberoende 3PL",
+        "Snabb onboarding (2–4 v)",
+        "Norge-export (VOEC)",
+        "Smidig returhantering"
+      ],
+      "notableClients": [
+        "Nordiska D2C-varumärken",
+        "Mode & Skönhet SME/Scaleup"
+      ],
+      "pricingModel": "Transparent transaktionsmodell per plock, pack & pallplats",
+      "desc": "Brings robotiserade och transportoberoende e-handelsfulfilment för snabbväxande varumärken – välj fritt mellan Bring, PostNord, Instabox, Budbee och DHL.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-aditro",
+      "name": "Aditro Logistics (Posti)",
+      "domain": "aditrologistics.com",
+      "logisticsType": "3PL & 4PL",
+      "hqCity": "Jönköping",
+      "warehouseCities": [
+        "Jönköping",
+        "Borås",
+        "Arlanda",
+        "Nykvarn"
+      ],
+      "region": "smaland",
+      "warehouseSqm": "280 000+ m²",
+      "automation": "AutoStore · Shuttle-system · AGV",
+      "wmsPlatform": "Astro WMS / Ongoing WMS",
+      "minOrderVolume": "Från 2 500 ordrar/mån",
+      "cutoffTime": "17:30 samma dag",
+      "integrations": [
+        "Centra",
+        "Norce",
+        "Litium",
+        "SAP",
+        "nShift"
+      ],
+      "specialties": [
+        "Mode & Outdoor",
+        "B2C + B2B-distribution",
+        "E-handelsreturer",
+        "Logistikbemanning"
+      ],
+      "notableClients": [
+        "Sport-, mode- och detaljhandelskedjor i Norden"
+      ],
+      "pricingModel": "Volymavtal baserat på orderrader, returflöde & lageryta",
+      "desc": "En av Nordens ledande 3PL-aktörer (del av Posti-koncernen) med högautomatiserade e-handelsnav i Jönköping, Borås och Mälardalen.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-dreamlogistics",
+      "name": "DreamLogistics",
+      "domain": "dreamlogistics.se",
+      "logisticsType": "3PL",
+      "hqCity": "Habo / Jönköping",
+      "warehouseCities": [
+        "Habo (Jönköping)",
+        "Borås",
+        "Ängelholm",
+        "Rosersberg"
+      ],
+      "region": "smaland",
+      "warehouseSqm": "110 000+ m²",
+      "automation": "AutoStore · AMR-robotar · Kartongvikare",
+      "wmsPlatform": "Ongoing WMS",
+      "minOrderVolume": "Från 500 ordrar/mån",
+      "cutoffTime": "16:30–18:00",
+      "integrations": [
+        "Shopify Plus",
+        "Centra",
+        "Norce",
+        "Litium",
+        "WooCommerce",
+        "Ingrid",
+        "nShift"
+      ],
+      "specialties": [
+        "Renodlad e-handelsfulfilment",
+        "Snabb skalning vid Black Week",
+        "Skönhet, mode & hälsa",
+        "Multi-site i Sverige"
+      ],
+      "notableClients": [
+        "Stronger",
+        "Chiquelle",
+        "Svenska D2C-raketer"
+      ],
+      "pricingModel": "Rörlig order- & kolliavgift + flexibel lageryta",
+      "desc": "Svensk e-handelsspecialiserad 3PL-partner med fyra strategiska lagerorter i Sverige, hög robotisering och färdiga kopplingar till moderna SaaS-plattformar.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-nowaste",
+      "name": "Nowaste Logistics",
+      "domain": "nowaste.se",
+      "logisticsType": "3PL",
+      "hqCity": "Helsingborg",
+      "warehouseCities": [
+        "Helsingborg",
+        "Malmö"
+      ],
+      "region": "syd",
+      "warehouseSqm": "130 000+ m²",
+      "automation": "AutoStore · Element Logic · Pick-by-Voice",
+      "wmsPlatform": "Astro WMS",
+      "minOrderVolume": "Från 3 000 ordrar/mån",
+      "cutoffTime": "17:00 samma dag",
+      "integrations": [
+        "Norce",
+        "SAP",
+        "Microsoft Dynamics",
+        "nShift"
+      ],
+      "specialties": [
+        "Högautomation & AI-styrning",
+        "Livsmedel & tempererat",
+        "Hemelektronik & hem/trädgård",
+        "Stora B2C/B2B-volymer"
+      ],
+      "notableClients": [
+        "Nordiska retailkedjor",
+        "E-handlare i Öresundsregionen"
+      ],
+      "pricingModel": "Skräddarsytt TPL-avtal per plocklinje & pallplats",
+      "desc": "Teknikintensiv skånsk 3PL-aktör i Helsingborg känd för Nordens mest automatiserade AutoStore-installationer och datadriven lagerstyrning.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-speedgroup",
+      "name": "Speed Group",
+      "domain": "speedgroup.se",
+      "logisticsType": "3PL",
+      "hqCity": "Borås",
+      "warehouseCities": [
+        "Borås (Viared)",
+        "Göteborg",
+        "Stockholm"
+      ],
+      "region": "vast",
+      "warehouseSqm": "220 000+ m²",
+      "automation": "AutoStore · Hängande konfektion · Automatpack",
+      "wmsPlatform": "Astro WMS / Eget WMS",
+      "minOrderVolume": "Från 2 000 ordrar/mån",
+      "cutoffTime": "17:00–19:00",
+      "integrations": [
+        "Centra",
+        "Norce",
+        "SAP",
+        "nShift",
+        "Ingrid"
+      ],
+      "specialties": [
+        "Borås modekluster",
+        "Textil & skor med hög returgrad",
+        "Hållbara solcellsdrivna lager",
+        "Skalbar bemanning"
+      ],
+      "notableClients": [
+        "Ledande svenska mode- & industrivarumärken"
+      ],
+      "pricingModel": "Volymbaserat 3PL-avtal (B2C + B2B)",
+      "desc": "Boråsbaserad 3PL-jätte mitt i Sveriges främsta textil- och e-handelskluster (Viared), byggd för effektiv returhantering och stora säsongstoppar.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-bonver",
+      "name": "Bonver Logistics",
+      "domain": "bonverlogistics.se",
+      "logisticsType": "3PL",
+      "hqCity": "Upplands-Bro / Stockholm",
+      "warehouseCities": [
+        "Stockholm (Brunna)"
+      ],
+      "region": "svealand",
+      "warehouseSqm": "38 000 m²",
+      "automation": "AutoStore · Automatisk kuvertering & pack",
+      "wmsPlatform": "Ongoing WMS / Egenutvecklat",
+      "minOrderVolume": "Från 400 ordrar/mån",
+      "cutoffTime": "17:00 (same-day Stockholm)",
+      "integrations": [
+        "Shopify Plus",
+        "Centra",
+        "WooCommerce",
+        "nShift",
+        "Ingrid"
+      ],
+      "specialties": [
+        "Små & medelstora paket",
+        "Skönhet, apotek & media",
+        "Samma-dag-leverans i Mälardalen",
+        "Kundspecifik presentpackning"
+      ],
+      "notableClients": [
+        "Skönhets-, böcker- & livsstilsbutiker"
+      ],
+      "pricingModel": "Enhetspris per order + emballage + hyllmeter",
+      "desc": "Stockholmsbaserad 3PL-partner i Brunna med extremt snabb hantering av lätta e-handelspaket och samma-kväll-utkörning via Airmee och Budbee.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-boxflow",
+      "name": "Boxflow",
+      "domain": "boxflow.se",
+      "logisticsType": "3PL",
+      "hqCity": "Halmstad",
+      "warehouseCities": [
+        "Halmstad",
+        "Helsingborg",
+        "Göteborg",
+        "Stockholm"
+      ],
+      "region": "vast",
+      "warehouseSqm": "95 000+ m²",
+      "automation": "Semi-automatik · Flexibla plockzoner",
+      "wmsPlatform": "Ongoing WMS",
+      "minOrderVolume": "Från 300 ordrar/mån",
+      "cutoffTime": "16:30 samma dag",
+      "integrations": [
+        "Shopify",
+        "WooCommerce",
+        "Centra",
+        "Norce",
+        "nShift"
+      ],
+      "specialties": [
+        "Flexibel 3PL + bemanning",
+        "Skrymmande & udda gods",
+        "Kvalitetskontroll & kitting",
+        "Växande D2C"
+      ],
+      "notableClients": [
+        "Svenska tillväxtbolag & importörer"
+      ],
+      "pricingModel": "Löpande rörligt avtal utan tunga startkostnader",
+      "desc": "Snabbväxande svensk logistikpartner som kombinerar modern 3PL-fulfilment i Halmstad, Helsingborg, Göteborg och Stockholm med egen logistikbemanning.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-e3pl",
+      "name": "E3PL",
+      "domain": "e3pl.se",
+      "logisticsType": "3PL",
+      "hqCity": "Borås / Mölndal",
+      "warehouseCities": [
+        "Borås",
+        "Mölndal (Göteborg)"
+      ],
+      "region": "vast",
+      "warehouseSqm": "28 000 m²",
+      "automation": "Effektiv zonplock · Skräddarsydda packstationer",
+      "wmsPlatform": "Ongoing WMS",
+      "minOrderVolume": "Från 150 ordrar/mån",
+      "cutoffTime": "16:00 samma dag",
+      "integrations": [
+        "Shopify Plus",
+        "Centra",
+        "WooCommerce",
+        "Starweb",
+        "nShift"
+      ],
+      "specialties": [
+        "Personlig 3PL för D2C",
+        "Mode, accessoarer & premium",
+        "Smidig returkontroll & ångning",
+        "Korta beslutsvägar"
+      ],
+      "notableClients": [
+        "Svenska D2C-varumärken & designbutiker"
+      ],
+      "pricingModel": "Tydlig prislista per order, orderrad och lagerplats",
+      "desc": "Nischad västsvensk 3PL byggd specifikt för e-handlare som prioriterar nära kundservice, branded unboxing och noggrann returhantering.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-emotion",
+      "name": "Emotion Logistics",
+      "domain": "emotionlogistics.com",
+      "logisticsType": "3PL",
+      "hqCity": "Jönköping (Torsvik)",
+      "warehouseCities": [
+        "Jönköping (Torsvik)"
+      ],
+      "region": "smaland",
+      "warehouseSqm": "45 000 m²",
+      "automation": "AutoStore · Automatiserade packmaskiner",
+      "wmsPlatform": "Ongoing WMS / Astro WMS",
+      "minOrderVolume": "Från 500 ordrar/mån",
+      "cutoffTime": "17:30 samma dag",
+      "integrations": [
+        "Shopify Plus",
+        "Centra",
+        "Norce",
+        "nShift",
+        "Ingrid"
+      ],
+      "specialties": [
+        "Torsviks E4-nav",
+        "Hög plockprecision (99,9%)",
+        "Prenumerationsboxar & kitting",
+        "Fossilfria transporter"
+      ],
+      "notableClients": [
+        "Nordiska D2C-varumärken inom hälsa & livsstil"
+      ],
+      "pricingModel": "Transparent styckpris per order + lageryta",
+      "desc": "Modern 3PL i logistiknavet Torsvik söder om Jönköping med sent inlämningsfönster mot både Stockholm, Göteborg och Malmö.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-logent",
+      "name": "Logent",
+      "domain": "logent.se",
+      "logisticsType": "3PL & 4PL",
+      "hqCity": "Göteborg / Stockholm",
+      "warehouseCities": [
+        "Göteborg",
+        "Stockholm",
+        "Hallsberg",
+        "Sundsvall",
+        "Luleå"
+      ],
+      "region": "vast",
+      "warehouseSqm": "250 000+ m²",
+      "automation": "Högautomatiserade kundspecifika lösningar",
+      "wmsPlatform": "Astro WMS / SAP / Kundens eget WMS",
+      "minOrderVolume": "Från 5 000 ordrar/mån",
+      "cutoffTime": "17:00–18:30",
+      "integrations": [
+        "SAP",
+        "Microsoft Dynamics",
+        "Norce",
+        "nShift"
+      ],
+      "specialties": [
+        "Dedikerade eller delade lager",
+        "Hamnlogistik & tullager",
+        "Täckning upp till Norrland",
+        "TPL + konsulting"
+      ],
+      "notableClients": [
+        "Nordiska detaljhandels- & e-handelskoncerner"
+      ],
+      "pricingModel": "Open-book / Enterprise TPL-avtal",
+      "desc": "Oberoende nordisk logistikpartner som driver både delade e-handelslager och helhetslösningar med tull, hamnkoppling och norrländska noder.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-borjes",
+      "name": "Börjes Logistics (Börjes Pack)",
+      "domain": "borjes.com",
+      "logisticsType": "3PL",
+      "hqCity": "Nybro / Kalmar",
+      "warehouseCities": [
+        "Nybro (Kalmar)",
+        "Växjö"
+      ],
+      "region": "smaland",
+      "warehouseSqm": "32 000 m²",
+      "automation": "Smalgångslager · Streckkodsstyrt plock",
+      "wmsPlatform": "Ongoing WMS",
+      "minOrderVolume": "Från 200 ordrar/mån",
+      "cutoffTime": "16:00 samma dag",
+      "integrations": [
+        "Shopify",
+        "Litium",
+        "Norce",
+        "WooCommerce",
+        "nShift"
+      ],
+      "specialties": [
+        "Smålandsklustret (hem & design)",
+        "Ömtåligt glas & porslin",
+        "Egen åkeriflotta",
+        "Tull & export"
+      ],
+      "notableClients": [
+        "Småländska design- & inredningshandlare"
+      ],
+      "pricingModel": "Flexibelt styck- & pallpris",
+      "desc": "Småländsk familjeägd logistikpartner specialiserad på e-handelsfulfilment för hem, design och ömtåliga produkter nära Kalmar och Växjö.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-dsv",
+      "name": "DSV Solutions Sverige",
+      "domain": "dsv.com/sv-se",
+      "logisticsType": "3PL & 4PL",
+      "hqCity": "Landskrona / Stockholm",
+      "warehouseCities": [
+        "Landskrona",
+        "Rosersberg",
+        "Göteborg",
+        "Jönköping"
+      ],
+      "region": "syd",
+      "warehouseSqm": "320 000+ m²",
+      "automation": "AutoStore · Shuttle · Multi-client",
+      "wmsPlatform": "DSV CargoWrite / Manhattan WMS",
+      "minOrderVolume": "Från 3 000 ordrar/mån",
+      "cutoffTime": "17:00 samma dag",
+      "integrations": [
+        "SAP",
+        "Centra",
+        "Shopify Plus",
+        "nShift"
+      ],
+      "specialties": [
+        "Global sjö/flyg + lokal 3PL",
+        "Skånska logistiknavet Landskrona",
+        "EU-tull & gränshandel",
+        "Multikanal"
+      ],
+      "notableClients": [
+        "Internationella varumärken med nordisk hubb"
+      ],
+      "pricingModel": "Global/nordisk kontraktslogistik",
+      "desc": "Global transport- och 3PL-jätte med enorm e-handelskapacitet i Landskrona och Rosersberg för bolag med import från Asien och export i Europa.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-4plcs",
+      "name": "4PL Central Station (4PLCS)",
+      "domain": "4plcs.se",
+      "logisticsType": "4PL",
+      "hqCity": "Stockholm",
+      "warehouseCities": [
+        "Kontrolltorn · Transportoberoende (Norden/EU)"
+      ],
+      "region": "svealand",
+      "warehouseSqm": "Asset-light (Kontrolltorn)",
+      "automation": "AI-ruttoptimering · Automatisk fakturakontroll",
+      "wmsPlatform": "Egen 4PL Control Tower-plattform (API)",
+      "minOrderVolume": "Enterprise & medelstora flöden (50M+ fraktomsättning)",
+      "cutoffTime": "Realtidsstyrning 24/7",
+      "integrations": [
+        "SAP",
+        "Microsoft Dynamics",
+        "Ongoing WMS",
+        "nShift",
+        "200+ transportörer"
+      ],
+      "specialties": [
+        "100% oberoende av transportörer & 3PL",
+        "Kontrolltorn i realtid",
+        "Upphandling & fraktrevision",
+        "CO2-rapportering per kolli"
+      ],
+      "notableClients": [
+        "Nordiska industri- & omnikanalbolag"
+      ],
+      "pricingModel": "SaaS-licens + % av realiserad fraktbesparing",
+      "desc": "Svenskt oberoende 4PL-kontrolltorn som agerar neutral spindel i nätet mellan e-handlare, 3PL-lager och hundratals fraktbolag.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-kuehne-nagel",
+      "name": "Kuehne+Nagel Integrated Logistics (4PL)",
+      "domain": "home.kuehne-nagel.com",
+      "logisticsType": "4PL",
+      "hqCity": "Stockholm / Göteborg",
+      "warehouseCities": [
+        "Kontrolltorn i Norden · Globalt 3PL-nätverk"
+      ],
+      "region": "vast",
+      "warehouseSqm": "Globalt kontrolltorn + partner-3PL",
+      "automation": "Control Tower Analytics · Prediktiv ETA",
+      "wmsPlatform": "KN Login / Integrated Logistics Suite",
+      "minOrderVolume": "Enterprise (multi-marknad & global import)",
+      "cutoffTime": "Global 24/7-styrning",
+      "integrations": [
+        "SAP",
+        "Oracle",
+        "EDI/API",
+        "Globala speditörer"
+      ],
+      "specialties": [
+        "End-to-end global 4PL",
+        "Sjö/flyg från Asien till nordisk 3PL",
+        "Avvikelsehantering & tull",
+        "Scope 3-klimatdata"
+      ],
+      "notableClients": [
+        "Multinationella svenska varumärken"
+      ],
+      "pricingModel": "Enterprise 4PL-managementavtal",
+      "desc": "Världsledande 4PL-operatör med svenskt kontrolltorn som tar helhetsansvar från fabrik i Asien/Europa hela vägen genom upphandlade 3PL-noder.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-dhl-llp",
+      "name": "DHL Supply Chain – LLP (4PL)",
+      "domain": "dhl.com/se-sv/home/our-divisions/supply-chain.html",
+      "logisticsType": "3PL & 4PL",
+      "hqCity": "Stockholm / Rosersberg",
+      "warehouseCities": [
+        "Rosersberg",
+        "Göteborg",
+        "Malmö",
+        "Kontrolltorn"
+      ],
+      "region": "svealand",
+      "warehouseSqm": "180 000+ m² + LLP-kontrolltorn",
+      "automation": "Locus-robotar · AutoStore · Digital Twin",
+      "wmsPlatform": "Manhattan / Blue Yonder / DHL MySupplyChain",
+      "minOrderVolume": "Enterprise & större omnichannel",
+      "cutoffTime": "24/7 LLP Control Tower",
+      "integrations": [
+        "SAP",
+        "Centra",
+        "Salesforce",
+        "Globala EDI-nät"
+      ],
+      "specialties": [
+        "Lead Logistics Partner (LLP / 4PL)",
+        "Kombinerad fysisk 3PL & nätverksstyrning",
+        "Returlogistik i Europa",
+        "Elektrifierad fleet"
+      ],
+      "notableClients": [
+        "Globala elektronik- & modekedjor i Sverige"
+      ],
+      "pricingModel": "Enterprise LLP/3PL-kontrakt",
+      "desc": "Erbjuder både högautomatiserade svenska 3PL-lager och renodlade Lead Logistics Partner (4PL)-upplägg som optimerar hela leveranskedjan.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-inquire",
+      "name": "Inquire",
+      "domain": "inquire.se",
+      "logisticsType": "4PL",
+      "hqCity": "Lidköping / Göteborg",
+      "warehouseCities": [
+        "Kontrolltorn i Västsverige (oberoende)"
+      ],
+      "region": "vast",
+      "warehouseSqm": "Asset-light (4PL-operatör)",
+      "automation": "AI-driven transportplanering · Fraktfakturakontroll",
+      "wmsPlatform": "Inquire Control Tower (Cloud)",
+      "minOrderVolume": "Medelstora & stora transportköpare",
+      "cutoffTime": "Kontinuerlig transportoptimering",
+      "integrations": [
+        "Affärssystem",
+        "3PL-WMS",
+        "TA-system"
+      ],
+      "specialties": [
+        "Neutral 4PL utan egna lastbilar",
+        "Upphandling & avtalsstyrning",
+        "Minskade tomtransporter & CO2",
+        "Transparenta nyckeltal"
+      ],
+      "notableClients": [
+        "Svenska e-handels-, handels- & tillverkningsbolag"
+      ],
+      "pricingModel": "Rådgivning + löpande 4PL-driftsavtal",
+      "desc": "Svensk oberoende 4PL-aktör som tar över styrningen, upphandlingen och den dagliga transportoptimeringen utan egna lager eller fordon.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    },
+    {
+      "id": "lp-eds",
+      "name": "EDS Logistics",
+      "domain": "edslogistics.se",
+      "logisticsType": "4PL",
+      "hqCity": "Stockholm / Göteborg",
+      "warehouseCities": [
+        "Oberoende 4PL-kontrolltorn"
+      ],
+      "region": "svealand",
+      "warehouseSqm": "Asset-light (Kontrolltorn & EDI)",
+      "automation": "Automatiserad fraktrevision & EDI-routing",
+      "wmsPlatform": "EDS Control Tower",
+      "minOrderVolume": "Växande B2B/B2C-handlare med flertal fraktavtal",
+      "cutoffTime": "Realtidshantering",
+      "integrations": [
+        "ERP",
+        "WMS",
+        "nShift",
+        "Transportörer"
+      ],
+      "specialties": [
+        "Kontrolltorn & avvikelsebevakning",
+        "Konsoliderade fraktavtal",
+        "Reklamationshantering",
+        "Snabb fraktbesparing"
+      ],
+      "notableClients": [
+        "Svenska importörer & omnikanalhandlare"
+      ],
+      "pricingModel": "Prestations- & transaktionsbaserat 4PL-avtal",
+      "desc": "Svenskt kontrolltorn inom 4PL som optimerar transportavtal, automatiserar fakturakontroll och hanterar avvikelser mellan lager och slutkund.",
+      "status": "published",
+      "updatedAt": "2026-11-18T10:00:00.000Z"
+    }
+  ],
   "events": [
     {
       "id": "ev-dcongress-2027",
@@ -2453,7 +3135,14 @@
       "share": "22,4 %",
       "aov": "965 SEK",
       "hubs": "Borås (Textil & D2C), Göteborg (Svenska Mässan & Hamnen), Landvetter",
-      "desc": "Nordens tätaste kluster för modehandlare (RevolutionRace, Nelly, Gina Tricot, NA-KD), 3PL-logistik och värdregion för D-Congress 2027."
+      "desc": "Nordens tätaste kluster för modehandlare (RevolutionRace, Nelly, Gina Tricot, NA-KD), 3PL-logistik och värdregion för D-Congress 2027.",
+      "populationLabel": "2,12 milj. inv.",
+      "populationDensityPerKm2": 68.4,
+      "parcelLockersTotal": 2290,
+      "lockersPer10kResidents": 10.8,
+      "lockersPer100Km2": 7.4,
+      "homeDeliveryTotalPct": 100,
+      "homeDeliveryEveningPct": 81
     },
     "svealand": {
       "key": "svealand",
@@ -2462,7 +3151,14 @@
       "share": "36,1 %",
       "aov": "1 040 SEK",
       "hubs": "Stockholm (Klarna, Centra, Voyado), Morgongåva/Uppsala (Apotea), Rosersberg",
-      "desc": "Högst köpkraft per capita och centrum för svensk fintech, apotekse-handel och blixtsnabba same-day leveranser."
+      "desc": "Högst köpkraft per capita och centrum för svensk fintech, apotekse-handel och blixtsnabba same-day leveranser.",
+      "populationLabel": "4,22 milj. inv.",
+      "populationDensityPerKm2": 43.2,
+      "parcelLockersTotal": 4720,
+      "lockersPer10kResidents": 11.2,
+      "lockersPer100Km2": 5.8,
+      "homeDeliveryTotalPct": 100,
+      "homeDeliveryEveningPct": 89
     },
     "smaland": {
       "key": "smaland",
@@ -2471,7 +3167,14 @@
       "share": "15,2 %",
       "aov": "920 SEK",
       "hubs": "Jönköping (Torsvik), Kalmar (Nordic Nest/Outnorth), Linköping & Norrköping",
-      "desc": "Strategiskt läge där 80 % av Nordens befolkning nås inom 24 timmar. Hemvist för flera av landets största exportörer inom hem och outdoor."
+      "desc": "Strategiskt läge där 80 % av Nordens befolkning nås inom 24 timmar. Hemvist för flera av landets största exportörer inom hem och outdoor.",
+      "populationLabel": "1,48 milj. inv.",
+      "populationDensityPerKm2": 36.1,
+      "parcelLockersTotal": 1410,
+      "lockersPer10kResidents": 9.5,
+      "lockersPer100Km2": 3.4,
+      "homeDeliveryTotalPct": 100,
+      "homeDeliveryEveningPct": 68
     },
     "syd": {
       "key": "syd",
@@ -2480,7 +3183,14 @@
       "share": "15,5 %",
       "aov": "910 SEK",
       "hubs": "Helsingborg (Logistikhubb), Malmö (Tech & Cross-border), Ängelholm",
-      "desc": "Direktkoppling via Öresund till Danmark och Tyskland ger regionen landets högsta andel gränsöverskridande B2C-export."
+      "desc": "Direktkoppling via Öresund till Danmark och Tyskland ger regionen landets högsta andel gränsöverskridande B2C-export.",
+      "populationLabel": "1,59 milj. inv.",
+      "populationDensityPerKm2": 118.2,
+      "parcelLockersTotal": 1710,
+      "lockersPer10kResidents": 10.7,
+      "lockersPer100Km2": 12.7,
+      "homeDeliveryTotalPct": 100,
+      "homeDeliveryEveningPct": 86
     },
     "norrland": {
       "key": "norrland",
@@ -2489,7 +3199,14 @@
       "share": "10,8 %",
       "aov": "890 SEK",
       "hubs": "Umeå, Luleå (Grön datacenter-tech), Sundsvall, Åre/Östersund",
-      "desc": "Långa avstånd driver hög köpfrekvens online. Paketskåp och lantbrevbärare säkerställer hög leveransprecision i hela landsdelen."
+      "desc": "Långa avstånd driver hög köpfrekvens online. Paketskåp och lantbrevbärare säkerställer hög leveransprecision i hela landsdelen.",
+      "populationLabel": "1,19 milj. inv.",
+      "populationDensityPerKm2": 4.9,
+      "parcelLockersTotal": 720,
+      "lockersPer10kResidents": 6.1,
+      "lockersPer100Km2": 0.3,
+      "homeDeliveryTotalPct": 100,
+      "homeDeliveryEveningPct": 38
     }
   },
   "orderBenchmarks": [
@@ -2659,6 +3376,12 @@
     "varubrevOrSmallBoxSharePct": 44,
     "leaveOutsideDoorSharePct": 58,
     "homeDeliveryPreferredSlot": "17:00 – 22:00 (Kväll)",
+    "nationalPopulationDensityKm2": 25.9,
+    "totalParcelLockerStations": 10850,
+    "lockersPer10kNational": 10.2,
+    "combinedAnyHomeDeliveryPct": 100,
+    "combinedEveningHomeDeliveryPct": 76,
+    "combinedLockerReachPct": 86,
     "updatedNote": "Svenskt konsumentindex 2026 · PostNord, Instabee & Ingrid benchmark",
     "timeWindows": [
       {
@@ -2753,6 +3476,132 @@
         "weightRangeKg": "10 – 35+ kg",
         "shareOfOrdersPct": 4,
         "dominantCarrierOption": "Hemleverans till tomtgräns / inbärning / DHL Pall"
+      }
+    ],
+    "carrierCoverage": [
+      {
+        "id": "cc-postnord",
+        "carrierName": "PostNord (MyPack Home & Varubrev)",
+        "homeDeliveryHouseholdPct": 100,
+        "eveningOrExpressPct": 68,
+        "parcelLockersCount": 2500,
+        "pickupAgentsCount": 2200,
+        "timeWindow": "Dag (Varubrev) & Kväll 17–22",
+        "ruralCoverage": "100% hela Sverige (inkl. glesbygd & lantbrevbäring)",
+        "boxNetworkNote": "2 500+ paketboxstationer (~125 000 fack), 3 dagars standardliggetid"
+      },
+      {
+        "id": "cc-earlybird",
+        "carrierName": "Early Bird (Tidningsbud)",
+        "homeDeliveryHouseholdPct": 97,
+        "eveningOrExpressPct": 97,
+        "parcelLockersCount": 1200,
+        "pickupAgentsCount": 0,
+        "timeWindow": "Tidig morgon 01:00 – 07:00",
+        "ruralCoverage": "97% av svenska hushåll via tidningsnätet (6 dgr/v)",
+        "boxNetworkNote": "Ansluten till iBoxen som reserv/komplement vid låsta portar"
+      },
+      {
+        "id": "cc-bring",
+        "carrierName": "Bring (Home Delivery & Box)",
+        "homeDeliveryHouseholdPct": 95,
+        "eveningOrExpressPct": 72,
+        "parcelLockersCount": 2300,
+        "pickupAgentsCount": 1650,
+        "timeWindow": "Dag & Kväll 17–22",
+        "ruralCoverage": "Rikstäckande nät (95%+ av befolkningen)",
+        "boxNetworkNote": "~2 300 egna paketboxar + 1 650 ombud samt iBoxen-integration"
+      },
+      {
+        "id": "cc-instabee",
+        "carrierName": "Instabee (Budbee Home & Instabox)",
+        "homeDeliveryHouseholdPct": 76,
+        "eveningOrExpressPct": 76,
+        "parcelLockersCount": 4100,
+        "pickupAgentsCount": 0,
+        "timeWindow": "Kväll 16:00 – 22:30 & Same-day",
+        "ruralCoverage": "Tätorter & drygt 200 svenska städer",
+        "boxNetworkNote": "Sveriges största skåpflotta (Instabox + Budbee Box) i butik & galleria"
+      },
+      {
+        "id": "cc-schenker",
+        "carrierName": "DB Schenker / DSV (Parcel & Home)",
+        "homeDeliveryHouseholdPct": 82,
+        "eveningOrExpressPct": 48,
+        "parcelLockersCount": 1200,
+        "pickupAgentsCount": 1600,
+        "timeWindow": "Dagtid & bokad hemleverans",
+        "ruralCoverage": "Bred täckning via 1 600+ ombud & regionala linjer",
+        "boxNetworkNote": "Integrerad med iBoxen öppna utomhusskåp + serviceombud"
+      },
+      {
+        "id": "cc-airmee",
+        "carrierName": "Airmee (Last-Mile Express)",
+        "homeDeliveryHouseholdPct": 72,
+        "eveningOrExpressPct": 72,
+        "parcelLockersCount": 1200,
+        "pickupAgentsCount": 0,
+        "timeWindow": "Kväll 17–22 (7 dagar/v) & Express",
+        "ruralCoverage": "Över 70% av befolkningen (storstäder & regionkärnor)",
+        "boxNetworkNote": "Snabb fossilfri kvällskörning + ansluten till iBoxen"
+      },
+      {
+        "id": "cc-dhl",
+        "carrierName": "DHL Freight / Home Delivery",
+        "homeDeliveryHouseholdPct": 70,
+        "eveningOrExpressPct": 54,
+        "parcelLockersCount": 1100,
+        "pickupAgentsCount": 1750,
+        "timeWindow": "Dag & Kväll 17–21 (även pall/skrymmande)",
+        "ruralCoverage": "Ca 70% hemleverans · 98% via ServicePoint-ombud",
+        "boxNetworkNote": "1 100+ egna/partnerskåp + bred integration mot iBoxen"
+      }
+    ],
+    "lockerNetworks": [
+      {
+        "id": "ln-instabee",
+        "operator": "Instabee (Instabox + Budbee Box)",
+        "stationsSweden": 4100,
+        "estimatedCompartments": "~185 000 fack",
+        "networkType": "Eget slutet nätverk",
+        "populationReachPct": 78,
+        "highlight": "Högst densitet i ICA/Coop-butiker, gym och köpcentrum i storstäder & 200+ tätorter"
+      },
+      {
+        "id": "ln-postnord",
+        "operator": "PostNord Paketbox",
+        "stationsSweden": 2500,
+        "estimatedCompartments": "~125 000 fack",
+        "networkType": "Eget slutet nätverk",
+        "populationReachPct": 84,
+        "highlight": "Störst spridning från Malmö till Kiruna; 3 dagars standardliggetid för högre luckomsättning"
+      },
+      {
+        "id": "ln-bring",
+        "operator": "Bring Paketbox",
+        "stationsSweden": 2300,
+        "estimatedCompartments": "~82 000 fack",
+        "networkType": "Eget slutet nätverk",
+        "populationReachPct": 74,
+        "highlight": "Snabbväxande grönt utomhus- och butiksnät med stark täckning längs E4/E6"
+      },
+      {
+        "id": "ln-iboxen",
+        "operator": "iBoxen (Öppen infrastruktur)",
+        "stationsSweden": 1200,
+        "estimatedCompartments": "~48 000 fack",
+        "networkType": "Öppet transportörsoberoende",
+        "populationReachPct": 70,
+        "highlight": "110+ kommuner · Delas av DHL, Airmee, Early Bird, Bring, Schenker & CityMail nära bostäder"
+      },
+      {
+        "id": "ln-dhl",
+        "operator": "DHL Paketbox (+ iBoxen-partner)",
+        "stationsSweden": 750,
+        "estimatedCompartments": "~32 000 fack",
+        "networkType": "Eget slutet nätverk",
+        "populationReachPct": 72,
+        "highlight": "Kombinerar egna skåp med iBoxen för att ge e-handlare rikstäckande boxval i checkout"
       }
     ]
   },

@@ -16,6 +16,7 @@ import type {
   EcommerceJob,
   EcommerceLaw,
   GroundingSource,
+  LogisticsProvider,
   Merchant,
   RecruitmentSite,
   RegionMetric,
@@ -93,6 +94,17 @@ export const api = {
     }),
   deletePartner: (id: string) =>
     request<{ deleted: boolean }>(`/api/partners/${id}`, { method: 'DELETE' }),
+
+  upsertLogisticsProvider: (provider: Partial<LogisticsProvider> & { name: string }) =>
+    request<{ provider: LogisticsProvider; created: boolean }>(
+      provider.id ? `/api/logistics/${provider.id}` : '/api/logistics',
+      {
+        method: provider.id ? 'PUT' : 'POST',
+        body: JSON.stringify(provider),
+      }
+    ),
+  deleteLogisticsProvider: (id: string) =>
+    request<{ deleted: boolean }>(`/api/logistics/${id}`, { method: 'DELETE' }),
 
   upsertEvent: (event: Partial<EcommerceEvent> & { name: string }) =>
     request<EcommerceEvent>(event.id ? `/api/events/${event.id}` : '/api/events', {

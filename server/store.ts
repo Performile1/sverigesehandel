@@ -14,6 +14,7 @@ import type {
   EcommerceJob,
   EcommerceLaw,
   JobValidityStatus,
+  LogisticsProvider,
   Merchant,
   RecruitmentSite,
   RegionMetric,
@@ -250,9 +251,59 @@ function ensureStoreFile(): CMSStore {
     const mergedPartners = mergeSeedPartners(basePartners);
     const mergedJobs = mergeAndValidateJobs(baseJobs);
 
+    const baseLogistics = Array.isArray(parsed.logisticsProviders)
+      ? parsed.logisticsProviders
+      : INITIAL_CMS_DATA.logisticsProviders;
+    const existingLogIds = new Set(baseLogistics.map((l) => l.id));
+    const missingSeedLogistics = INITIAL_CMS_DATA.logisticsProviders.filter(
+      (s) => !existingLogIds.has(s.id)
+    );
+    const mergedLogistics = [...baseLogistics, ...missingSeedLogistics];
+
+    const rawRegions = parsed.regions ?? INITIAL_CMS_DATA.regions;
+    let regionsChanged = !parsed.regions;
+    const mergedRegions: Record<string, RegionMetric> = { ...rawRegions };
+    for (const [key, seedReg] of Object.entries(INITIAL_CMS_DATA.regions)) {
+      const existingReg = mergedRegions[key];
+      if (!existingReg) {
+        mergedRegions[key] = seedReg;
+        regionsChanged = true;
+      } else if (
+        existingReg.populationDensityPerKm2 === undefined ||
+        existingReg.lockersPer10kResidents === undefined ||
+        existingReg.homeDeliveryEveningPct === undefined
+      ) {
+        mergedRegions[key] = { ...seedReg, ...existingReg };
+        regionsChanged = true;
+      }
+    }
+
+    const rawDelivery = parsed.deliveryStats;
+    const deliveryChanged =
+      !rawDelivery ||
+      !Array.isArray(rawDelivery.carrierCoverage) ||
+      rawDelivery.carrierCoverage.length === 0 ||
+      !Array.isArray(rawDelivery.lockerNetworks) ||
+      rawDelivery.lockerNetworks.length === 0;
+    const mergedDelivery: DeliveryStatsData = rawDelivery
+      ? {
+          ...INITIAL_CMS_DATA.deliveryStats,
+          ...rawDelivery,
+          carrierCoverage:
+            Array.isArray(rawDelivery.carrierCoverage) && rawDelivery.carrierCoverage.length > 0
+              ? rawDelivery.carrierCoverage
+              : INITIAL_CMS_DATA.deliveryStats.carrierCoverage,
+          lockerNetworks:
+            Array.isArray(rawDelivery.lockerNetworks) && rawDelivery.lockerNetworks.length > 0
+              ? rawDelivery.lockerNetworks
+              : INITIAL_CMS_DATA.deliveryStats.lockerNetworks,
+        }
+      : INITIAL_CMS_DATA.deliveryStats;
+
     const hydrated: CMSStore = {
       merchants: mergedMerchants.list,
       partners: mergedPartners.list,
+      logisticsProviders: mergedLogistics,
       events:
         Array.isArray(parsed.events) && parsed.events.length > 0
           ? parsed.events
@@ -263,7 +314,7 @@ function ensureStoreFile(): CMSStore {
         Array.isArray(parsed.recruitmentSites) && parsed.recruitmentSites.length > 0
           ? parsed.recruitmentSites
           : INITIAL_CMS_DATA.recruitmentSites,
-      regions: parsed.regions ?? INITIAL_CMS_DATA.regions,
+      regions: mergedRegions,
       orderBenchmarks:
         Array.isArray(parsed.orderBenchmarks) && parsed.orderBenchmarks.length > 0
           ? parsed.orderBenchmarks
@@ -272,7 +323,7 @@ function ensureStoreFile(): CMSStore {
         Array.isArray(parsed.shippingTiers) && parsed.shippingTiers.length > 0
           ? parsed.shippingTiers
           : INITIAL_CMS_DATA.shippingTiers,
-      deliveryStats: parsed.deliveryStats ?? INITIAL_CMS_DATA.deliveryStats,
+      deliveryStats: mergedDelivery,
       laws:
         Array.isArray(parsed.laws) && parsed.laws.length > 0
           ? parsed.laws
@@ -300,16 +351,19 @@ function ensureStoreFile(): CMSStore {
       mergedMerchants.changed ||
       mergedPartners.changed ||
       mergedJobs.changed ||
+      regionsChanged ||
+      deliveryChanged ||
       !parsed.events ||
       !parsed.jobs ||
       !parsed.recruitmentSites ||
       !parsed.orderBenchmarks ||
       !parsed.shippingTiers ||
-      !parsed.deliveryStats ||
       !parsed.laws ||
       !parsed.intelligenceSources ||
       !parsed.techStackShares ||
-      !parsed.adBanners
+      !parsed.adBanners ||
+      !parsed.logisticsProviders ||
+      missingSeedLogistics.length > 0
     ) {
       fs.writeFileSync(DB_FILE, JSON.stringify(hydrated, null, 2), 'utf-8');
     }
@@ -369,6 +423,12 @@ export function upsertMerchant(input: Partial<Merchant> & { name: string }): { m
       id: existing.id,
       name: cleanName || existing.name,
       domain: cleanDomain || existing.domain,
+      annualPackages:
+        'annualPackages' in input
+          ? typeof input.annualPackages === 'number' && input.annualPackages > 0
+            ? Math.round(input.annualPackages)
+            : undefined
+          : existing.annualPackages,
       updatedAt: now,
     };
     store.merchants[existingIdx] = updated;
@@ -387,6 +447,10 @@ export function upsertMerchant(input: Partial<Merchant> & { name: string }): { m
     reviews: input.reviews || '1 000+',
     revenue: input.revenue || '100–500M SEK',
     revenueNumericM: input.revenueNumericM,
+    annualPackages:
+      typeof input.annualPackages === 'number' && input.annualPackages > 0
+        ? Math.round(input.annualPackages)
+        : undefined,
     yoyGrowth: input.yoyGrowth || '+8% YoY',
     yoyGrowthPct: typeof input.yoyGrowthPct === 'number' ? input.yoyGrowthPct : 8,
     revenueYear: input.revenueYear || '2025/2026',
@@ -436,6 +500,10 @@ export function batchAddMerchants(items: Array<Partial<Merchant> & { name: strin
       reviews: input.reviews || 'Verifierad',
       revenue: input.revenue || '100–500M SEK',
       revenueNumericM: input.revenueNumericM,
+      annualPackages:
+        typeof input.annualPackages === 'number' && input.annualPackages > 0
+          ? Math.round(input.annualPackages)
+          : undefined,
       yoyGrowth: input.yoyGrowth || '+8% YoY',
       yoyGrowthPct: typeof input.yoyGrowthPct === 'number' ? input.yoyGrowthPct : 8,
       revenueYear: input.revenueYear || '2025/2026',
@@ -1046,6 +1114,72 @@ export function deleteContactMessage(id: string): boolean {
   const before = store.contactMessages.length;
   store.contactMessages = store.contactMessages.filter((m) => m.id !== id);
   if (store.contactMessages.length === before) return false;
+  saveStore(store);
+  return true;
+}
+
+export function upsertLogisticsProvider(
+  input: Partial<LogisticsProvider> & { name: string }
+): { provider: LogisticsProvider; created: boolean } {
+  const store = ensureStoreFile();
+  const now = new Date().toISOString();
+  const cleanName = input.name.trim();
+  const existingIdx = store.logisticsProviders.findIndex(
+    (l) => (input.id && l.id === input.id) || l.name.toLowerCase() === cleanName.toLowerCase()
+  );
+
+  if (existingIdx >= 0) {
+    const existing = store.logisticsProviders[existingIdx];
+    const updated: LogisticsProvider = {
+      ...existing,
+      ...input,
+      id: existing.id,
+      name: cleanName || existing.name,
+      updatedAt: now,
+    };
+    store.logisticsProviders[existingIdx] = updated;
+    saveStore(store);
+    return { provider: updated, created: false };
+  }
+
+  const created: LogisticsProvider = {
+    id: input.id || `lp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    name: cleanName,
+    domain: (input.domain || `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '')}.se`).replace(
+      /^https?:\/\//,
+      ''
+    ),
+    logisticsType: input.logisticsType || '3PL',
+    hqCity: input.hqCity?.trim() || 'Stockholm',
+    warehouseCities:
+      Array.isArray(input.warehouseCities) && input.warehouseCities.length > 0
+        ? input.warehouseCities
+        : [input.hqCity?.trim() || 'Stockholm'],
+    region: input.region || 'svealand',
+    warehouseSqm: input.warehouseSqm?.trim() || '25 000 m²',
+    automation: input.automation?.trim() || 'WMS-styrd plock & pack',
+    wmsPlatform: input.wmsPlatform?.trim() || 'Ongoing WMS',
+    minOrderVolume: input.minOrderVolume?.trim() || 'Från 300 ordrar/mån',
+    cutoffTime: input.cutoffTime?.trim() || '17:00 samma dag',
+    integrations: Array.isArray(input.integrations) ? input.integrations : ['Shopify Plus', 'Centra', 'nShift'],
+    specialties: Array.isArray(input.specialties) ? input.specialties : ['E-handelsfulfilment'],
+    notableClients: Array.isArray(input.notableClients) ? input.notableClients : [],
+    pricingModel: input.pricingModel?.trim() || 'Rörligt pris per order + pallplats',
+    desc: input.desc?.trim() || `Svensk logistikpartner (${input.logisticsType || '3PL'}) för e-handel.`,
+    status: input.status || 'published',
+    updatedAt: now,
+  };
+
+  store.logisticsProviders.unshift(created);
+  saveStore(store);
+  return { provider: created, created: true };
+}
+
+export function deleteLogisticsProvider(id: string): boolean {
+  const store = ensureStoreFile();
+  const before = store.logisticsProviders.length;
+  store.logisticsProviders = store.logisticsProviders.filter((l) => l.id !== id);
+  if (store.logisticsProviders.length === before) return false;
   saveStore(store);
   return true;
 }

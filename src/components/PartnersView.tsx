@@ -182,6 +182,13 @@ export function PartnersView({
 
             <button
               type="button"
+              onClick={() => onNavigate('3pl')}
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-[#FECC02] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
+            >
+              3PL &amp; 4PL i Sverige &rarr;
+            </button>
+            <button
+              type="button"
               onClick={onOpenDiscover}
               className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-semibold text-xs inline-flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap"
             >
@@ -278,15 +285,26 @@ export function PartnersView({
                   {activeCompareConfig.subtitle}
                 </p>
               </div>
-              {pinnedIds.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setPinnedIds([])}
-                  className="text-xs font-semibold text-[#006AA7] hover:underline cursor-pointer self-start"
-                >
-                  Visa alla i kategorin ({allDomainPartners.length})
-                </button>
-              )}
+              <div className="flex flex-wrap items-center gap-3 self-start">
+                {compareDomain === 'carriers' && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('marknad')}
+                    className="text-xs font-bold text-[#059669] hover:underline cursor-pointer"
+                  >
+                    Se skåpdensitet &amp; hemleveranstäckning &rarr;
+                  </button>
+                )}
+                {pinnedIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPinnedIds([])}
+                    className="text-xs font-semibold text-[#006AA7] hover:underline cursor-pointer"
+                  >
+                    Visa alla i kategorin ({allDomainPartners.length})
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Quick Select / Filter Pills */}
