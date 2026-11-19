@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { MarknadView } from '../src/components/MarknadView.tsx';
+import { NewsView } from '../src/components/NewsView.tsx';
+import { PartnersView } from '../src/components/PartnersView.tsx';
 import { ThreePlView } from '../src/components/ThreePlView.tsx';
 import { CommunityView } from '../src/components/CommunityView.tsx';
 import { publicStore } from '../server/publicStore.ts';
@@ -62,18 +64,53 @@ try {
   const currentSnapshot = structuredClone(snapshot);
   const legacy = structuredClone(snapshot) as Partial<typeof snapshot>;
   delete legacy.logisticsProviders;
+  delete legacy.news;
+  delete legacy.schemaVersion;
+  legacy.partners = (legacy.partners || []).filter((p) => p.id !== 'p-iboxen').map((p) => {
+    const copy = { ...p };
+    delete copy.carrierMetrics;
+    return copy;
+  });
   snapshot = legacy as typeof snapshot;
   const legacyJson = JSON.stringify(snapshot);
   const writesBeforeUpgrade = transactions;
   const upgraded = await service.getStore();
   assert.deepEqual(upgraded.logisticsProviders, INITIAL_CMS_DATA.logisticsProviders);
-  // The same migrated public payload must render the market/map, not merely pass types.
+  assert.deepEqual(upgraded.news, INITIAL_CMS_DATA.news);
+  assert.equal(upgraded.schemaVersion, 2);
+  assert.ok(upgraded.partners.some((p) => p.id === 'p-iboxen'), 'Legacy pre-v2 snapshot receives iBoxen');
+  assert.ok(
+    upgraded.partners.find((p) => p.id === 'p-postnord')?.carrierMetrics?.serviceCount,
+    'Legacy pre-v2 snapshot enriches carriers with carrierMetrics'
+  );
+  // The same migrated public payload must render the market/map, news & partners cleanly in SSR.
   const visible = publicStore(upgraded);
   const marketHtml = renderToString(createElement(MarknadView, {
     ...visible, merchantCount: visible.merchants.length, partnerCount: visible.partners.length,
     onNavigate: () => {}, onBookAdSlot: () => {},
   }));
   assert.ok(marketHtml.includes('Sveriges'));
+  assert.ok(marketHtml.includes('Svensk e-handelstillväxt'));
+  const newsHtml = renderToString(createElement(NewsView, {
+    news: visible.news,
+    adBanners: visible.adBanners,
+    onNavigate: () => {},
+    onBookAdSlot: () => {},
+    onRefresh: async () => {},
+    onNotify: () => {},
+  }));
+  assert.ok(newsHtml.includes('Temu'));
+  const partnersHtml = renderToString(createElement(PartnersView, {
+    partners: visible.partners,
+    adBanners: visible.adBanners,
+    onNavigate: () => {},
+    onBookAdSlot: () => {},
+    onOpenDiscover: () => {},
+    onOpenEditor: () => {},
+    onRequestIntro: () => {},
+  }));
+  assert.ok(partnersHtml.includes('iBoxen'));
+  assert.ok(partnersHtml.includes('Leveranstjänster'));
   const threePlHtml = renderToString(createElement(ThreePlView, {
     logisticsProviders: visible.logisticsProviders,
     adBanners: visible.adBanners,
@@ -100,14 +137,27 @@ try {
   assert.equal(transactions, writesBeforeUpgrade);
   await service.upsertMerchant({ name: 'Migration fixture' });
   assert.deepEqual(snapshot.logisticsProviders, INITIAL_CMS_DATA.logisticsProviders);
-  const empty = { ...currentSnapshot, logisticsProviders: [] };
+  const empty = { ...currentSnapshot, logisticsProviders: [], schemaVersion: 2 };
   assert.deepEqual(upgradeSnapshot(empty), empty, 'An intentionally empty list stays empty');
+  const v2WithoutIboxen = {
+    ...currentSnapshot,
+    schemaVersion: 2,
+    partners: currentSnapshot.partners.filter((p) => p.id !== 'p-iboxen'),
+  };
+  const upgradedV2 = upgradeSnapshot(v2WithoutIboxen) as typeof currentSnapshot;
+  assert.ok(
+    !upgradedV2.partners.some((p) => p.id === 'p-iboxen'),
+    'Do not restore deleted iBoxen once snapshot is at schemaVersion >= 2'
+  );
   const custom = { ...currentSnapshot, logisticsProviders: [{ ...currentSnapshot.logisticsProviders[0], name: 'Edited provider' }] };
   assert.deepEqual(upgradeSnapshot(custom), custom, 'Do not restore deleted providers or overwrite edits');
   assert.ok(!validateSnapshot({ ...currentSnapshot, logisticsProviders: null }));
   assert.ok(!validateSnapshot({ ...currentSnapshot, logisticsProviders: {} }));
+  assert.ok(!validateSnapshot({ ...currentSnapshot, news: null }));
   snapshot = currentSnapshot;
   snapshot.logisticsProviders[0].status = 'draft';
+  snapshot.news[0].status = 'draft';
+  const draftNewsId = snapshot.news[0].id;
   const noRegistry = async () => false;
   assert.equal((await resolveCmsIdentity({ uid: 'owner', email: ADMIN_EMAIL, email_verified: false }, async () => true)).admin, false);
   assert.equal((await resolveCmsIdentity({ uid: 'owner', email: ADMIN_EMAIL, email_verified: true }, noRegistry)).admin, true);
@@ -126,16 +176,20 @@ try {
   assert.equal(publicData.communityMemberCount, 1);
   assert.deepEqual(publicData.communityMemberCities, ['Test']);
   assert.ok(!publicData.merchants.some((item: { id: string }) => item.id === draftId));
+  assert.ok(!publicData.news.some((item: { id: string }) => item.id === draftNewsId));
   assert.equal(snapshot.contactMessages.length, 1, 'Public filtering must not mutate stored data');
   const beforeDenied = calls;
   for (const [path, method] of [
     ['/api/merchants', 'POST'], ['/api/merchants/item', 'PUT'], ['/api/partners/item', 'DELETE'],
     ['/api/cms/import', 'POST'], ['/api/cms/reset', 'POST'], ['/api/ai/discover', 'POST'],
-    ['/api/ai/enrich', 'POST'], ['/api/jobs/validate', 'POST'], ['/api/contact/item', 'DELETE'],
+    ['/api/ai/enrich', 'POST'], ['/api/ai/news', 'POST'], ['/api/news', 'POST'],
+    ['/api/news/item', 'DELETE'], ['/api/cms/status', 'GET'],
+    ['/api/jobs/validate', 'POST'], ['/api/contact/item', 'DELETE'],
   ]) {
-    assert.equal((await request(path, method, {})).status, 401, `${method} ${path}`);
-    assert.equal((await request(path, method, {}, 'member-fixture')).status, 403);
+    assert.equal((await request(path, method, method === 'GET' ? undefined : {})).status, 401, `${method} ${path}`);
+    assert.equal((await request(path, method, method === 'GET' ? undefined : {}, 'member-fixture')).status, 403);
   }
+  assert.equal((await request('/api/cms/status', 'GET', undefined, 'admin-fixture')).status, 200);
   assert.equal(calls, beforeDenied, 'Denied writes must never reach storage');
   assert.equal((await request('/api/cms/store', 'GET', undefined, 'invalid-fixture')).status, 401);
   const fullData = await (await request('/api/cms/store', 'GET', undefined, 'admin-fixture')).json();
@@ -207,5 +261,9 @@ try {
   console.log('CMS checks passed: JSON route, admin guards, private data, writes/reload/delete, isolated snapshots, size guard, async errors.');
 } finally {
   server.closeAllConnections();
-  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  await Promise.race([
+    new Promise<void>((resolve) => server.close(() => resolve())),
+    new Promise<void>((resolve) => setTimeout(resolve, 250)),
+  ]);
 }
+process.exit(0);

@@ -61,6 +61,11 @@ export function EntityEditorModal({
   const [pClients, setPClients] = useState('');
   const [pDesc, setPDesc] = useState('');
   const [pStatus, setPStatus] = useState<PublishStatus>('published');
+  const [pServiceCount, setPServiceCount] = useState('');
+  const [pParcelLockers, setPParcelLockers] = useState('');
+  const [pPickupAgents, setPPickupAgents] = useState('');
+  const [pHomeDeliveryPct, setPHomeDeliveryPct] = useState('');
+  const [pAvgLeadTime, setPAvgLeadTime] = useState('');
 
   useEffect(() => {
     if (!open) return;
@@ -105,6 +110,19 @@ export function EntityEditorModal({
       setPClients(partner?.notableClients?.join(', ') ?? '');
       setPDesc(partner?.desc ?? '');
       setPStatus(partner?.status ?? 'published');
+      setPServiceCount(
+        partner?.carrierMetrics ? String(partner.carrierMetrics.serviceCount) : ''
+      );
+      setPParcelLockers(
+        partner?.carrierMetrics ? String(partner.carrierMetrics.parcelLockers) : ''
+      );
+      setPPickupAgents(
+        partner?.carrierMetrics ? String(partner.carrierMetrics.pickupAgents) : ''
+      );
+      setPHomeDeliveryPct(
+        partner?.carrierMetrics ? String(partner.carrierMetrics.homeDeliveryPct) : ''
+      );
+      setPAvgLeadTime(partner?.carrierMetrics?.avgLeadTime ?? '');
     }
   }, [open, mode, merchant, partner]);
 
@@ -198,6 +216,20 @@ export function EntityEditorModal({
         });
         onNotify(merchant ? `${mName} uppdaterad i CMS.` : `${mName} tillagd i CMS.`);
       } else {
+        const hasCarrierMetricsInput =
+          pSubType === 'Transportör' &&
+          (pServiceCount !== '' || pParcelLockers !== '' || pPickupAgents !== '' || pHomeDeliveryPct !== '');
+        const carrierMetrics = hasCarrierMetricsInput
+          ? {
+              ...(partner?.carrierMetrics || {}),
+              serviceCount: Number(pServiceCount) || 0,
+              parcelLockers: Number(pParcelLockers) || 0,
+              pickupAgents: Number(pPickupAgents) || 0,
+              homeDeliveryPct: Number(pHomeDeliveryPct) || 0,
+              avgLeadTime: pAvgLeadTime.trim() || partner?.carrierMetrics?.avgLeadTime,
+            }
+          : partner?.carrierMetrics;
+
         await api.upsertPartner({
           id: partner?.id,
           name: pName.trim(),
@@ -210,6 +242,7 @@ export function EntityEditorModal({
           pricingModel: pPricingModel.trim() || undefined,
           setupTime: pSetupTime.trim() || undefined,
           bestFor: pBestFor.trim() || undefined,
+          carrierMetrics,
           notableClients: pClients
             .split(',')
             .map((s) => s.trim())
@@ -675,6 +708,76 @@ export function EntityEditorModal({
                   />
                 </div>
               </div>
+
+              {pSubType === 'Transportör' && (
+                <div className="p-3.5 rounded-xl bg-[#F4F6F9] border border-slate-200 space-y-2.5">
+                  <div className="text-xs font-bold text-[#040B16]">
+                    Transportörsdata (tjänster, paketskåp, ombud &amp; hemleverans)
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Tjänster (st)
+                      </label>
+                      <input
+                        type="number"
+                        value={pServiceCount}
+                        onChange={(e) => setPServiceCount(e.target.value)}
+                        placeholder="9"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Paketskåp
+                      </label>
+                      <input
+                        type="number"
+                        value={pParcelLockers}
+                        onChange={(e) => setPParcelLockers(e.target.value)}
+                        placeholder="5000"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Ombud
+                      </label>
+                      <input
+                        type="number"
+                        value={pPickupAgents}
+                        onChange={(e) => setPPickupAgents(e.target.value)}
+                        placeholder="1900"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Hemlev. (%)
+                      </label>
+                      <input
+                        type="number"
+                        value={pHomeDeliveryPct}
+                        onChange={(e) => setPHomeDeliveryPct(e.target.value)}
+                        placeholder="100"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Ledtid
+                      </label>
+                      <input
+                        type="text"
+                        value={pAvgLeadTime}
+                        onChange={(e) => setPAvgLeadTime(e.target.value)}
+                        placeholder="1–2 vardagar"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">

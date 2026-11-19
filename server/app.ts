@@ -3,12 +3,14 @@ import type { CmsDataStore } from './firestoreStore.ts';
 import { publicStore } from './publicStore.ts';
 import type { CmsIdentity } from './authPolicy.ts';
 import { upgradeSnapshot, validateSnapshot } from './snapshot.ts';
+import { hasExplicitAdminCredentials } from './firebaseAdmin.ts';
 import {
   discoverJobsWithAI,
   discoverMerchantsWithAI,
   discoverPartnersWithAI,
   discoverRecruitersWithAI,
   enrichSingleEntityWithAI,
+  fetchEcommerceNewsWithAI,
 } from './geminiDiscovery.ts';
 
 
@@ -33,7 +35,7 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   app.use('/api', route(async (req, res, next) => {
     const path = req.originalUrl.split('?')[0].replace(/\/$/, '');
     const publicRead = ['GET', 'HEAD'].includes(req.method) &&
-      ['/api/cms/store', '/api/merchants', '/api/partners'].includes(path);
+      ['/api/cms/store', '/api/merchants', '/api/partners', '/api/news'].includes(path);
     const authorization = req.get('authorization');
     let identity: CmsIdentity | undefined;
     if (authorization) {
@@ -98,6 +100,16 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   app.post('/api/cms/reset', route(async (_req, res) => {
     res.json(await store.resetStore());
   }));
+
+  app.get('/api/cms/status', (_req, res) => {
+    const explicitCreds = hasExplicitAdminCredentials();
+    const firestoreEnabled = explicitCreds || process.env.USE_FIRESTORE_ADMIN === 'true';
+    res.json({
+      persistence: firestoreEnabled ? 'firestore' : 'local',
+      hasExplicitAdminCredentials: explicitCreds,
+      hasGeminiKey: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY'),
+    });
+  });
 
   // --- MERCHANTS (E-HANDLARE) ---
   app.get('/api/merchants', route(async (_req, res) => {
@@ -206,6 +218,48 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     const ok = await store.deleteLogisticsProvider(req.params.id);
     if (!ok) {
       res.status(404).json({ error: 'Logistikpartner hittades inte.' });
+      return;
+    }
+    res.json({ deleted: true });
+  }));
+
+  // --- E-COMMERCE NEWS ---
+  app.get('/api/news', route(async (_req, res) => {
+    res.json(publicStore(await store.getStore(), res.locals.cmsAdmin === true).news);
+  }));
+
+  app.post('/api/news', route(async (req, res) => {
+    if (!req.body?.title) {
+      res.status(400).json({ error: 'Nyhetsrubrik krävs.' });
+      return;
+    }
+    const result = await store.upsertNews(req.body);
+    res.status(result.created ? 201 : 200).json(result);
+  }));
+
+  app.post('/api/news/batch', route(async (req, res) => {
+    const items = req.body?.items;
+    if (!Array.isArray(items)) {
+      res.status(400).json({ error: 'items-array krävs.' });
+      return;
+    }
+    const result = await store.batchAddNews(items);
+    res.status(201).json(result);
+  }));
+
+  app.put('/api/news/:id', route(async (req, res) => {
+    if (!req.body?.title) {
+      res.status(400).json({ error: 'Nyhetsrubrik krävs.' });
+      return;
+    }
+    const result = await store.upsertNews({ ...req.body, id: req.params.id });
+    res.json(result);
+  }));
+
+  app.delete('/api/news/:id', route(async (req, res) => {
+    const ok = await store.deleteNews(req.params.id);
+    if (!ok) {
+      res.status(404).json({ error: 'Nyhet hittades inte.' });
       return;
     }
     res.json({ deleted: true });
@@ -471,6 +525,41 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       console.error('AI Enrich Error:', error);
       res.status(status).json({
         error: error.message || 'Kunde inte hämta företagsdata.',
+      });
+    }
+  }));
+
+  app.post('/api/ai/news', route(async (req, res) => {
+    try {
+      const { topic, count, autoSave } = req.body as {
+        topic?: string;
+        count?: number;
+        autoSave?: boolean;
+      };
+      const snapshot = await store.getStore();
+      const result = await fetchEcommerceNewsWithAI({
+        topic,
+        count,
+        existingTitles: (snapshot.news || []).map((n) => n.title),
+      });
+      if (autoSave) {
+        const toAdd = result.candidates
+          .filter((c) => !c.alreadyExists)
+          .map((c) => ({ ...c, status: 'published' as const }));
+        const saved = await store.batchAddNews(toAdd);
+        res.json({ ...result, saved });
+        return;
+      }
+      res.json(result);
+    } catch (err) {
+      const error = err as Error & { statusCode?: number; status?: number };
+      const status = error.statusCode || error.status || 500;
+      console.error('AI News Fetch Error:', error);
+      res.status(status).json({
+        error:
+          status === 403 || status === 400
+            ? `${error.message} Kontrollera serverns GEMINI_API_KEY.`
+            : error.message || 'Kunde inte hämta senaste nyheterna.',
       });
     }
   }));

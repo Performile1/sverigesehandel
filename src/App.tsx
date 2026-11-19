@@ -14,12 +14,14 @@ import { KontaktView } from './components/KontaktView';
 import { MarknadView } from './components/MarknadView';
 import { MerchantsView } from './components/MerchantsView';
 import { Navbar } from './components/Navbar';
+import { NewsView } from './components/NewsView';
 import { PartnersView } from './components/PartnersView';
 import { ThreePlView } from './components/ThreePlView';
 import type { CMSStore, JobRoleCategory, Merchant, PortalTab, TechPartner } from './types';
 
 const TAB_TITLES: Record<PortalTab, string> = {
   marknad: 'Sveriges E-handel – Marknadsdata, ECDB, Statista & Tech | sverigesehandel.se',
+  nyheter: 'E-handelsnyheter – Temu, Nya Butiker & SaaS i Sverige & Europa | sverigesehandel.se',
   event: 'Event & Mässor 2027 – D-Congress, E-commerce Expo & Retail Tech | sverigesehandel.se',
   ehandlare: 'Svenska E-handlare – Omsättning, Tillväxt & Tech-stack | sverigesehandel.se',
   partners: 'Jämför Betallösningar, Transportörer, TA-system & Plattformar | sverigesehandel.se',
@@ -37,7 +39,7 @@ function getInitialTab(): PortalTab {
 }
 
 export default function App() {
-  const { user, authReady, isAdmin, authError, signInWithGoogle } = useFirebase();
+  const { user, authReady, isAdmin, authError, signInWithGoogle, signOutUser } = useFirebase();
   const fetchSequence = useRef(0);
   const [store, setStore] = useState<CMSStore | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,6 +104,7 @@ export default function App() {
       setStore({
         ...data,
         logisticsProviders: Array.isArray(data.logisticsProviders) ? data.logisticsProviders : [],
+        news: Array.isArray(data.news) ? data.news : [],
       });
       setLoadError(null);
     } catch (err) {
@@ -198,13 +201,27 @@ export default function App() {
             Kunde inte ansluta till CMS-servern
           </h1>
           <p className="text-xs text-slate-600">{loadError || 'Okänt fel.'}</p>
-          <button
-            type="button"
-            onClick={fetchStore}
-            className="px-4 py-2 rounded-xl bg-[#040B16] text-white text-xs font-bold cursor-pointer"
-          >
-            Försök igen
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={fetchStore}
+              className="px-4 py-2 rounded-xl bg-[#040B16] text-white text-xs font-bold cursor-pointer"
+            >
+              Försök igen
+            </button>
+            {user && (
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOutUser();
+                  setLoadError(null);
+                }}
+                className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-[#040B16] text-xs font-semibold cursor-pointer"
+              >
+                Logga ut &amp; ladda publik portal
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -261,6 +278,18 @@ export default function App() {
                 partnerCount={store.partners.filter((p) => p.status === 'published').length}
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
+              />
+            )}
+            {activeTab === 'nyheter' && (
+              <NewsView
+                news={store.news || []}
+                adBanners={store.adBanners}
+                isAdmin={isAdmin}
+                onNavigate={handleNavigate}
+                onBookAdSlot={handleBookAdSlot}
+                onRefresh={fetchStore}
+                onNotify={notify}
+                onRequireAdmin={() => setMode('cms')}
               />
             )}
             {activeTab === 'event' && (
@@ -464,6 +493,18 @@ export default function App() {
                       className="hover:text-white"
                     >
                       Marknad & regional data
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#nyheter"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleNavigate('nyheter');
+                      }}
+                      className="hover:text-white"
+                    >
+                      Nyheter &amp; Trender
                     </a>
                   </li>
                   <li>

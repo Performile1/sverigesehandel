@@ -26,12 +26,25 @@ export function isVerifiedAdmin(user: User | null): boolean {
   return Boolean(user && user.emailVerified && user.email === ADMIN_EMAIL);
 }
 
+const EXPECTED_USER_KEYS = ['uid', 'displayName', 'role', 'city', 'createdAt', 'updatedAt'] as const;
+const EXPECTED_PRIVATE_KEYS = ['uid', 'email', 'updatedAt'] as const;
+
+function hasExactKeys(data: Record<string, unknown>, keys: readonly string[]): boolean {
+  const actualKeys = Object.keys(data);
+  return actualKeys.length === keys.length && keys.every((k) => Object.prototype.hasOwnProperty.call(data, k));
+}
+
+function isFirestoreTimestamp(val: unknown): boolean {
+  return Boolean(val && typeof val === 'object' && typeof (val as { toMillis?: unknown }).toMillis === 'function');
+}
+
 export async function ensureUserProfile(user: User): Promise<void> {
   if (!user.emailVerified) return;
   const uid = sanitizeFirestoreId(user.uid);
   const userPath = `users/${uid}`;
   const privatePath = `users/${uid}/private/info`;
 
+  let profileReady = false;
   try {
     const userRef = doc(db, 'users', uid);
     const snap = await getDoc(userRef);
@@ -51,22 +64,77 @@ export async function ensureUserProfile(user: User): Promise<void> {
         updatedAt: serverTimestamp(),
       });
     } else {
-      await updateDoc(userRef, {
-        displayName,
-        updatedAt: serverTimestamp(),
-      });
+      const existing = snap.data() as Record<string, unknown>;
+      const validShape =
+        hasExactKeys(existing, EXPECTED_USER_KEYS) &&
+        existing.uid === uid &&
+        typeof existing.displayName === 'string' &&
+        typeof existing.role === 'string' &&
+        existing.role.length >= 1 &&
+        existing.role.length <= 80 &&
+        typeof existing.city === 'string' &&
+        existing.city.length >= 1 &&
+        existing.city.length <= 60 &&
+        isFirestoreTimestamp(existing.createdAt) &&
+        isFirestoreTimestamp(existing.updatedAt);
+
+      if (!validShape) {
+        await deleteDoc(userRef);
+        await setDoc(userRef, {
+          uid,
+          displayName,
+          role: 'E-handlare / Besökare',
+          city: 'Sverige',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } else if (existing.displayName !== displayName) {
+        await updateDoc(userRef, {
+          displayName,
+          updatedAt: serverTimestamp(),
+        });
+      }
     }
+    profileReady = true;
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, userPath);
   }
 
+  if (!profileReady) return;
+
   try {
     const privateRef = doc(db, 'users', uid, 'private', 'info');
-    await setDoc(privateRef, {
-      uid,
-      email: sanitizeBoundedString(user.email, BLUEPRINT_LIMITS.emailMax, 'user@example.se'),
-      updatedAt: serverTimestamp(),
-    });
+    const privSnap = await getDoc(privateRef);
+    const safeEmail = sanitizeBoundedString(user.email, BLUEPRINT_LIMITS.emailMax, 'user@example.se');
+
+    if (!privSnap.exists()) {
+      await setDoc(privateRef, {
+        uid,
+        email: safeEmail,
+        updatedAt: serverTimestamp(),
+      });
+    } else {
+      const existingPriv = privSnap.data() as Record<string, unknown>;
+      const validPriv =
+        hasExactKeys(existingPriv, EXPECTED_PRIVATE_KEYS) &&
+        existingPriv.uid === uid &&
+        typeof existingPriv.email === 'string' &&
+        isFirestoreTimestamp(existingPriv.updatedAt);
+
+      if (!validPriv) {
+        await deleteDoc(privateRef);
+        await setDoc(privateRef, {
+          uid,
+          email: safeEmail,
+          updatedAt: serverTimestamp(),
+        });
+      } else if (existingPriv.email !== safeEmail) {
+        await updateDoc(privateRef, {
+          email: safeEmail,
+          updatedAt: serverTimestamp(),
+        });
+      }
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, privatePath);
   }

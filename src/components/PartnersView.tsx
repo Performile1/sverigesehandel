@@ -39,8 +39,8 @@ const COMPARE_DOMAINS: Array<{
   {
     id: 'carriers',
     label: 'Logistik (Transportörer)',
-    title: 'Jämför Svenska Transportörer (Last-mile, Skåp & Hemleverans)',
-    subtitle: 'Jämför kundbas, nätverkstäckning, leveranstider och styrkor mellan PostNord, Instabee, DHL, Bring, Airmee, Early Bird och Schenker.',
+    title: 'Jämför Svenska Transportörer & Paketskåpsnät (Last-mile, Skåp & Ombud)',
+    subtitle: 'Ställ PostNord, Instabee, iBoxen, DHL, Bring, Airmee, Early Bird och DB Schenker sida vid sida på antal tjänster, paketskåp, ombud och hemleverans.',
     match: (p) => p.subType === 'Transportör',
   },
   {
@@ -64,6 +64,13 @@ const COMPARE_DOMAINS: Array<{
     subtitle: 'Jämför Voyado, Funnel, Triggerbee, Rule, Klaviyo, Hello Retail och Lipscore.',
     match: (p) => p.cat === 'MarTech & AI' || p.subType === 'MarTech & AI',
   },
+];
+
+const CARRIER_COMPARE_PRESETS: Array<{ label: string; ids: string[] }> = [
+  { label: 'PostNord vs Instabee vs iBoxen', ids: ['p-postnord', 'p-instabee', 'p-iboxen'] },
+  { label: 'Storstad & Snabbhet: Instabee vs Airmee vs Early Bird', ids: ['p-instabee', 'p-airmee', 'p-earlybird'] },
+  { label: 'Rikstäckning & Export: PostNord vs Bring vs DHL', ids: ['p-postnord', 'p-bring', 'p-dhl'] },
+  { label: 'iBoxen-nätverket: iBoxen vs DHL vs Bring vs Schenker', ids: ['p-iboxen', 'p-dhl', 'p-bring', 'p-schenker'] },
 ];
 
 export function PartnersView({
@@ -125,6 +132,8 @@ export function PartnersView({
     return pinnedInDomain.length > 0 ? pinnedInDomain : matches;
   }, [published, activeCompareConfig, pinnedIds]);
 
+  const sideBySideActors = useMemo(() => compareList.slice(0, 4), [compareList]);
+
   const allDomainPartners = useMemo(
     () => published.filter(activeCompareConfig.match),
     [published, activeCompareConfig]
@@ -148,7 +157,7 @@ export function PartnersView({
               Tekniska Partners, Antal Kunder & Jämförelsesidor
             </h1>
             <p className="text-slate-300 text-sm sm:text-base mt-2 max-w-2xl leading-relaxed">
-              Bläddra i hela katalogen eller växla till Jämför-läget för att ställa betallösningar, transportörer, TA-system, plattformar och MarTech sida vid sida.
+              Bläddra i hela katalogen eller växla till Jämför-läget för att ställa betallösningar, transportörer (inkl. iBoxen), TA-system, plattformar och MarTech sida vid sida.
             </p>
           </div>
 
@@ -157,7 +166,7 @@ export function PartnersView({
               <button
                 type="button"
                 onClick={() => setViewMode('catalog')}
-                className={`px-3.5 py-2 rounded-lg inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                className={`px-3.5 py-2 rounded-lg inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
                   viewMode === 'catalog'
                     ? 'bg-[#FECC02] text-[#040B16]'
                     : 'text-slate-200 hover:text-white'
@@ -169,7 +178,7 @@ export function PartnersView({
               <button
                 type="button"
                 onClick={() => setViewMode('compare')}
-                className={`px-3.5 py-2 rounded-lg inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                className={`px-3.5 py-2 rounded-lg inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
                   viewMode === 'compare'
                     ? 'bg-[#FECC02] text-[#040B16]'
                     : 'text-slate-200 hover:text-white'
@@ -307,10 +316,29 @@ export function PartnersView({
               </div>
             </div>
 
-            {/* Quick Select / Filter Pills */}
+            {/* Carrier Comparison Presets */}
+            {compareDomain === 'carriers' && (
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+                <span className="text-xs font-semibold text-slate-500 mr-1">
+                  Snabbjämförelser:
+                </span>
+                {CARRIER_COMPARE_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => setPinnedIds(preset.ids)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#F4F6F9] hover:bg-[#FECC02]/30 border border-slate-200 text-[#040B16] transition-colors cursor-pointer"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Quick Select Buttons */}
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
               <span className="text-xs font-semibold text-slate-500 mr-1">
-                Välj att jämföra:
+                Välj aktörer (max 4 i kolumnmatris):
               </span>
               {allDomainPartners.map((p) => {
                 const selected = pinnedIds.includes(p.id);
@@ -331,67 +359,282 @@ export function PartnersView({
               })}
             </div>
 
-            {/* Matrix Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
-                    <th className="py-3 px-4 font-semibold">Partner</th>
-                    <th className="py-3 px-4 font-semibold">Antal kunder</th>
-                    <th className="py-3 px-4 font-semibold">Prismodell</th>
-                    <th className="py-3 px-4 font-semibold">Setup-tid</th>
-                    <th className="py-3 px-4 font-semibold">Passar bäst för</th>
-                    <th className="py-3 px-4 font-semibold">Nyckelstyrkor</th>
-                    <th className="py-3 px-4 font-semibold text-right">Kontakt</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {compareList.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50 align-top">
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <div className="font-display font-extrabold text-sm text-[#040B16]">
-                          {p.name}
-                        </div>
-                        <div className="text-[11px] font-mono text-[#006AA7]">
-                          {p.domain} · {p.origin}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 font-mono font-semibold text-[#059669] tabular-nums min-w-[160px]">
-                        {p.customerCount || 'Nordiska e-handlare'}
-                      </td>
-                      <td className="py-4 px-4 text-slate-700 min-w-[170px]">
-                        {p.pricingModel || 'Offert / SaaS'}
-                      </td>
-                      <td className="py-4 px-4 font-mono text-slate-600 whitespace-nowrap">
-                        {p.setupTime || '1–4 veckor'}
-                      </td>
-                      <td className="py-4 px-4 text-slate-700 min-w-[200px]">
-                        {p.bestFor || p.desc}
-                      </td>
-                      <td className="py-4 px-4 text-slate-700 min-w-[210px]">
-                        {p.keyStrengths && p.keyStrengths.length > 0 ? (
-                          <ul className="space-y-1">
-                            {p.keyStrengths.map((s, idx) => (
-                              <li key={idx}>· {s}</li>
+            {/* Side-by-Side Column Matrix (Up to 4 Actors) */}
+            {sideBySideActors.length >= 2 && (
+              <div className="space-y-2.5 pt-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-mono font-bold text-[#006AA7]">
+                    Sida-vid-sida jämförelse ({sideBySideActors.length} valda aktörer)
+                  </span>
+                  <span className="text-slate-500">
+                    Klicka på aktörerna ovan för att byta ut kolumnerna
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-[#040B16] text-white">
+                        <th className="py-3.5 px-4 font-mono font-semibold text-slate-300 w-44">
+                          Jämförelsepunkt
+                        </th>
+                        {sideBySideActors.map((actor) => (
+                          <th key={actor.id} className="py-3.5 px-4 min-w-[200px] align-top">
+                            <div className="font-display text-sm font-extrabold text-[#FECC02]">
+                              {actor.name}
+                            </div>
+                            <div className="text-[11px] font-mono font-normal text-slate-300 mt-0.5">
+                              {actor.domain} · {actor.origin}
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {compareDomain === 'carriers' && (
+                        <>
+                          <tr>
+                            <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                              Antal leveranstjänster
+                            </td>
+                            {sideBySideActors.map((actor) => (
+                              <td key={actor.id} className="py-3 px-4 align-top">
+                                <div className="font-mono font-extrabold text-sm text-[#040B16] tabular-nums">
+                                  {actor.carrierMetrics ? `${actor.carrierMetrics.serviceCount} st` : '–'}
+                                </div>
+                                {actor.carrierMetrics?.coreServices && (
+                                  <div className="text-[11px] text-slate-500 mt-1">
+                                    {actor.carrierMetrics.coreServices.join(' · ')}
+                                  </div>
+                                )}
+                              </td>
                             ))}
-                          </ul>
-                        ) : (
-                          <span>{p.stack}</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-4 text-right whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => onRequestIntro(p.name)}
-                          className="px-3 py-1.5 rounded-lg bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer"
-                        >
-                          Intro
-                        </button>
-                      </td>
+                          </tr>
+                          <tr>
+                            <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                              Paketskåp i Sverige
+                            </td>
+                            {sideBySideActors.map((actor) => (
+                              <td
+                                key={actor.id}
+                                className="py-3 px-4 font-mono font-bold text-[#006AA7] tabular-nums"
+                              >
+                                {actor.carrierMetrics && actor.carrierMetrics.parcelLockers > 0
+                                  ? `${actor.carrierMetrics.parcelLockers.toLocaleString('sv-SE')} skåp`
+                                  : 'Egen box saknas'}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr>
+                            <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                              Postombud &amp; utlämning
+                            </td>
+                            {sideBySideActors.map((actor) => (
+                              <td
+                                key={actor.id}
+                                className="py-3 px-4 font-mono font-semibold text-[#040B16] tabular-nums"
+                              >
+                                {actor.carrierMetrics && actor.carrierMetrics.pickupAgents > 0
+                                  ? `${actor.carrierMetrics.pickupAgents.toLocaleString('sv-SE')} ombud`
+                                  : 'Inga manuella ombud'}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr>
+                            <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                              Hemleverans-täckning
+                            </td>
+                            {sideBySideActors.map((actor) => (
+                              <td
+                                key={actor.id}
+                                className="py-3 px-4 font-mono font-extrabold text-[#059669] tabular-nums"
+                              >
+                                {actor.carrierMetrics && actor.carrierMetrics.homeDeliveryPct > 0
+                                  ? `${actor.carrierMetrics.homeDeliveryPct} % av hushåll`
+                                  : 'Endast utomhusskåp'}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr>
+                            <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                              Same-day, Helg &amp; Ledtid
+                            </td>
+                            {sideBySideActors.map((actor) => (
+                              <td key={actor.id} className="py-3 px-4 text-slate-700">
+                                <div className="font-mono font-semibold text-[#040B16]">
+                                  {actor.carrierMetrics?.avgLeadTime || '1–2 vardagar'}
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-0.5">
+                                  Same-day: {actor.carrierMetrics?.sameDayAvailable ? 'Ja' : 'Nej'} · Helg:{' '}
+                                  {actor.carrierMetrics?.weekendDelivery ? 'Ja' : 'Begränsat'}
+                                </div>
+                              </td>
+                            ))}
+                          </tr>
+                        </>
+                      )}
+
+                      <tr>
+                        <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                          Antal e-handelskunder
+                        </td>
+                        {sideBySideActors.map((actor) => (
+                          <td
+                            key={actor.id}
+                            className="py-3 px-4 font-mono font-semibold text-[#059669] tabular-nums"
+                          >
+                            {actor.customerCount || 'Nordiska e-handlare'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                          Prismodell
+                        </td>
+                        {sideBySideActors.map((actor) => (
+                          <td key={actor.id} className="py-3 px-4 text-slate-700">
+                            {actor.pricingModel || 'Offert / SaaS'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                          Setup-tid
+                        </td>
+                        {sideBySideActors.map((actor) => (
+                          <td key={actor.id} className="py-3 px-4 font-mono text-slate-700">
+                            {actor.setupTime || '1–4 veckor'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                          Passar bäst för
+                        </td>
+                        {sideBySideActors.map((actor) => (
+                          <td key={actor.id} className="py-3 px-4 text-slate-700 leading-relaxed">
+                            {actor.bestFor || actor.desc}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                          Nyckelstyrkor
+                        </td>
+                        {sideBySideActors.map((actor) => (
+                          <td key={actor.id} className="py-3 px-4 text-slate-700">
+                            {actor.keyStrengths && actor.keyStrengths.length > 0 ? (
+                              <ul className="space-y-1">
+                                {actor.keyStrengths.map((s, idx) => (
+                                  <li key={idx}>· {s}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <span>{actor.stack}</span>
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-4 font-semibold text-slate-600 bg-slate-50">
+                          Kontakt
+                        </td>
+                        {sideBySideActors.map((actor) => (
+                          <td key={actor.id} className="py-3 px-4">
+                            <button
+                              type="button"
+                              onClick={() => onRequestIntro(actor.name)}
+                              className="px-3 py-1.5 rounded-lg bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer"
+                            >
+                              Begär intro till {actor.name}
+                            </button>
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Full Category Overview Table */}
+            <div className="space-y-2 pt-2">
+              <div className="font-mono text-xs font-semibold text-slate-500">
+                Fullständig översikt ({compareList.length} aktörer)
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
+                      <th className="py-3 px-4 font-semibold">Partner</th>
+                      {compareDomain === 'carriers' && (
+                        <>
+                          <th className="py-3 px-3 font-semibold text-right">Tjänster</th>
+                          <th className="py-3 px-3 font-semibold text-right">Skåp / Ombud</th>
+                          <th className="py-3 px-3 font-semibold text-right">Hemlev.</th>
+                        </>
+                      )}
+                      <th className="py-3 px-4 font-semibold">Antal kunder</th>
+                      <th className="py-3 px-4 font-semibold">Prismodell</th>
+                      <th className="py-3 px-4 font-semibold">Setup-tid</th>
+                      <th className="py-3 px-4 font-semibold">Passar bäst för</th>
+                      <th className="py-3 px-4 font-semibold text-right">Kontakt</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {compareList.map((p) => (
+                      <tr key={p.id} className="hover:bg-slate-50 align-top">
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <div className="font-display font-extrabold text-sm text-[#040B16]">
+                            {p.name}
+                          </div>
+                          <div className="text-[11px] font-mono text-[#006AA7]">
+                            {p.domain} · {p.origin}
+                          </div>
+                        </td>
+                        {compareDomain === 'carriers' && (
+                          <>
+                            <td className="py-4 px-3 text-right font-mono font-bold text-[#040B16] tabular-nums whitespace-nowrap">
+                              {p.carrierMetrics ? `${p.carrierMetrics.serviceCount} st` : '–'}
+                            </td>
+                            <td className="py-4 px-3 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                              {p.carrierMetrics
+                                ? `${p.carrierMetrics.parcelLockers.toLocaleString('sv-SE')} / ${p.carrierMetrics.pickupAgents.toLocaleString('sv-SE')}`
+                                : '–'}
+                            </td>
+                            <td className="py-4 px-3 text-right font-mono font-bold text-[#059669] tabular-nums whitespace-nowrap">
+                              {p.carrierMetrics && p.carrierMetrics.homeDeliveryPct > 0
+                                ? `${p.carrierMetrics.homeDeliveryPct}%`
+                                : '–'}
+                            </td>
+                          </>
+                        )}
+                        <td className="py-4 px-4 font-mono font-semibold text-[#059669] tabular-nums min-w-[150px]">
+                          {p.customerCount || 'Nordiska e-handlare'}
+                        </td>
+                        <td className="py-4 px-4 text-slate-700 min-w-[160px]">
+                          {p.pricingModel || 'Offert / SaaS'}
+                        </td>
+                        <td className="py-4 px-4 font-mono text-slate-600 whitespace-nowrap">
+                          {p.setupTime || '1–4 veckor'}
+                        </td>
+                        <td className="py-4 px-4 text-slate-700 min-w-[200px]">
+                          {p.bestFor || p.desc}
+                        </td>
+                        <td className="py-4 px-4 text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => onRequestIntro(p.name)}
+                            className="px-3 py-1.5 rounded-lg bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer"
+                          >
+                            Intro
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -439,6 +682,41 @@ export function PartnersView({
                         <span className="font-semibold text-[#040B16] tabular-nums">
                           {p.customerCount}
                         </span>
+                      </div>
+                    )}
+
+                    {p.carrierMetrics && (
+                      <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-[#F4F6F9] border border-slate-200 text-[11px]">
+                        <div>
+                          <div className="font-mono text-slate-500">Leveranstjänster</div>
+                          <div className="font-mono font-bold text-[#040B16] tabular-nums">
+                            {p.carrierMetrics.serviceCount} st
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-mono text-slate-500">Paketskåp</div>
+                          <div className="font-mono font-bold text-[#006AA7] tabular-nums">
+                            {p.carrierMetrics.parcelLockers > 0
+                              ? `${p.carrierMetrics.parcelLockers.toLocaleString('sv-SE')} st`
+                              : '–'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-mono text-slate-500">Postombud</div>
+                          <div className="font-mono font-bold text-[#040B16] tabular-nums">
+                            {p.carrierMetrics.pickupAgents > 0
+                              ? `${p.carrierMetrics.pickupAgents.toLocaleString('sv-SE')} st`
+                              : '–'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-mono text-slate-500">Hemleverans</div>
+                          <div className="font-mono font-bold text-[#059669] tabular-nums">
+                            {p.carrierMetrics.homeDeliveryPct > 0
+                              ? `${p.carrierMetrics.homeDeliveryPct} %`
+                              : 'Utomhusbox'}
+                          </div>
+                        </div>
                       </div>
                     )}
 

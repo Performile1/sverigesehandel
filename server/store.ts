@@ -13,6 +13,7 @@ import type {
   EcommerceEvent,
   EcommerceJob,
   EcommerceLaw,
+  EcommerceNewsItem,
   JobValidityStatus,
   LogisticsProvider,
   Merchant,
@@ -155,7 +156,7 @@ function mergeSeedPartners(existing: TechPartner[]): { list: TechPartner[]; chan
   const updatedExisting = existing.map((p) => {
     const seed = seedById.get(p.id);
     if (!seed) return p;
-    if (!p.customerCount || !p.subType || !p.pricingModel) {
+    if (!p.customerCount || !p.subType || !p.pricingModel || (!p.carrierMetrics && seed.carrierMetrics)) {
       changed = true;
       return {
         ...seed,
@@ -166,6 +167,7 @@ function mergeSeedPartners(existing: TechPartner[]): { list: TechPartner[]; chan
         setupTime: p.setupTime ?? seed.setupTime,
         bestFor: p.bestFor ?? seed.bestFor,
         keyStrengths: p.keyStrengths && p.keyStrengths.length > 0 ? p.keyStrengths : seed.keyStrengths,
+        carrierMetrics: p.carrierMetrics ?? seed.carrierMetrics,
       };
     }
     return p;
@@ -330,9 +332,11 @@ function ensureStoreFile(): CMSStore {
       : INITIAL_CMS_DATA.deliveryStats;
 
     const hydrated: CMSStore = {
+      schemaVersion: 2,
       merchants: mergedMerchants.list,
       partners: mergedPartners.list,
       logisticsProviders: mergedLogistics,
+      news: Array.isArray(parsed.news) ? parsed.news : INITIAL_CMS_DATA.news,
       events:
         Array.isArray(parsed.events) && parsed.events.length > 0
           ? parsed.events
@@ -382,6 +386,7 @@ function ensureStoreFile(): CMSStore {
       mergedJobs.changed ||
       regionsChanged ||
       deliveryChanged ||
+      !parsed.news ||
       !parsed.events ||
       !parsed.jobs ||
       !parsed.recruitmentSites ||
@@ -1222,6 +1227,96 @@ export function deleteLogisticsProvider(id: string): boolean {
   const before = store.logisticsProviders.length;
   store.logisticsProviders = store.logisticsProviders.filter((l) => l.id !== id);
   if (store.logisticsProviders.length === before) return false;
+  saveStore(store);
+  return true;
+}
+
+export function upsertNews(
+  input: Partial<EcommerceNewsItem> & { title: string }
+): { item: EcommerceNewsItem; created: boolean } {
+  const store = ensureStoreFile();
+  const list = Array.isArray(store.news) ? store.news : [];
+  const cleanTitle = input.title.trim();
+  const existingIdx = input.id ? list.findIndex((n) => n.id === input.id) : -1;
+
+  if (existingIdx >= 0) {
+    const updated: EcommerceNewsItem = {
+      ...list[existingIdx],
+      ...input,
+      id: list[existingIdx].id,
+      title: cleanTitle || list[existingIdx].title,
+    };
+    list[existingIdx] = updated;
+    store.news = list;
+    saveStore(store);
+    return { item: updated, created: false };
+  }
+
+  const created: EcommerceNewsItem = {
+    id: input.id || `news-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    title: cleanTitle,
+    summary: input.summary?.trim() || 'Nyhet inom svensk och europeisk e-handel.',
+    category: input.category || 'SaaS & System',
+    region: input.region || 'Sverige',
+    sourceName: input.sourceName?.trim() || 'Redaktionen',
+    sourceUrl: input.sourceUrl?.trim() || 'https://sverigesehandel.se',
+    publishedDate: input.publishedDate || todayIso(),
+    impactNote: input.impactNote?.trim() || undefined,
+    tags: Array.isArray(input.tags) ? input.tags.filter(Boolean) : [],
+    status: input.status || 'published',
+    fetchedByAI: input.fetchedByAI,
+  };
+  store.news = [created, ...list];
+  saveStore(store);
+  return { item: created, created: true };
+}
+
+export function batchAddNews(
+  items: Array<Partial<EcommerceNewsItem> & { title: string }>
+): { added: EcommerceNewsItem[]; skipped: string[] } {
+  const store = ensureStoreFile();
+  const list = Array.isArray(store.news) ? store.news : [];
+  const existingTitles = new Set(list.map((n) => n.title.toLowerCase().trim()));
+  const added: EcommerceNewsItem[] = [];
+  const skipped: string[] = [];
+
+  for (const input of items) {
+    const cleanTitle = input.title?.trim();
+    if (!cleanTitle) continue;
+    if (existingTitles.has(cleanTitle.toLowerCase())) {
+      skipped.push(cleanTitle);
+      continue;
+    }
+    const created: EcommerceNewsItem = {
+      id: `news-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      title: cleanTitle,
+      summary: input.summary?.trim() || 'Aktuell nyhet inom digital handel.',
+      category: input.category || 'SaaS & System',
+      region: input.region || 'Europa',
+      sourceName: input.sourceName?.trim() || 'Branschnyhet',
+      sourceUrl: input.sourceUrl?.trim() || 'https://sverigesehandel.se',
+      publishedDate: input.publishedDate || todayIso(),
+      impactNote: input.impactNote?.trim() || undefined,
+      tags: Array.isArray(input.tags) ? input.tags.filter(Boolean) : [],
+      status: input.status || 'published',
+      fetchedByAI: input.fetchedByAI ?? true,
+    };
+    list.unshift(created);
+    existingTitles.add(cleanTitle.toLowerCase());
+    added.push(created);
+  }
+
+  store.news = list;
+  saveStore(store);
+  return { added, skipped };
+}
+
+export function deleteNews(id: string): boolean {
+  const store = ensureStoreFile();
+  const list = Array.isArray(store.news) ? store.news : [];
+  const before = list.length;
+  store.news = list.filter((n) => n.id !== id);
+  if (store.news.length === before) return false;
   saveStore(store);
   return true;
 }

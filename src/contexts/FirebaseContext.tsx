@@ -1,6 +1,8 @@
 import {
+  getRedirectResult,
   onIdTokenChanged,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   type User,
 } from 'firebase/auth';
@@ -30,11 +32,30 @@ interface FirebaseContextValue {
   authError: string | null;
   savedSessionIds: string[];
   signInWithGoogle: () => Promise<User | null>;
+  signInWithGoogleRedirect: () => Promise<void>;
   signOutUser: () => Promise<void>;
   toggleSavedSession: (session: DCSession) => Promise<boolean>;
 }
 
 const FirebaseContext = createContext<FirebaseContextValue | null>(null);
+
+function formatAuthError(err: unknown): string {
+  const code = (err as { code?: string })?.code;
+  const host = typeof window !== 'undefined' ? window.location.hostname : 'denna domän';
+  if (code === 'auth/unauthorized-domain') {
+    return `Domänen "${host}" är inte godkänd i Firebase Authentication ännu. Lägg till "${host}" under Firebase Console → Authentication → Settings → Authorized domains.`;
+  }
+  if (code === 'auth/popup-blocked') {
+    return 'Webbläsaren blockerade popup-fönstret för Google-inloggning. Försök med omdirigering nedan eller tillåt popups.';
+  }
+  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+    return 'Inloggningsfönstret stängdes innan inloggningen slutfördes.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Nätverksfel vid kontakt med Google/Firebase. Kontrollera uppkopplingen och försök igen.';
+  }
+  return err instanceof Error ? err.message : 'Kunde inte logga in med Google.';
+}
 
 export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -43,6 +64,14 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [signingIn, setSigningIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [savedSessionIds, setSavedSessionIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    void getRedirectResult(auth).catch((err) => {
+      if (active) setAuthError(formatAuthError(err));
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     let generation = 0;
@@ -63,7 +92,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
         try {
           await ensureUserProfile(nextUser);
         } catch (err) {
-          console.error('Failed to sync user profile to Firestore:', err);
+          console.warn('User profile sync skipped/warning:', err);
         }
       } else {
         setSavedSessionIds([]);
@@ -80,10 +109,21 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     const unsubSessions = subscribeSavedSessions(
       user.uid,
       (ids) => setSavedSessionIds(ids),
-      (err) => console.error('Firestore savedSessions listener error:', err)
+      (err) => console.warn('Firestore savedSessions listener warning:', err)
     );
     return () => unsubSessions();
   }, [authReady, user]);
+
+  const signInWithGoogleRedirect = useCallback(async () => {
+    setSigningIn(true);
+    setAuthError(null);
+    try {
+      await signInWithRedirect(auth, googleProvider);
+    } catch (err) {
+      setAuthError(formatAuthError(err));
+      setSigningIn(false);
+    }
+  }, []);
 
   const signInWithGoogle = useCallback(async () => {
     setSigningIn(true);
@@ -91,12 +131,25 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       if (result.user.emailVerified) {
-        await ensureUserProfile(result.user);
+        try {
+          await ensureUserProfile(result.user);
+        } catch (profileErr) {
+          console.warn('Profile sync warning after login:', profileErr);
+        }
       }
       return result.user;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Kunde inte logga in med Google.';
-      setAuthError(message);
+      const code = (err as { code?: string })?.code;
+      if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return null;
+        } catch (redirectErr) {
+          setAuthError(formatAuthError(redirectErr));
+          return null;
+        }
+      }
+      setAuthError(formatAuthError(err));
       return null;
     } finally {
       setSigningIn(false);
@@ -104,6 +157,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOutUser = useCallback(async () => {
+    setAuthError(null);
     await signOut(auth);
     setSavedSessionIds([]);
   }, []);
@@ -135,6 +189,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
         authError,
         savedSessionIds,
         signInWithGoogle,
+        signInWithGoogleRedirect,
         signOutUser,
         toggleSavedSession,
       }}

@@ -12,6 +12,7 @@ interface NavbarProps {
 
 const NAV_ITEMS: Array<{ id: PortalTab; label: string }> = [
   { id: 'marknad', label: 'Marknad' },
+  { id: 'nyheter', label: 'Nyheter' },
   { id: 'event', label: 'Event' },
   { id: 'ehandlare', label: 'E-handlare' },
   { id: 'partners', label: 'Partners' },

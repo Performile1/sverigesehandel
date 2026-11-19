@@ -59,6 +59,17 @@ export type PartnerSubType =
   | 'MarTech & AI'
   | 'ERP & Omnichannel';
 
+export interface CarrierMetrics {
+  serviceCount: number;
+  parcelLockers: number;
+  pickupAgents: number;
+  homeDeliveryPct: number;
+  sameDayAvailable?: boolean;
+  weekendDelivery?: boolean;
+  avgLeadTime?: string;
+  coreServices?: string[];
+}
+
 export interface TechPartner {
   id: string;
   name: string;
@@ -72,6 +83,7 @@ export interface TechPartner {
   setupTime?: string;
   bestFor?: string;
   keyStrengths?: string[];
+  carrierMetrics?: CarrierMetrics;
   notableClients: string[];
   desc: string;
   status: PublishStatus;
@@ -387,10 +399,33 @@ export interface ContactMessage {
   createdAt: string;
 }
 
+export type NewsCategory =
+  | 'Temu & Marknadsplatser'
+  | 'Nya Butiker (SE & EU)'
+  | 'SaaS & System'
+  | 'Logistik & Regler';
+
+export interface EcommerceNewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  category: NewsCategory | string;
+  region: 'Sverige' | 'Europa' | 'Norden' | 'Globalt' | string;
+  sourceName: string;
+  sourceUrl: string;
+  publishedDate: string;
+  impactNote?: string;
+  tags?: string[];
+  status: PublishStatus;
+  fetchedByAI?: boolean;
+}
+
 export interface CMSStore {
+  schemaVersion?: number;
   merchants: Merchant[];
   partners: TechPartner[];
   logisticsProviders: LogisticsProvider[];
+  news: EcommerceNewsItem[];
   events: EcommerceEvent[];
   sessions: DCSession[];
   jobs: EcommerceJob[];
@@ -482,6 +517,7 @@ export interface DiscoveredRecruiterCandidate {
 
 export type PortalTab =
   | 'marknad'
+  | 'nyheter'
   | 'event'
   | 'historia'
   | 'ehandlare'
@@ -496,6 +532,7 @@ export type CMSSection =
   | 'discover'
   | 'merchants'
   | 'partners'
+  | 'news'
   | 'events'
   | 'jobs'
   | 'content';

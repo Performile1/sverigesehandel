@@ -15,6 +15,7 @@ import type {
   EcommerceEvent,
   EcommerceJob,
   EcommerceLaw,
+  EcommerceNewsItem,
   GroundingSource,
   LogisticsProvider,
   Merchant,
@@ -26,11 +27,21 @@ import type {
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   await auth.authStateReady();
-  const token = await auth.currentUser?.getIdToken();
-  const headers = new Headers(options?.headers);
-  headers.set('Content-Type', 'application/json');
-  if (token) headers.set('Authorization', `Bearer ${token}`);
-  const res = await fetch(url, { ...options, headers });
+  const buildHeaders = async (forceRefresh = false) => {
+    const token = await auth.currentUser?.getIdToken(forceRefresh);
+    const headers = new Headers(options?.headers);
+    headers.set('Content-Type', 'application/json');
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+    return { headers, hasToken: Boolean(token) };
+  };
+
+  let { headers, hasToken } = await buildHeaders(false);
+  let res = await fetch(url, { ...options, headers });
+  if (res.status === 401 && hasToken && auth.currentUser) {
+    ({ headers } = await buildHeaders(true));
+    res = await fetch(url, { ...options, headers });
+  }
+
   if (!res.headers.get('content-type')?.includes('application/json')) {
     throw new Error('CMS-API:t svarade inte med JSON. Kontrollera att Vercel API-funktionen är driftsatt.');
   }
@@ -53,6 +64,12 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
 
 export const api = {
   getStore: () => request<CMSStore>('/api/cms/store'),
+  getCmsStatus: () =>
+    request<{
+      persistence: 'firestore' | 'local';
+      hasExplicitAdminCredentials: boolean;
+      hasGeminiKey: boolean;
+    }>('/api/cms/status'),
   importStore: (store: CMSStore) =>
     request<CMSStore>('/api/cms/import', {
       method: 'POST',
@@ -248,6 +265,31 @@ export const api = {
       data: Record<string, unknown>;
       sources: GroundingSource[];
     }>('/api/ai/enrich', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  upsertNews: (item: Partial<EcommerceNewsItem> & { title: string }) =>
+    request<{ item: EcommerceNewsItem; created: boolean }>(
+      item.id ? `/api/news/${item.id}` : '/api/news',
+      {
+        method: item.id ? 'PUT' : 'POST',
+        body: JSON.stringify(item),
+      }
+    ),
+  batchAddNews: (items: Array<Partial<EcommerceNewsItem> & { title: string }>) =>
+    request<{ added: EcommerceNewsItem[]; skipped: string[] }>('/api/news/batch', {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    }),
+  deleteNews: (id: string) =>
+    request<{ deleted: boolean }>(`/api/news/${id}`, { method: 'DELETE' }),
+  fetchNewsWithAI: (payload: { topic?: string; count?: number; autoSave?: boolean }) =>
+    request<{
+      candidates: Array<Omit<EcommerceNewsItem, 'id' | 'status'> & { alreadyExists?: boolean }>;
+      sources: GroundingSource[];
+      saved?: { added: EcommerceNewsItem[]; skipped: string[] };
+    }>('/api/ai/news', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),

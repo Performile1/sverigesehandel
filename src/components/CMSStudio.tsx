@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Briefcase,
   Building2,
@@ -13,6 +13,7 @@ import {
   Mail,
   MapPin,
   Megaphone,
+  Newspaper,
   Pencil,
   Plus,
   RotateCcw,
@@ -40,6 +41,7 @@ import type {
   JobRoleCategory,
   LawCategory,
   Merchant,
+  NewsCategory,
   RecruitmentSite,
   TechPartner,
 } from '../types';
@@ -249,6 +251,45 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
   const [newLawSummary, setNewLawSummary] = useState('');
   const [newLawRequirements, setNewLawRequirements] = useState('');
   const [newLawPenalty, setNewLawPenalty] = useState('Marknadsstörningsavgift / sanktionsavgift');
+
+  // News management state
+  const [cmsNewsTitle, setCmsNewsTitle] = useState('');
+  const [cmsNewsCategory, setCmsNewsCategory] = useState<NewsCategory>('Temu & Marknadsplatser');
+  const [cmsNewsRegion, setCmsNewsRegion] = useState<'Sverige' | 'Europa' | 'Norden' | 'Globalt'>('Europa');
+  const [cmsNewsSourceName, setCmsNewsSourceName] = useState('');
+  const [cmsNewsSourceUrl, setCmsNewsSourceUrl] = useState('');
+  const [cmsNewsSummary, setCmsNewsSummary] = useState('');
+  const [cmsNewsAiTopic, setCmsNewsAiTopic] = useState(
+    'Temu, nya svenska e-handelsbutiker och nya SaaS-system i Europa 2026–2027'
+  );
+  const [cmsNewsAiLoading, setCmsNewsAiLoading] = useState(false);
+
+  // Server CMS diagnostics (non-secret booleans)
+  const [cmsStatus, setCmsStatus] = useState<{
+    persistence: 'firestore' | 'local';
+    hasExplicitAdminCredentials: boolean;
+    hasGeminiKey: boolean;
+  } | null>(null);
+  const [cmsStatusError, setCmsStatusError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAdmin || section !== 'overview') return;
+    let cancelled = false;
+    api
+      .getCmsStatus()
+      .then((res) => {
+        if (!cancelled) {
+          setCmsStatus(res);
+          setCmsStatusError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setCmsStatusError((err as Error).message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, section]);
 
   const filteredMerchants = useMemo(() => {
     const q = merchantSearch.trim().toLowerCase();
@@ -599,6 +640,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
     { id: 'discover', label: 'Sök & Lägg till', icon: Sparkles },
     { id: 'merchants', label: 'E-handlare', icon: Building2, count: store.merchants.length },
     { id: 'partners', label: 'Tech & Partners', icon: Layers, count: store.partners.length },
+    { id: 'news', label: 'Nyheter', icon: Newspaper, count: (store.news || []).length },
     { id: 'events', label: 'Event & Mässor', icon: Calendar, count: store.events.length },
     { id: 'jobs', label: 'Jobb & Rekrytering', icon: Briefcase, count: store.jobs.length + store.recruitmentSites.length },
     { id: 'content', label: 'Annons, Data & Inkorg', icon: MapPin, count: store.adBanners.length + store.contactMessages.length },
@@ -2640,6 +2682,219 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
             </div>
           )}
 
+          {/* SECTION: NEWS */}
+          {section === 'news' && (
+            <div className="space-y-6">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-lg font-bold text-[#040B16]">
+                      Hämta färska nyheter via Google Search AI
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Hämtar och sparar nya e-handelsnyheter om Temu, nya nätbutiker och nya SaaS-system direkt i CMS.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={cmsNewsAiTopic}
+                    onChange={(e) => setCmsNewsAiTopic(e.target.value)}
+                    placeholder="Ämne att hämta nyheter om..."
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <button
+                    type="button"
+                    disabled={cmsNewsAiLoading}
+                    onClick={async () => {
+                      setCmsNewsAiLoading(true);
+                      try {
+                        const res = await api.fetchNewsWithAI({
+                          topic: cmsNewsAiTopic,
+                          count: 5,
+                          autoSave: true,
+                        });
+                        await onRefresh();
+                        onNotify(
+                          `Hämtade ${res.candidates.length} artiklar och sparade ${res.saved?.added.length ?? 0} nya nyheter.`
+                        );
+                      } catch (err) {
+                        onNotify((err as Error).message);
+                      } finally {
+                        setCmsNewsAiLoading(false);
+                      }
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[#FECC02] hover:bg-[#EAB308] disabled:opacity-50 text-[#040B16] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  >
+                    {cmsNewsAiLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    {cmsNewsAiLoading ? 'Hämtar...' : 'Hämta & spara 5 nyheter'}
+                  </button>
+                </div>
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!cmsNewsTitle.trim() || !cmsNewsSummary.trim()) return;
+                  await api.upsertNews({
+                    title: cmsNewsTitle.trim(),
+                    summary: cmsNewsSummary.trim(),
+                    category: cmsNewsCategory,
+                    region: cmsNewsRegion,
+                    sourceName: cmsNewsSourceName.trim() || 'sverigesehandel.se Redaktion',
+                    sourceUrl: cmsNewsSourceUrl.trim() || 'https://sverigesehandel.se',
+                    publishedDate: new Date().toISOString().slice(0, 10),
+                    status: 'published',
+                  });
+                  setCmsNewsTitle('');
+                  setCmsNewsSummary('');
+                  setCmsNewsSourceName('');
+                  setCmsNewsSourceUrl('');
+                  await onRefresh();
+                  onNotify('Nyhetsartikel publicerad.');
+                }}
+                className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4"
+              >
+                <h2 className="font-display text-lg font-bold text-[#040B16]">
+                  Publicera nyhetsartikel manuellt
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <input
+                    type="text"
+                    required
+                    value={cmsNewsTitle}
+                    onChange={(e) => setCmsNewsTitle(e.target.value)}
+                    placeholder="Rubrik *"
+                    className="sm:col-span-2 px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <select
+                    value={cmsNewsCategory}
+                    onChange={(e) => setCmsNewsCategory(e.target.value as NewsCategory)}
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs bg-white"
+                  >
+                    <option value="Temu & Marknadsplatser">Temu & Marknadsplatser</option>
+                    <option value="Nya Butiker (SE & EU)">Nya Butiker (SE & EU)</option>
+                    <option value="SaaS & System">SaaS & System</option>
+                    <option value="Logistik & Regler">Logistik & Regler</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <select
+                    value={cmsNewsRegion}
+                    onChange={(e) =>
+                      setCmsNewsRegion(
+                        e.target.value as 'Sverige' | 'Europa' | 'Norden' | 'Globalt'
+                      )
+                    }
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs bg-white"
+                  >
+                    <option value="Sverige">Sverige</option>
+                    <option value="Europa">Europa</option>
+                    <option value="Norden">Norden</option>
+                    <option value="Globalt">Globalt</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={cmsNewsSourceName}
+                    onChange={(e) => setCmsNewsSourceName(e.target.value)}
+                    placeholder="Källa (t.ex. Breakit, Ehandel.se)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="url"
+                    value={cmsNewsSourceUrl}
+                    onChange={(e) => setCmsNewsSourceUrl(e.target.value)}
+                    placeholder="Länk (https://...)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                </div>
+                <textarea
+                  rows={2}
+                  required
+                  value={cmsNewsSummary}
+                  onChange={(e) => setCmsNewsSummary(e.target.value)}
+                  placeholder="Sammanfattning av nyheten *"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer"
+                  >
+                    + Publicera nyhet
+                  </button>
+                </div>
+              </form>
+
+              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
+                        <th className="py-2.5 px-4 font-semibold">Artikel &amp; Källa</th>
+                        <th className="py-2.5 px-4 font-semibold">Kategori &amp; Region</th>
+                        <th className="py-2.5 px-4 font-semibold">Datum</th>
+                        <th className="py-2.5 px-4 font-semibold">Status</th>
+                        <th className="py-2.5 px-4 font-semibold text-right">Ta bort</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {(store.news || []).map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-50">
+                          <td className="py-3 px-4 max-w-md">
+                            <div className="font-semibold text-[#040B16]">{item.title}</div>
+                            <div className="text-[11px] text-slate-500">{item.sourceName}</div>
+                          </td>
+                          <td className="py-3 px-4 text-slate-700 whitespace-nowrap">
+                            {item.category} · {item.region}
+                          </td>
+                          <td className="py-3 px-4 font-mono text-slate-500 whitespace-nowrap tabular-nums">
+                            {item.publishedDate}
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await api.upsertNews({
+                                  ...item,
+                                  status: item.status === 'published' ? 'draft' : 'published',
+                                });
+                                await onRefresh();
+                              }}
+                              className={`text-xs font-semibold cursor-pointer hover:underline ${
+                                item.status === 'published' ? 'text-[#059669]' : 'text-amber-700'
+                              }`}
+                            >
+                              {item.status === 'published' ? 'Publicerad' : 'Utkast'}
+                            </button>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await api.deleteNews(item.id);
+                                await onRefresh();
+                                onNotify('Nyhetsartikel borttagen.');
+                              }}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* SECTION: OVERVIEW & BACKUP */}
           {section === 'overview' && (
             <div className="space-y-6">
@@ -2663,12 +2918,12 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                   </div>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-2xl p-5">
-                  <div className="text-xs font-mono text-slate-500">Event & Mässor</div>
+                  <div className="text-xs font-mono text-slate-500">Nyheter &amp; Event</div>
                   <div className="font-display text-3xl font-extrabold text-[#040B16] mt-1 tabular-nums">
-                    {store.events.length}
+                    {(store.news || []).length + store.events.length}
                   </div>
                   <div className="text-xs text-slate-500 mt-1 tabular-nums">
-                    {store.sessions.length} D-Congress pass
+                    {(store.news || []).length} nyheter · {store.events.length} event
                   </div>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-2xl p-5">
@@ -2680,6 +2935,63 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                     {store.jobs.length} jobb · {store.recruitmentSites.length} byråer/portaler
                   </div>
                 </div>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <h2 className="font-display text-lg font-bold text-[#040B16]">
+                      Server- &amp; Vercel-status (CMS API)
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Verifierar att Vercel API, Firestore och Firebase Admin fungerar på aktiv domän.
+                    </p>
+                  </div>
+                </div>
+                {cmsStatusError ? (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                    Kunde inte hämta serverstatus: {cmsStatusError}
+                  </div>
+                ) : cmsStatus ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div className="p-3.5 rounded-xl bg-[#F4F6F9] border border-slate-200">
+                      <div className="font-mono text-slate-500">Databaslager</div>
+                      <div className="font-bold text-[#040B16] mt-1">
+                        {cmsStatus.persistence === 'firestore'
+                          ? 'Firebase Firestore (Moln)'
+                          : 'Lokal JSON-lagring (Dev)'}
+                      </div>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-[#F4F6F9] border border-slate-200">
+                      <div className="font-mono text-slate-500">Admin-autentisering</div>
+                      <div
+                        className={`font-bold mt-1 ${
+                          cmsStatus.hasExplicitAdminCredentials
+                            ? 'text-[#059669]'
+                            : 'text-amber-700'
+                        }`}
+                      >
+                        {cmsStatus.hasExplicitAdminCredentials
+                          ? 'Verifierad via Service Account'
+                          : 'Använder default ADC / begränsad verifiering'}
+                      </div>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-[#F4F6F9] border border-slate-200">
+                      <div className="font-mono text-slate-500">Gemini AI Search</div>
+                      <div
+                        className={`font-bold mt-1 ${
+                          cmsStatus.hasGeminiKey ? 'text-[#059669]' : 'text-amber-700'
+                        }`}
+                      >
+                        {cmsStatus.hasGeminiKey
+                          ? 'Konfigurerad på server'
+                          : 'GEMINI_API_KEY saknas i miljövariabler'}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-500">Kontrollerar serverstatus...</div>
+                )}
               </div>
 
               <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">

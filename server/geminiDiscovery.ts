@@ -4,7 +4,9 @@ import type {
   DiscoveredMerchantCandidate,
   DiscoveredPartnerCandidate,
   DiscoveredRecruiterCandidate,
+  EcommerceNewsItem,
   GroundingSource,
+  NewsCategory,
 } from '../src/types.ts';
 
 function getClient(): GoogleGenAI {
@@ -429,6 +431,98 @@ Returnera ENDAST en giltig JSON-array där varje objekt har exakt dessa nycklar:
   return {
     candidates,
     sources: extractSources(response),
+  };
+}
+
+export interface DiscoveredNewsCandidate extends Omit<EcommerceNewsItem, 'id' | 'status'> {
+  alreadyExists?: boolean;
+}
+
+const VALID_NEWS_CATEGORIES: NewsCategory[] = [
+  'Temu & Marknadsplatser',
+  'Nya Butiker (SE & EU)',
+  'SaaS & System',
+  'Logistik & Regler',
+];
+
+export async function fetchEcommerceNewsWithAI(params: {
+  topic?: string;
+  count?: number;
+  existingTitles: string[];
+}): Promise<{ candidates: DiscoveredNewsCandidate[]; sources: GroundingSource[] }> {
+  const ai = getClient();
+  const limit = Math.min(Math.max(params.count ?? 6, 3), 10);
+  const excludeList = params.existingTitles.slice(0, 25).join(' | ');
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const topicText =
+    params.topic?.trim() ||
+    'Temu och marknadsplatser i Europa, nya e-handelsbutiker som öppnar i Sverige och Europa, samt nya SaaS-system, checkout-plattformar och logistikregler';
+
+  const prompt = `Dagens datum är ${todayIso}. Använd Google Search för att hitta de ${limit} viktigaste och mest relevanta aktuella branschnyheterna inom svensk och europeisk e-handel med fokus på:
+Fokusområde: "${topicText}"
+Särskilda områden att prioritera:
+1. Temu, Shein, Amazon och marknadsplatsregler/tullar i Europa & Sverige.
+2. Nya e-handlare eller fysiska/digitala butiker som öppnar eller expanderar i Sverige och Europa.
+3. Nya SaaS-system, plattformar (t.ex. Centra, Shopify, Norce, Kustom, Voyado, AI-checkout) och logistiknyheter.
+
+Undvik att duplicera dessa redan sparade rubriker: ${excludeList || 'inga'}
+
+Returnera ENDAST en giltig JSON-array där varje objekt har EXAKT dessa nycklar:
+- "title": string (koncis, informativ svensk nyhetsrubrik)
+- "summary": string (saklig svensk sammanfattning på 2–3 meningar om vad som hänt)
+- "category": string (en av: "Temu & Marknadsplatser", "Nya Butiker (SE & EU)", "SaaS & System", "Logistik & Regler")
+- "region": string ("Sverige" | "Europa" | "Norden" | "Globalt")
+- "sourceName": string (namn på nyhetskälla, t.ex. "Ehandel.se", "Dagens Handel", "Breakit", "Ecommerce News Europe")
+- "sourceUrl": string (giltig https://-URL till nyheten eller källan)
+- "publishedDate": string (YYYY-MM-DD)
+- "impactNote": string (1 kort mening om vad nyheten innebär för svenska e-handlare)
+- "tags": string[] (2–4 korta nyckelord)`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-4-hydrogen',
+    contents: prompt,
+    config: {
+      tools: [{ googleSearch: {} }],
+      systemInstruction:
+        'Du är chefredaktör på en svensk branschportal för e-handel. Du levererar alltid aktuella, faktabaserade e-handelsnyheter om Sverige och Europa i strikt JSON-format utan markdown-text runtomkring.',
+    },
+  });
+
+  const sources = extractSources(response);
+  const text = response.text ?? '[]';
+  const rawList = extractJsonArray<DiscoveredNewsCandidate>(text);
+  const existingSet = new Set(params.existingTitles.map((t) => t.toLowerCase().trim()));
+
+  const candidates = rawList
+    .filter((item) => item && typeof item.title === 'string' && item.title.trim().length > 0)
+    .map((item, idx) => {
+      const cat = VALID_NEWS_CATEGORIES.includes(item.category as NewsCategory)
+        ? (item.category as NewsCategory)
+        : 'SaaS & System';
+      const fallbackUrl = sources[idx % Math.max(sources.length, 1)]?.uri || 'https://www.ehandel.se';
+      const rawUrl = typeof item.sourceUrl === 'string' ? item.sourceUrl.trim() : '';
+      const validUrl = rawUrl.startsWith('http') ? rawUrl : fallbackUrl;
+      return {
+        title: item.title.trim(),
+        summary: item.summary?.trim() || 'Aktuell branschnyhet inom svensk och europeisk e-handel.',
+        category: cat,
+        region: item.region?.trim() || 'Europa',
+        sourceName: item.sourceName?.trim() || 'Branschredaktion',
+        sourceUrl: validUrl,
+        publishedDate:
+          item.publishedDate && /^\d{4}-\d{2}-\d{2}$/.test(item.publishedDate)
+            ? item.publishedDate
+            : todayIso,
+        impactNote: item.impactNote?.trim() || undefined,
+        tags: Array.isArray(item.tags) ? item.tags.slice(0, 4) : [],
+        fetchedByAI: true,
+        alreadyExists: existingSet.has(item.title.toLowerCase().trim()),
+      };
+    });
+
+  return {
+    candidates,
+    sources,
   };
 }
 

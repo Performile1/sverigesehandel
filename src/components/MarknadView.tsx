@@ -9,7 +9,21 @@ import {
   Scale,
   Search,
   ShieldAlert,
+  TrendingUp,
 } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ComposedChart,
+  Line,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import type {
   AdBanner,
   CategoryOrderBenchmark,
@@ -54,6 +68,75 @@ interface MarknadViewProps {
   onBookAdSlot: (slotName: string) => void;
 }
 
+const SWEDISH_ECOMMERCE_TREND = [
+  { year: '2021', revenueMdr: 146.0, yoyPct: 20.1, label: 'Pandemitopp' },
+  { year: '2022', revenueMdr: 136.0, yoyPct: -6.8, label: 'Rekyl & inflation' },
+  { year: '2023', revenueMdr: 133.2, yoyPct: -2.1, label: 'Köpkraftsbotten' },
+  { year: '2024', revenueMdr: 143.8, yoyPct: 8.0, label: 'Återhämtning' },
+  { year: '2025', revenueMdr: 155.3, yoyPct: 8.0, label: 'Apotek & Beauty driver' },
+  { year: '2026', revenueMdr: 168.4, yoyPct: 8.4, label: 'Aktuellt helårsindex' },
+  { year: '2027P', revenueMdr: 181.5, yoyPct: 7.8, label: 'Prognos (HUI/ECDB)' },
+];
+
+function TrendChartTooltip({
+  active,
+  payload,
+  label,
+  mode,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload?: Record<string, unknown> }>;
+  label?: string;
+  mode: 'categories' | 'macro' | 'merchants';
+}) {
+  if (!active || !payload || payload.length === 0 || !payload[0]?.payload) return null;
+  const row = payload[0].payload;
+
+  if (mode === 'categories') {
+    return (
+      <div className="bg-[#040B16] text-white border border-white/15 rounded-xl px-3.5 py-2.5 text-xs shadow-xl space-y-1">
+        <div className="font-display font-bold text-[#FECC02]">{String(row.category || label)}</div>
+        <div className="font-mono tabular-nums">
+          Snittillväxt: <strong className="text-[#10B981]">{Number(row.avgGrowthPct) > 0 ? '+' : ''}{Number(row.avgGrowthPct).toFixed(1)}%</strong>
+        </div>
+        <div className="text-slate-300 tabular-nums">
+          {String(row.merchantCount)} handlare · {Number(row.totalRevenueMdr).toFixed(1)} mdr SEK
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'macro') {
+    return (
+      <div className="bg-[#040B16] text-white border border-white/15 rounded-xl px-3.5 py-2.5 text-xs shadow-xl space-y-1">
+        <div className="font-display font-bold text-[#FECC02]">
+          {String(row.year)} · {String(row.label)}
+        </div>
+        <div className="font-mono tabular-nums">
+          Omsättning: <strong>{Number(row.revenueMdr).toFixed(1)} mdr SEK</strong>
+        </div>
+        <div className="font-mono tabular-nums">
+          Tillväxt YoY:{' '}
+          <strong className={Number(row.yoyPct) >= 0 ? 'text-[#10B981]' : 'text-red-400'}>
+            {Number(row.yoyPct) > 0 ? '+' : ''}{Number(row.yoyPct).toFixed(1)}%
+          </strong>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-[#040B16] text-white border border-white/15 rounded-xl px-3.5 py-2.5 text-xs shadow-xl space-y-1">
+      <div className="font-display font-bold text-[#FECC02]">{String(row.name || label)}</div>
+      <div className="text-slate-300">{String(row.category)} · {String(row.platform)}</div>
+      <div className="font-mono tabular-nums">
+        Tillväxt YoY: <strong className="text-[#10B981]">{Number(row.yoyPct) > 0 ? '+' : ''}{Number(row.yoyPct).toFixed(1)}%</strong>
+      </div>
+      <div className="font-mono text-slate-300 tabular-nums">Omsättning: {String(row.revenue)}</div>
+    </div>
+  );
+}
+
 export function MarknadView({
   regions = {},
   orderBenchmarks = [],
@@ -88,6 +171,7 @@ export function MarknadView({
   const [calcBaseShippingFee, setCalcBaseShippingFee] = useState<number>(49);
   const [calcAnnualParcels, setCalcAnnualParcels] = useState<number>(50000);
   const [calcSelectedMerchantId, setCalcSelectedMerchantId] = useState<string>('');
+  const [trendMode, setTrendMode] = useState<'categories' | 'macro' | 'merchants'>('categories');
   const [heroQuery, setHeroQuery] = useState('');
 
   const calcCategory =
@@ -119,6 +203,66 @@ export function MarknadView({
     () => merchantParcelRows.reduce((acc, row) => acc + row.estimate.annualParcels, 0),
     [merchantParcelRows]
   );
+
+  const categoryTrendData = useMemo(() => {
+    const groups = new Map<
+      string,
+      { count: number; growthSum: number; growthCount: number; revM: number }
+    >();
+    for (const m of merchants) {
+      if (m.status !== 'published') continue;
+      const entry = groups.get(m.category) || {
+        count: 0,
+        growthSum: 0,
+        growthCount: 0,
+        revM: 0,
+      };
+      entry.count += 1;
+      if (typeof m.yoyGrowthPct === 'number' && Number.isFinite(m.yoyGrowthPct)) {
+        entry.growthSum += m.yoyGrowthPct;
+        entry.growthCount += 1;
+      }
+      if (typeof m.revenueNumericM === 'number' && Number.isFinite(m.revenueNumericM)) {
+        entry.revM += m.revenueNumericM;
+      }
+      groups.set(m.category, entry);
+    }
+    return Array.from(groups.entries())
+      .map(([category, g]) => ({
+        category,
+        shortCategory: category.length > 16 ? `${category.slice(0, 15)}…` : category,
+        avgGrowthPct:
+          g.growthCount > 0 ? Math.round((g.growthSum / g.growthCount) * 10) / 10 : 0,
+        merchantCount: g.count,
+        totalRevenueMdr: Math.round((g.revM / 1000) * 10) / 10,
+      }))
+      .filter((row) => row.merchantCount > 0)
+      .sort((a, b) => b.avgGrowthPct - a.avgGrowthPct);
+  }, [merchants]);
+
+  const overallCatalogAvgGrowthPct = useMemo(() => {
+    const withGrowth = merchants.filter(
+      (m) => m.status === 'published' && typeof m.yoyGrowthPct === 'number'
+    );
+    if (withGrowth.length === 0) return 8.4;
+    const sum = withGrowth.reduce((acc, m) => acc + (m.yoyGrowthPct || 0), 0);
+    return Math.round((sum / withGrowth.length) * 10) / 10;
+  }, [merchants]);
+
+  const topGrowthMerchants = useMemo(() => {
+    return merchants
+      .filter((m) => m.status === 'published' && typeof m.yoyGrowthPct === 'number')
+      .sort((a, b) => (b.yoyGrowthPct || 0) - (a.yoyGrowthPct || 0))
+      .slice(0, 10)
+      .map((m) => ({
+        name: m.name,
+        shortName: m.name.length > 14 ? `${m.name.slice(0, 13)}…` : m.name,
+        yoyPct: m.yoyGrowthPct || 0,
+        revenue: m.revenue,
+        category: m.category,
+        platform: m.platform,
+      }));
+  }, [merchants]);
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -357,6 +501,227 @@ export function MarknadView({
             </div>
           </div>
         </div>
+
+        {/* Industry Trend Graph (Recharts) */}
+        <section
+          id="trendgraf"
+          className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 scroll-mt-20"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+              <div className="text-xs font-mono font-semibold text-[#059669] inline-flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5" />
+                Branschdata &amp; Tillväxttrend · Recharts Liveindex
+              </div>
+              <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#040B16] mt-1">
+                Svensk e-handelstillväxt per bransch &amp; marknadstrend (2021–2027)
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-3xl">
+                Snitt-tillväxt (YoY %) beräknad direkt från publicerade svenska e-handlare i katalogen samt flerårig marknadsutveckling i miljarder SEK.
+              </p>
+            </div>
+
+            <div className="inline-flex flex-wrap bg-slate-100 p-1 rounded-lg text-xs font-semibold self-start shrink-0 gap-1">
+              <button
+                type="button"
+                onClick={() => setTrendMode('categories')}
+                className={`px-3.5 py-2 rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                  trendMode === 'categories'
+                    ? 'bg-[#040B16] text-white'
+                    : 'text-slate-600 hover:text-[#040B16]'
+                }`}
+              >
+                Branschtillväxt (YoY %)
+              </button>
+              <button
+                type="button"
+                onClick={() => setTrendMode('macro')}
+                className={`px-3.5 py-2 rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                  trendMode === 'macro'
+                    ? 'bg-[#040B16] text-white'
+                    : 'text-slate-600 hover:text-[#040B16]'
+                }`}
+              >
+                Marknadstrend 2021–2027
+              </button>
+              <button
+                type="button"
+                onClick={() => setTrendMode('merchants')}
+                className={`px-3.5 py-2 rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                  trendMode === 'merchants'
+                    ? 'bg-[#040B16] text-white'
+                    : 'text-slate-600 hover:text-[#040B16]'
+                }`}
+              >
+                Toppbolag (Tillväxt)
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200">
+              <div className="text-[11px] font-mono text-slate-500">Katalogens snitt-YoY</div>
+              <div className="font-display text-xl font-extrabold text-[#059669] mt-1 tabular-nums">
+                {overallCatalogAvgGrowthPct > 0 ? '+' : ''}
+                {overallCatalogAvgGrowthPct.toFixed(1).replace('.', ',')} %
+              </div>
+              <div className="text-xs text-slate-600 mt-0.5">
+                Baserat på {merchants.filter((m) => m.status === 'published').length} verifierade bolag
+              </div>
+            </div>
+            <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200">
+              <div className="text-[11px] font-mono text-slate-500">Starkaste bransch</div>
+              <div className="font-display text-xl font-extrabold text-[#040B16] mt-1 truncate">
+                {categoryTrendData[0]?.category || 'Apotek & Skönhet'}
+              </div>
+              <div className="text-xs text-[#059669] font-mono font-bold mt-0.5 tabular-nums">
+                +{categoryTrendData[0]?.avgGrowthPct ?? 14.5}% snitt-tillväxt
+              </div>
+            </div>
+            <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200">
+              <div className="text-[11px] font-mono text-slate-500">Svensk marknad 2026</div>
+              <div className="font-display text-xl font-extrabold text-[#006AA7] mt-1 tabular-nums">
+                168,4 mdr SEK
+              </div>
+              <div className="text-xs text-slate-600 mt-0.5">Prognos 2027: 181,5 mdr (+7,8%)</div>
+            </div>
+            <div className="p-4 rounded-xl bg-[#F4F6F9] border border-slate-200">
+              <div className="text-[11px] font-mono text-slate-500">Snabbast växande bolag</div>
+              <div className="font-display text-xl font-extrabold text-[#040B16] mt-1 truncate">
+                {topGrowthMerchants[0]?.name || 'Lyko'}
+              </div>
+              <div className="text-xs text-[#059669] font-mono font-bold mt-0.5 tabular-nums">
+                +{topGrowthMerchants[0]?.yoyPct ?? 24}% YoY
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full h-[340px] min-w-0 bg-[#F4F6F9]/60 border border-slate-200 rounded-xl p-4">
+            <ResponsiveContainer width="100%" height="100%" minWidth={320} minHeight={290}>
+              {trendMode === 'categories' ? (
+                <BarChart
+                  data={categoryTrendData}
+                  margin={{ top: 14, right: 16, left: 0, bottom: 28 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                  <XAxis
+                    dataKey="shortCategory"
+                    tick={{ fontSize: 11, fill: '#334155' }}
+                    interval={0}
+                    angle={-15}
+                    textAnchor="end"
+                    height={54}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: '#475569' }}
+                    tickFormatter={(val) => `${val}%`}
+                    width={46}
+                  />
+                  <ReferenceLine y={0} stroke="#94A3B8" />
+                  <ReferenceLine
+                    y={overallCatalogAvgGrowthPct}
+                    stroke="#006AA7"
+                    strokeDasharray="4 4"
+                  />
+                  <Tooltip content={<TrendChartTooltip mode="categories" />} />
+                  <Bar dataKey="avgGrowthPct" name="Snitt-YoY %" radius={[6, 6, 0, 0]} maxBarSize={54}>
+                    {categoryTrendData.map((entry) => (
+                      <Cell
+                        key={entry.category}
+                        fill={
+                          entry.avgGrowthPct >= overallCatalogAvgGrowthPct
+                            ? '#059669'
+                            : entry.avgGrowthPct >= 0
+                            ? '#006AA7'
+                            : '#DC2626'
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              ) : trendMode === 'macro' ? (
+                <ComposedChart
+                  data={SWEDISH_ECOMMERCE_TREND}
+                  margin={{ top: 14, right: 16, left: 0, bottom: 8 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                  <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#334155' }} />
+                  <YAxis
+                    yAxisId="left"
+                    tick={{ fontSize: 11, fill: '#475569' }}
+                    tickFormatter={(val) => `${val} mdr`}
+                    width={62}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 11, fill: '#059669' }}
+                    tickFormatter={(val) => `${val}%`}
+                    width={44}
+                  />
+                  <ReferenceLine yAxisId="right" y={0} stroke="#94A3B8" strokeDasharray="2 2" />
+                  <Tooltip content={<TrendChartTooltip mode="macro" />} />
+                  <Bar
+                    yAxisId="left"
+                    dataKey="revenueMdr"
+                    name="Omsättning (mdr SEK)"
+                    fill="#040B16"
+                    radius={[6, 6, 0, 0]}
+                    maxBarSize={48}
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="yoyPct"
+                    name="Tillväxt YoY (%)"
+                    stroke="#059669"
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: '#FECC02', stroke: '#040B16', strokeWidth: 2 }}
+                  />
+                </ComposedChart>
+              ) : (
+                <BarChart
+                  data={topGrowthMerchants}
+                  margin={{ top: 14, right: 16, left: 0, bottom: 28 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                  <XAxis
+                    dataKey="shortName"
+                    tick={{ fontSize: 11, fill: '#334155' }}
+                    interval={0}
+                    angle={-15}
+                    textAnchor="end"
+                    height={54}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: '#475569' }}
+                    tickFormatter={(val) => `+${val}%`}
+                    width={46}
+                  />
+                  <Tooltip content={<TrendChartTooltip mode="merchants" />} />
+                  <Bar dataKey="yoyPct" name="YoY-tillväxt %" fill="#006AA7" radius={[6, 6, 0, 0]} maxBarSize={46} />
+                </BarChart>
+              )}
+            </ResponsiveContainer>
+          </div>
+
+          <div className="text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
+            <span>
+              {trendMode === 'categories'
+                ? `Gröna staplar överstiger katalogsnittet (+${overallCatalogAvgGrowthPct.toFixed(1)}% YoY · streckad linje).`
+                : trendMode === 'macro'
+                ? 'Staplar visar total svensk B2C e-handelsomsättning (mdr SEK); linjen visar årlig förändringstakt (YoY %).'
+                : 'De 10 snabbast växande publicerade svenska e-handlarna i databasen.'}
+            </span>
+            <button
+              type="button"
+              onClick={() => onNavigate('ehandlare')}
+              className="font-bold text-[#006AA7] hover:underline cursor-pointer"
+            >
+              Utforska alla e-handlare &amp; nyckeltal &rarr;
+            </button>
+          </div>
+        </section>
 
         {/* Demographics & Consumer Behavior */}
         <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8">
