@@ -1,3 +1,4 @@
+import { CmsFirebasePanel } from './CmsFirebasePanel';
 import { MapPointsEditor } from './MapPointsEditor';
 import { JobTextPanel, NewsReviewPanel } from './EditorialPanels';
 import { useEffect, useMemo, useState } from 'react';
@@ -782,6 +783,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
     { id: 'forms', label: 'Formulär & Intro', icon: ClipboardList, count: (store.contactForms || []).length },
     { id: 'pages', label: 'Sidtexter & Kontakt', icon: FileText },
     { id: 'content', label: 'Annons, Data & Inkorg', icon: MapPin, count: store.adBanners.length + store.contactMessages.length },
+    { id: 'firebase', label: 'Firebase: Bilder & Statistik', icon: BarChart3 },
     { id: 'overview', label: 'Översikt & Backup', icon: Database },
   ];
 
@@ -3079,6 +3081,8 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
               onOpenInbox={() => setSection('content')}
             />
           )}
+
+          {section === 'firebase' && <CmsFirebasePanel store={store} onRefresh={onRefresh} />}
 
           {/* SECTION: NEWS */}
           {section === 'news' && (

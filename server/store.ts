@@ -1,3 +1,4 @@
+import type { CmsImage } from '../src/types.ts';
 import { validMapPoint } from '../shared/portalContent.ts';
 import type { MapPoint } from '../src/types.ts';
 import { articleUrl, jobSummary } from '../shared/editorial.ts';
@@ -2026,4 +2027,15 @@ export function updatePageContent(patch: Partial<PageContentMap>): PageContentMa
   store.pageContent = merged;
   saveStore(store);
   return merged;
+}
+
+// Target lookup and assignment run in one snapshot transaction, preserving other edits.
+export function assignCmsImage(type: 'partner' | 'ad', id: string, image: CmsImage | null): boolean {
+  const store = ensureStoreFile();
+  const item = (type === 'partner' ? store.partners : store.adBanners).find((entry) => entry.id === id);
+  if (!item) return false;
+  if (image) item.image = image;
+  else delete item.image;
+  saveStore(store);
+  return true;
 }

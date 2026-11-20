@@ -6,6 +6,11 @@ verifiering innan produktionssättning.
 
 ## Preciserat av beställaren
 
+- Firebase har valts för bildlagring och GA4-rapportåtkomst i stället för
+  Vercel Blob/Web Analytics. Kod för uppladdning/bildvisning och rapportvy
+  förbereds avstängd; se [Firebase-checklistan](firebase-bilder-statistik.md).
+  Ingen ny insamling, betalaktivering eller leverantörskonfiguration ingår.
+
 - Kartans utseende och regiongränser ska inte ändras. Endast nya punkter ska kunna
   läggas till och hanteras i CMS. Förslaget om länskarta utgår.
 - Råa IP-adresser och heatmaps ska förbli avstängda. Se
@@ -27,7 +32,9 @@ automatisk hämtning av externa artiklar, omdirigerings- eller betalväggskontro
 ingår inte. Befintliga nyhetslänkar behöver fortfarande granskas av redaktionen.
 
 Jobbfilter och hantering av tillagda kartpunkter ingår nu också i implementations-PR:n.
-Bildlagring, analys och Paketindexarkiv är inte implementerade eller aktiverade. Besluten under
+Bilduppladdning/bildvisning och läsning av befintliga GA4-rapporter är förberedda
+avstängda i en separat Firebase-PR. Ny analysinsamling och Paketindexarkiv är
+inte implementerade. Besluten under
 ”Beslut och underlag” nedan kvarstår. Produktionsdata har inte migrerats eller
 ändrats genom kodarbetet; verifiering sker mot isolerade testdata och preview.
 
@@ -167,9 +174,9 @@ produktionsändringar eller personuppgiftsinsamlingar aktiveras genom denna plan
 
 ## 5. Besöksstatistik i CMS
 
-- Utvärdera Vercel Web Analytics/API mot rapportbehoven före leverantörsbeslut.
-  Den dokumenterade modellen har sidvisningar, besökare och aggregering per tid/sida;
-  identifieringen återställs dagligen och är inte ett exakt personantal över tid.
+- Använd Firebase/GA4 och Google Analytics Data API för rapportåtkomst i CMS.
+  Aktiva användare per sida är inte ett exakt personantal eller måttet unik
+  sidvisning. Rapportläsning och eventuell framtida insamling är separata beslut.
 - Lägg rapporthämtning bakom befintlig serverkontrollerad CMS-adminbehörighet.
   Leverantörsbehörigheter hålls på servern. Skydda rapportcache och export likadant.
 - Visa datumintervall, tidszon, sidvisningar, uppskattade unika besökare,

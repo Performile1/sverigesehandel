@@ -76,6 +76,7 @@ export interface CarrierMetrics {
 }
 
 export interface TechPartner {
+  image?: CmsImage;
   id: string;
   name: string;
   domain: string;
@@ -453,6 +454,7 @@ export type AdBannerPlacement =
   | 'jobb-top';
 
 export interface AdBanner {
+  image?: CmsImage;
   id: string;
   placement: AdBannerPlacement;
   placementLabel: string;
@@ -753,6 +755,7 @@ export type PortalTab =
   | 'kontakt';
 
 export type CMSSection =
+  | 'firebase'
   | 'overview'
   | 'discover'
   | 'merchants'
@@ -766,3 +769,26 @@ export type CMSSection =
   | 'forms'
   | 'pages'
   | 'content';
+
+export interface CmsImage {
+  path: string;
+  url: string;
+  alt: string;
+  width: number;
+  height: number;
+}
+export interface CmsAnalyticsReport {
+  days: number;
+  timeZone: string;
+  rows: Array<{ page: string; views: number; activeUsers: number; engagementSeconds: number }>;
+  truncated: boolean;
+  dataLossFromOtherRow: boolean;
+  subjectToThresholding: boolean;
+}
+export interface FirebaseFeatureStatus {
+  mediaEnabled: boolean;
+  reportsEnabled: boolean;
+  collectionEnabled: boolean;
+  rawIpEnabled: boolean;
+  heatmapsEnabled: boolean;
+}
