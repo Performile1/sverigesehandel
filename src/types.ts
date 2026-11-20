@@ -156,6 +156,7 @@ export interface DCSession {
 export type JobValidityStatus = 'active' | 'expired' | 'closed';
 
 export interface EcommerceJob {
+  salaryEstimate?: SalaryEstimate | null;
   id: string;
   title: string;
   company: string;
@@ -641,6 +642,7 @@ export interface MapPoint {
 }
 
 export interface CMSStore {
+  paketindexArchive?: PaketindexObservation[];
   mapPoints?: MapPoint[];
   schemaVersion?: number;
   merchants: Merchant[];
@@ -791,4 +793,35 @@ export interface FirebaseFeatureStatus {
   collectionEnabled: boolean;
   rawIpEnabled: boolean;
   heatmapsEnabled: boolean;
+}
+
+export interface PaketindexObservation {
+  edition: string;
+  period: string;
+  metric: 'total' | 'domestic' | 'foreign' | 'returns' | 'secondhand' | 'export' | 'bulky' | 'returnRate' | 'pickupShare' | 'homeShare' | 'lockerShare';
+  basis: 'carrier' | 'survey' | 'legacy';
+  value: number;
+  unit: 'packages' | 'percent';
+  sourceName: string;
+  sourceUrl: string;
+  publishedDate: string;
+  precision: 'exact' | 'rounded-thousands';
+  sampleSize?: number;
+  note: string;
+  status: PublishStatus;
+}
+
+export interface SalaryEstimate {
+  min: number;
+  max: number;
+  currency: 'SEK';
+  period: 'month';
+  fullTime: true;
+  occupation: string;
+  geography: string;
+  geographicLevel: 'local' | 'regional' | 'national';
+  sourceName: string;
+  sourceUrl: string;
+  year: number;
+  method: string;
 }

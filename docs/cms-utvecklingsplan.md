@@ -22,21 +22,30 @@ verifiering innan produktionssättning.
 - Personliga placeholders neutraliseras, även från sparade CMS-formulär.
   Administratörsidentitet och säkerhetsregler är inte placeholders och ändras inte.
 
-## Pågående implementation
+## Aktuell leveransstatus
 
-Första implementations-PR:n omfattar nyhetslänkarnas granskningsflöde och
-kort/full jobbtext. Den tar bort reservlänkar, sparar nyheter som utkast tills en
-redaktör godkänt direktlänken, ger en inventering av befintliga nyheter och
-bevarar äldre jobbtexter med en kort visningsingress. Nyhetsgranskningen är manuell;
-automatisk hämtning av externa artiklar, omdirigerings- eller betalväggskontroll
-ingår inte. Befintliga nyhetslänkar behöver fortfarande granskas av redaktionen.
+| Del | Kodstatus | Återstående verifiering/beslut |
+| --- | --- | --- |
+| Nyhetslänkar enbart i CMS | Mergat i #5/#8 | Redaktionell kontroll av befintliga artiklar och inloggat test. |
+| Jobbtexter och filter | Mergat i #5/#6 | Inloggad redigering; äldre källtexter behöver granskas. |
+| Nya kartpunkter på oförändrad karta | Mergat i #6 | Egna punkter och inloggad CMS-verifiering i isolerad data. |
+| Firebase-bilder/GA4-rapporter | Kod mergad i #7, avstängd | Blaze/bucket/IAM/GA4, kostnad/integritet, filbackup och live-tester. Fullständigt filbibliotek/städning kvarstår. |
+| Paketindexarkiv/import | Implementerat i aktuell PR | Källgranskning, autentiserad provimport och produktionens godkännande. Ingen automatisk import. |
+| Källbelagda lönespann | Fält, CMS och publik visning i aktuell PR | Verklig lönekälla, metod/rättigheter och redaktionella belopp saknas. |
+| Integritet/samtycke och ny analysinsamling | Beslutsunderlag, inte aktiverat | Juridisk ansvarig, dataflöden, avtal/lagringstider, godkänd text och samtyckesstyrd insamlare kvarstår. |
+| Aktiv tid, rå IP och heatmaps | Ingen ny insamling | IP/heatmaps fortsatt avstängda enligt beställarbeslut. |
 
-Jobbfilter och hantering av tillagda kartpunkter ingår nu också i implementations-PR:n.
-Bilduppladdning/bildvisning och läsning av befintliga GA4-rapporter är förberedda
-avstängda i en separat Firebase-PR. Ny analysinsamling och Paketindexarkiv är
-inte implementerade. Besluten under
-”Beslut och underlag” nedan kvarstår. Produktionsdata har inte migrerats eller
-ändrats genom kodarbetet; verifiering sker mot isolerade testdata och preview.
+Se [Paketindex- och lönechecklistan](paketindex-och-loner.md) för den aktuella
+implementationens omfattning. Arkivet behåller rapportversion och metod, stöder
+CSV-import i två steg och publicerar inga mottagna utdrag automatiskt. Det äldre
+sammanfattningsobjektet finns kvar separat för att bevara dess data. Arkivet är
+begränsat till 500 poster och snapshotets storleksgräns; större tillväxt kräver
+en separat dokument-/backupmigrering, inte en obegränsad utökning.
+
+Planen är **inte helt driftklar** bara för att kod är mergad. Checklistor nedan
+är mål och ska inte bockas av som live-verifierade utifrån enbart lokala tester.
+Produktionsdata har inte ändrats av arbetet; inga nya betal-/spårningstjänster
+aktiveras. Råa IP-adresser och heatmaps förblir avstängda.
 
 ## Mål och omfattning
 
@@ -45,7 +54,7 @@ besöksstatistik, tydliga jobbtexter, källbelagda löneuppskattningar och utbyg
 regiondata med karta. Nyheter måste dessutom länka direkt till rätt originalartikel.
 Befintligt innehåll och administratörsskydd ska bevaras.
 
-## Verifierat nuläge i koden
+## Ursprungligt nuläge före arbetet (historisk kodgranskning)
 
 Granskat mot `main`, commit `c9baba6a745c1abd1b2b8906bbb0d0d7763a2dbc`.
 Detta är en kodgranskning, inte verifiering av inloggade produktionsflöden.
@@ -289,7 +298,7 @@ Detta ersätter tidigare förslag om nya geografiska områden/länskarta.
 - [ ] Lämna ett Paketindex-exempel och bekräfta CSV eller även XLSX samt datarättigheter.
 - [ ] Välj statistikleverantör, definition av unika mått och eventuell separat IP-insyn.
 - [ ] Besluta om heatmaps/aktiv tid ska aktiveras och godkänn integritetsupplägget.
-- [ ] Välj lönekälla/metod och lämplig geografisk precision.
+- [ ] Lämna granskad lönekälla/metod och lämplig geografisk precision; tekniskt stöd är förberett.
 - [x] Behåll befintlig kartindelning; tillåt endast nya kartpunkter.
 - [x] Låt råa IP-adresser och heatmaps förbli avstängda.
 - [x] Paketindexexempel mottagna; avstämning mot original och rapportversion återstår.

@@ -1,3 +1,5 @@
+import { PaketindexArchive } from './PaketindexArchive';
+import type { PaketindexObservation } from '../types';
 import { MARKET_TITLE } from '../../shared/portalContent';
 import type { MapPoint } from '../types';
 import { useMemo, useState } from 'react';
@@ -58,6 +60,7 @@ import { ResilientImage } from './ResilientImage';
 import { SwedenLogisticsMap } from './SwedenLogisticsMap';
 
 interface MarknadViewProps {
+  paketindexArchive?: PaketindexObservation[];
   mapPoints?: MapPoint[];
   regions: Record<string, RegionMetric>;
   orderBenchmarks: CategoryOrderBenchmark[];
@@ -150,6 +153,7 @@ function TrendChartTooltip({
 }
 
 export function MarknadView({
+  paketindexArchive = [],
   mapPoints = [],
   regions = {},
   orderBenchmarks = [],
@@ -349,7 +353,7 @@ export function MarknadView({
               </h1>
               <p className="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed">
                 {pageCopy?.subtitle ||
-                  'Datadriven plattform för svenska e-handlare, tech-partners och rekrytering. Utforska regional marknadsdata, gränshandel, Paketindex Q1 2026 och lediga jobb inom svensk e-handel.'}
+                  'Datadriven plattform för svenska e-handlare, tech-partners och rekrytering. Utforska regional marknadsdata, gränshandel, Paketindex och lediga jobb inom svensk e-handel.'}
               </p>
 
               <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3 pt-1 max-w-xl">
@@ -412,7 +416,7 @@ export function MarknadView({
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
               <div className="text-xs font-mono text-slate-400">
-                {pageCopy?.kpi3Label || 'Paketindex Q1 2026'}
+                {pageCopy?.kpi3Label || `Paketindex ${paketindex?.quarterLabel || ''}`}
               </div>
               <div className="font-display text-2xl font-extrabold text-[#FECC02] mt-1 tabular-nums">
                 {pageCopy?.kpi3Value || '64,2M (+16,9 %)'}
@@ -892,7 +896,7 @@ export function MarknadView({
                   ))}
                 </div>
                 <div className="text-[11px] font-mono text-slate-500">
-                  Källa: Paketindex {paketindex?.quarterLabel || 'Kvartal 1 2026'} ({paketindex?.publisher || 'Transportföretagen & HUI'}) · Konsumentens senaste e-handelspaket (mars 2026).
+                  Källa: Paketindex {paketindex?.quarterLabel || 'Kvartal 1 2026'} ({paketindex?.publisher || 'Transportföretagen & HUI'}) · Separat äldre sammanfattningsunderlag; inte vald arkivperiod.
                 </div>
               </div>
             )}
@@ -2114,7 +2118,7 @@ export function MarknadView({
               {/* Reception Channels */}
               <div className="lg:col-span-6 space-y-4">
                 <h3 className="font-display font-bold text-base text-[#040B16]">
-                  Hur vill man ta emot paketet? (Paketindex K1 2026)
+                  Hur vill man ta emot paketet? (äldre sammanfattningsunderlag)
                 </h3>
                 <div className="space-y-3">
                   {deliveryStats.receptionChannels.map((rc) => (
@@ -2470,17 +2474,19 @@ export function MarknadView({
           );
         })()}
 
-        {/* Paketindex Kvartal 1 2026 (Transportföretagen & HUI) */}
+        {/* Äldre Paketindexsammanfattning (separat från versionsarkivet) */}
+        <PaketindexArchive rows={paketindexArchive} />
+
         {paketindex && (
           <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100">
               <div>
                 <div className="text-xs font-mono font-semibold text-[#006AA7] inline-flex items-center gap-1.5">
                   <Package className="w-3.5 h-3.5" />
-                  Paketindex · {paketindex.quarterLabel} ({paketindex.publisher})
+                  Äldre Paketindexsammanfattning · {paketindex.quarterLabel} ({paketindex.publisher})
                 </div>
                 <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#040B16] mt-1">
-                  Officiell svensk paketstatistik: {paketindex.totalParcelsMillions.toFixed(1).replace('.', ',')} miljoner B2C-paket i K1
+                  Officiell svensk paketstatistik: {paketindex.totalParcelsMillions.toFixed(1).replace('.', ',')} miljoner B2C-paket ({paketindex.quarterLabel})
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-3xl leading-relaxed">
                   {paketindex.summaryText}
@@ -2489,10 +2495,10 @@ export function MarknadView({
               <div className="p-4 rounded-xl bg-[#040B16] text-white shrink-0 space-y-0.5">
                 <div className="text-[11px] font-mono text-[#FECC02]">Kvartalstillväxt YoY</div>
                 <div className="font-display text-2xl font-extrabold tabular-nums">
-                  +{paketindex.yoyGrowthPct.toFixed(1).replace('.', ',')} %
+                  {paketindex.yoyGrowthPct.toLocaleString('sv-SE', { maximumFractionDigits: 1, minimumFractionDigits: 1, signDisplay: 'exceptZero' })} %
                 </div>
                 <div className="text-xs text-slate-300 tabular-nums">
-                  +{paketindex.yoyGrowthMillions.toFixed(1).replace('.', ',')} milj paket mot K1 2025
+                  {paketindex.yoyGrowthMillions.toLocaleString('sv-SE', { maximumFractionDigits: 1, minimumFractionDigits: 1, signDisplay: 'exceptZero' })} milj paket mot motsvarande period föregående år
                 </div>
               </div>
             </div>
@@ -2535,10 +2541,10 @@ export function MarknadView({
               <div className="lg:col-span-6 p-5 rounded-2xl border border-slate-200 space-y-4">
                 <div>
                   <h3 className="font-display font-bold text-base text-[#040B16]">
-                    Konsumentens senaste leveransval (Mars 2026)
+                    Leveransval enligt den äldre sammanfattningen
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Fler än 2 av 5 valde utlämningsställe; paketskåp ~1 av 5 (majoritet inomhus).
+                    Fördelningen hör till sammanfattningens underlag, inte till vald arkivperiod.
                   </p>
                 </div>
                 <div className="h-[220px] w-full">
@@ -2583,10 +2589,10 @@ export function MarknadView({
               <div className="lg:col-span-6 p-5 rounded-2xl border border-slate-200 space-y-4">
                 <div>
                   <h3 className="font-display font-bold text-base text-[#040B16]">
-                    Utlandspaket &amp; Second hand-trend (K1 2022–K1 2026)
+                    Historiska jämförelsepunkter i äldre sammanfattning
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Utlandsandelen ökade från vart sjätte till vart tredje paket; second hand fyrdubblades sedan K1 2023.
+                    Separat äldre sammanfattning. Välj rapportversion i arkivet ovan för versionsseparerad historik.
                   </p>
                 </div>
                 <div className="h-[220px] w-full">

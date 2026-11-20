@@ -1,3 +1,4 @@
+import { SalaryEstimateEditor } from './SalaryEstimateEditor';
 import { useState } from 'react';
 import type { EcommerceJob, EcommerceNewsItem } from '../types';
 import { api } from '../api';
@@ -72,6 +73,7 @@ export function JobTextPanel({ jobs, onRefresh, onNotify }: PanelProps & { jobs:
       {jobs.map((job) => <option key={job.id} value={job.id}>{job.title} · {job.company}</option>)}
     </select></label>
     <JobTextForm key={`${selected.id}-${selected.summary}-${selected.desc}`} job={selected} onRefresh={onRefresh} onNotify={onNotify} />
+    <SalaryEstimateEditor key={`${selected.id}-${JSON.stringify(selected.salaryEstimate)}`} job={selected} onRefresh={onRefresh} />
   </section>;
 }
 

@@ -1,3 +1,4 @@
+import type { PaketindexObservation } from './types';
 import type { CmsImage, CmsAnalyticsReport, FirebaseFeatureStatus } from './types';
 import type { MapPoint } from './types';
 import { auth } from './firebase';
@@ -76,6 +77,11 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  savePaketindexObservation: (row: PaketindexObservation) => request<PaketindexObservation>('/api/paketindex/archive', { method: 'POST', body: JSON.stringify(row) }),
+  deletePaketindexObservation: (key: string) => request<{ deleted: boolean }>('/api/paketindex/archive', { method: 'DELETE', body: JSON.stringify({ key }) }),
+  importPaketindexCsv: (csv: string, policy: 'reject' | 'skip' | 'replace', commit: boolean) => request<{
+    incoming: PaketindexObservation[]; added: number; skipped: number; replaced: number; totalAfter: number; committed: boolean;
+  }>('/api/paketindex/archive/import', { method: 'POST', body: JSON.stringify({ csv, policy, commit }) }),
   firebaseFeatures: () => request<FirebaseFeatureStatus>('/api/firebase-features'),
   analyticsReport: (days: number) => request<{ enabled: boolean; report?: CmsAnalyticsReport }>(`/api/analytics/report?days=${days}`),
   uploadImage: (payload: { targetType: 'partner' | 'ad'; targetId: string; data: string; alt: string }) =>

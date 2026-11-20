@@ -11,7 +11,7 @@ export type CmsDataStore = {
 
 function initialStore(): CMSStore {
   // Never import sample or historic private submissions into the hosted CMS.
-  return { ...structuredClone(INITIAL_CMS_DATA), contactMessages: [], communityMembers: [], directMessages: [] };
+  return upgradeSnapshot({ ...structuredClone(INITIAL_CMS_DATA), contactMessages: [], communityMembers: [], directMessages: [] }) as CMSStore;
 }
 
 // Persist as JSON to preserve the existing model (including arrays) without
