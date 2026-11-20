@@ -3,6 +3,14 @@
 React/Vite frontend with the existing Express CMS API deployed as one Vercel
 Function. `/api/*` is routed to it; the local dev server uses the same API.
 
+## Development roadmap
+
+See the [CMS development plan (Swedish)](docs/cms-utvecklingsplan.md) for the
+proposed phases, acceptance criteria and decisions covering media uploads,
+Paketindex history, analytics, job descriptions, salary estimates, regional maps
+and direct links to the correct news articles. The plan does not implement or
+activate these features.
+
 ## Firebase integration
 
 This branch preserves the Firebase setup from `main`:
