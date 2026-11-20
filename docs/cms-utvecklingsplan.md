@@ -4,6 +4,19 @@ Status: förslag för granskning. Denna PR dokumenterar planen; den implementera
 aktiverar eller publicerar inte funktionerna nedan. Varje etapp får en separat
 implementation och verifiering innan produktionssättning.
 
+## Pågående implementation
+
+Första implementations-PR:n omfattar nyhetslänkarnas granskningsflöde och
+kort/full jobbtext. Den tar bort reservlänkar, sparar nyheter som utkast tills en
+redaktör godkänt direktlänken, ger en inventering av befintliga nyheter och
+bevarar äldre jobbtexter med en kort visningsingress. Nyhetsgranskningen är manuell;
+automatisk hämtning av externa artiklar, omdirigerings- eller betalväggskontroll
+ingår inte. Befintliga nyhetslänkar behöver fortfarande granskas av redaktionen.
+
+Övriga etapper är inte implementerade eller aktiverade. Besluten under
+”Beslut och underlag” nedan kvarstår. Produktionsdata har inte migrerats eller
+ändrats genom kodarbetet; verifiering sker mot isolerade testdata och preview.
+
 ## Mål och omfattning
 
 CMS ska stödja partnerloggor, annonsbilder, historiska och nya Paketindexperioder,

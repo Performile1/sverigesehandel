@@ -163,6 +163,7 @@ export interface EcommerceJob {
   roleCategory: JobRoleCategory | string;
   seniority: string;
   salaryRange?: string;
+  summary?: string;
   applyUrl: string;
   skills: string[];
   desc: string;
@@ -552,6 +553,7 @@ export interface EcommerceNewsItem {
   tags?: string[];
   status: PublishStatus;
   fetchedByAI?: boolean;
+  linkReviewedAt?: string;
 }
 
 export interface PaketindexChannelSplit {
@@ -713,6 +715,7 @@ export interface DiscoveredJobCandidate {
   expiresAt?: string;
   skills: string[];
   desc: string;
+  summary?: string;
   alreadyExists?: boolean;
 }
 

@@ -75,6 +75,7 @@ export default function App() {
   const [jobUrl, setJobUrl] = useState('');
   const [jobSkills, setJobSkills] = useState('Shopify, Centra, Growth');
   const [jobDesc, setJobDesc] = useState('');
+  const [jobSummary, setJobSummary] = useState('');
   const [jobExpiresAt, setJobExpiresAt] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 45);
@@ -163,6 +164,7 @@ export default function App() {
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean),
+      summary: jobSummary.trim(),
       desc: jobDesc.trim() || `${jobTitle.trim()} hos ${jobCompany.trim()}.`,
       postedAt: 'Ny idag',
       expiresAt: jobExpiresAt || undefined,
@@ -175,6 +177,7 @@ export default function App() {
     setJobSalary('');
     setJobUrl('');
     setJobDesc('');
+    setJobSummary('');
     await fetchStore();
     notify('Jobbannons publicerad!');
   }
@@ -868,11 +871,16 @@ export default function App() {
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono"
                 />
               </div>
+              <label className="block text-sm">Kort ingress (högst 240 tecken)
+                <textarea aria-label="Kort ingress" maxLength={240} rows={2} value={jobSummary} onChange={(e) => setJobSummary(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-xl" />
+              </label>
+              <label className="block text-sm" htmlFor="job-full-description">Fullständig beskrivning</label>
               <textarea
-                rows={3}
+                id="job-full-description"
+                rows={8}
                 value={jobDesc}
                 onChange={(e) => setJobDesc(e.target.value)}
-                placeholder="Kort beskrivning av rollen..."
+                placeholder="Fullständig beskrivning. Tom rad skapar stycke; börja punktlistor med -."
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs"
               />
               <div className="flex justify-end gap-2 pt-2">

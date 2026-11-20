@@ -700,7 +700,7 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       if (autoSave) {
         const toAdd = result.candidates
           .filter((c) => !c.alreadyExists)
-          .map((c) => ({ ...c, status: 'published' as const }));
+          .map((c) => ({ ...c, status: 'draft' as const }));
         const saved = await store.batchAddNews(toAdd);
         res.json({ ...result, saved });
         return;

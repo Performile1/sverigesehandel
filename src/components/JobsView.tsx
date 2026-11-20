@@ -1,3 +1,4 @@
+import { JobDescription } from './JobDescription';
 import { useMemo, useState } from 'react';
 import { Briefcase, ExternalLink, MapPin, Plus, Search, Sparkles, Users } from 'lucide-react';
 import type {
@@ -92,7 +93,8 @@ export function JobsView({
         j.company.toLowerCase().includes(q) ||
         j.city.toLowerCase().includes(q) ||
         j.skills.some((s) => s.toLowerCase().includes(q)) ||
-        j.desc.toLowerCase().includes(q);
+        j.desc.toLowerCase().includes(q) ||
+        (j.summary || '').toLowerCase().includes(q);
       const matchRole = roleFilter === 'all' || j.roleCategory === roleFilter;
       const matchModel = workModelFilter === 'all' || j.workModel === workModelFilter;
       return matchQ && matchRole && matchModel;
@@ -322,7 +324,7 @@ export function JobsView({
                       </div>
                     </div>
 
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{job.desc}</p>
+                    <JobDescription job={job} />
 
                     <div className="text-xs text-slate-600 pt-1">
                       <span className="font-semibold text-slate-800">Kompetenser:</span>{' '}

@@ -1,3 +1,4 @@
+import { articleUrl, jobSummary } from '../shared/editorial.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import fs from 'fs';
 import path from 'path';
@@ -868,6 +869,12 @@ export function deleteSession(id: string): boolean {
 export function upsertJob(input: Partial<EcommerceJob> & { title: string; company: string }): EcommerceJob {
   const store = ensureStoreFile();
   const today = todayIso();
+  if (input.summary !== undefined && (typeof input.summary !== 'string' || input.summary.length > 240)) {
+    throw Object.assign(new Error('Jobbets ingress får vara högst 240 tecken.'), { status: 400 });
+  }
+  if (input.desc !== undefined && typeof input.desc !== 'string') {
+    throw Object.assign(new Error('Jobbeskrivningen måste vara text.'), { status: 400 });
+  }
   const idx = input.id ? store.jobs.findIndex((j) => j.id === input.id) : -1;
   if (idx >= 0) {
     const merged: EcommerceJob = { ...store.jobs[idx], ...input };
@@ -878,6 +885,7 @@ export function upsertJob(input: Partial<EcommerceJob> & { title: string; compan
         merged.expiresAt = defaultExpiryIso(45);
       }
     }
+    merged.summary = jobSummary(merged);
     store.jobs[idx] = merged;
     saveStore(store);
     return merged;
@@ -895,6 +903,7 @@ export function upsertJob(input: Partial<EcommerceJob> & { title: string; compan
     applyUrl: input.applyUrl || 'https://ehandel.se/jobb',
     skills: Array.isArray(input.skills) ? input.skills : [],
     desc: input.desc || '',
+    summary: jobSummary({ summary: input.summary, desc: input.desc || '' }),
     postedAt: input.postedAt || 'Just nu',
     expiresAt,
     verifiedAt: today,
@@ -910,6 +919,12 @@ export function upsertJob(input: Partial<EcommerceJob> & { title: string; compan
 }
 
 export function batchAddJobs(items: Array<Partial<EcommerceJob> & { title: string; company: string }>): { added: EcommerceJob[]; skipped: string[] } {
+  for (const item of items) {
+    if ((item.summary !== undefined && (typeof item.summary !== 'string' || item.summary.length > 240)) ||
+        (item.desc !== undefined && typeof item.desc !== 'string')) {
+      throw Object.assign(new Error('Ogiltig jobbtext eller ingress över 240 tecken.'), { status: 400 });
+    }
+  }
   const store = ensureStoreFile();
   const today = todayIso();
   const added: EcommerceJob[] = [];
@@ -946,6 +961,7 @@ export function batchAddJobs(items: Array<Partial<EcommerceJob> & { title: strin
       applyUrl: input.applyUrl || 'https://ehandel.se/jobb',
       skills: Array.isArray(input.skills) ? input.skills : [],
       desc: input.desc || `Roll inom svensk e-handel hos ${company}.`,
+      summary: jobSummary({ summary: input.summary, desc: input.desc || '' }),
       postedAt: 'Nyupptäckt',
       expiresAt,
       verifiedAt: today,
@@ -1813,44 +1829,59 @@ export function deleteLogisticsProvider(id: string): boolean {
   return true;
 }
 
+// All publication paths share this policy. No network request is performed here.
+// Confirmation is an explicit editorial attestation, not automated fact checking.
+function prepareNews(input: Partial<EcommerceNewsItem> & { confirmArticleLink?: boolean }, previous?: EcommerceNewsItem): EcommerceNewsItem {
+  for (const key of ['title', 'summary', 'sourceName', 'sourceUrl', 'publishedDate'] as const) {
+    if (input[key] !== undefined && typeof input[key] !== 'string') {
+      throw Object.assign(new Error('Nyhetens textfält måste vara text.'), { status: 400 });
+    }
+  }
+  const item = {
+    ...previous,
+    id: previous?.id || input.id || `news-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title: input.title?.trim() || previous?.title || '',
+    summary: input.summary?.trim() ?? previous?.summary ?? '',
+    category: input.category || previous?.category || 'SaaS & System',
+    region: input.region || previous?.region || 'Sverige',
+    sourceName: input.sourceName?.trim() ?? previous?.sourceName ?? '',
+    sourceUrl: input.sourceUrl?.trim() ?? previous?.sourceUrl ?? '',
+    publishedDate: input.publishedDate || previous?.publishedDate || todayIso(),
+    impactNote: input.impactNote ?? previous?.impactNote,
+    tags: input.tags ?? previous?.tags ?? [],
+    fetchedByAI: input.fetchedByAI ?? previous?.fetchedByAI,
+    status: input.status || previous?.status || 'draft',
+    linkReviewedAt: previous?.linkReviewedAt,
+  } as EcommerceNewsItem;
+  const url = articleUrl(item.sourceUrl);
+  if (url) item.sourceUrl = url;
+  const changed = !previous || ['title', 'summary', 'sourceUrl', 'sourceName', 'publishedDate'].some(
+    (key) => item[key as keyof EcommerceNewsItem] !== previous[key as keyof EcommerceNewsItem]);
+  if (changed) item.linkReviewedAt = undefined;
+  if (input.confirmArticleLink === true) {
+    if (!url || !item.title || !item.summary || !item.sourceName) {
+      throw Object.assign(new Error('Ange rubrik, sammanfattning, källa och direktlänk till artikeln före godkännande.'), { status: 400 });
+    }
+    item.linkReviewedAt = new Date().toISOString();
+  }
+  if (item.status === 'published' && (!url || !item.linkReviewedAt)) {
+    throw Object.assign(new Error('Öppna och granska rätt originalartikel före publicering. Spara annars som utkast.'), { status: 400 });
+  }
+  return item;
+}
+
 export function upsertNews(
-  input: Partial<EcommerceNewsItem> & { title: string }
+  input: Partial<EcommerceNewsItem> & { title: string; confirmArticleLink?: boolean }
 ): { item: EcommerceNewsItem; created: boolean } {
   const store = ensureStoreFile();
   const list = Array.isArray(store.news) ? store.news : [];
-  const cleanTitle = input.title.trim();
-  const existingIdx = input.id ? list.findIndex((n) => n.id === input.id) : -1;
-
-  if (existingIdx >= 0) {
-    const updated: EcommerceNewsItem = {
-      ...list[existingIdx],
-      ...input,
-      id: list[existingIdx].id,
-      title: cleanTitle || list[existingIdx].title,
-    };
-    list[existingIdx] = updated;
-    store.news = list;
-    saveStore(store);
-    return { item: updated, created: false };
-  }
-
-  const created: EcommerceNewsItem = {
-    id: input.id || `news-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    title: cleanTitle,
-    summary: input.summary?.trim() || 'Nyhet inom svensk och europeisk e-handel.',
-    category: input.category || 'SaaS & System',
-    region: input.region || 'Sverige',
-    sourceName: input.sourceName?.trim() || 'Redaktionen',
-    sourceUrl: input.sourceUrl?.trim() || 'https://sverigesehandel.se',
-    publishedDate: input.publishedDate || todayIso(),
-    impactNote: input.impactNote?.trim() || undefined,
-    tags: Array.isArray(input.tags) ? input.tags.filter(Boolean) : [],
-    status: input.status || 'published',
-    fetchedByAI: input.fetchedByAI,
-  };
-  store.news = [created, ...list];
+  const idx = input.id ? list.findIndex((n) => n.id === input.id) : -1;
+  const item = prepareNews(input, idx >= 0 ? list[idx] : undefined);
+  if (idx >= 0) list[idx] = item;
+  else list.unshift(item);
+  store.news = list;
   saveStore(store);
-  return { item: created, created: true };
+  return { item, created: idx < 0 };
 }
 
 export function batchAddNews(
@@ -1858,36 +1889,19 @@ export function batchAddNews(
 ): { added: EcommerceNewsItem[]; skipped: string[] } {
   const store = ensureStoreFile();
   const list = Array.isArray(store.news) ? store.news : [];
-  const existingTitles = new Set(list.map((n) => n.title.toLowerCase().trim()));
+  const titles = new Set(list.map((n) => n.title.toLowerCase().trim()));
   const added: EcommerceNewsItem[] = [];
   const skipped: string[] = [];
-
   for (const input of items) {
-    const cleanTitle = input.title?.trim();
-    if (!cleanTitle) continue;
-    if (existingTitles.has(cleanTitle.toLowerCase())) {
-      skipped.push(cleanTitle);
-      continue;
-    }
-    const created: EcommerceNewsItem = {
-      id: `news-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      title: cleanTitle,
-      summary: input.summary?.trim() || 'Aktuell nyhet inom digital handel.',
-      category: input.category || 'SaaS & System',
-      region: input.region || 'Europa',
-      sourceName: input.sourceName?.trim() || 'Branschnyhet',
-      sourceUrl: input.sourceUrl?.trim() || 'https://sverigesehandel.se',
-      publishedDate: input.publishedDate || todayIso(),
-      impactNote: input.impactNote?.trim() || undefined,
-      tags: Array.isArray(input.tags) ? input.tags.filter(Boolean) : [],
-      status: input.status || 'published',
-      fetchedByAI: input.fetchedByAI ?? true,
-    };
-    list.unshift(created);
-    existingTitles.add(cleanTitle.toLowerCase());
-    added.push(created);
+    const title = input.title?.trim();
+    if (!title) continue;
+    if (titles.has(title.toLowerCase())) { skipped.push(title); continue; }
+    // Batch/AI import is never an editorial attestation, even if supplied in JSON.
+    const item = prepareNews({ ...input, status: 'draft', confirmArticleLink: false });
+    list.unshift(item);
+    titles.add(title.toLowerCase());
+    added.push(item);
   }
-
   store.news = list;
   saveStore(store);
   return { added, skipped };
