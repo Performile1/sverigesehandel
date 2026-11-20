@@ -54,7 +54,7 @@ required before activation. Do not supply credentials in chat or commits.
 ## Editorial links and job descriptions
 
 News created manually or imported in batches/with AI is saved as draft. In the
-CMS news view (also available to admins on the public news tab), select a story
+CMS news view only (never on the public portal, including for admins), select a story
 in the link-review panel, correct its headline/summary/source/date/URL, open the
 original article, then explicitly confirm it matches before publishing. The
 server records the review time; changing those fields requires another review.
