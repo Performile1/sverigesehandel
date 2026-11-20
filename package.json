@@ -23,12 +23,14 @@
     "express": "^4.21.2",
     "firebase": "^13.4.0",
     "firebase-admin": "13.10.0",
+    "google-auth-library": "^11.3.4",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "react-is": "^19.3.1",
     "recharts": "^3.11.0",
+    "sharp": "^0.35.5",
     "vite": "^8.3.0"
   },
   "devDependencies": {

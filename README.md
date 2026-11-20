@@ -11,6 +11,27 @@ Paketindex history, analytics, job descriptions, salary estimates, regional maps
 and direct links to the correct news articles. The plan does not implement or
 activate these features.
 
+## Firebase media and report access (disabled by default)
+
+The CMS **Firebase: Bilder & Statistik** panel prepares Firebase Storage uploads
+for partner logos/ad images and server-side GA4 report access. See the
+[configuration, privacy gates and verification checklist](docs/firebase-bilder-statistik.md).
+Both features default to off; no resources, billing, client analytics SDK,
+collection, raw IP analytics or heatmaps are activated by this code.
+
+Uploads require explicit bucket + server flag, existing CMS-admin authorization,
+and separately configured Google IAM/Blaze. PNG/JPEG/WebP up to 350 kB is decoded,
+validated, stripped of EXIF/GPS and re-encoded as WebP. Public download links are
+created even for draft posts: only intentionally public images belong here.
+Detach/replace preserves old objects; file backup and safe garbage collection
+remain a deployment prerequisite, not an implemented media library.
+
+Reports require an explicit numeric GA4 property, a separate read flag, Data API
+and property-level service-account access. They read existing aggregated data
+only, for allowlisted public page paths; they do not start collection or rebuild
+hash-tab history. Signed-in CMS verification and live provider/IAM tests remain
+required before activation. Do not supply credentials in chat or commits.
+
 ## Portal refinements and supporting material
 
 - Jobs combine free text, city autocomplete, role and work model (Hybrid,

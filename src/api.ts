@@ -1,3 +1,4 @@
+import type { CmsImage, CmsAnalyticsReport, FirebaseFeatureStatus } from './types';
 import type { MapPoint } from './types';
 import { auth } from './firebase';
 import type {
@@ -75,6 +76,12 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  firebaseFeatures: () => request<FirebaseFeatureStatus>('/api/firebase-features'),
+  analyticsReport: (days: number) => request<{ enabled: boolean; report?: CmsAnalyticsReport }>(`/api/analytics/report?days=${days}`),
+  uploadImage: (payload: { targetType: 'partner' | 'ad'; targetId: string; data: string; alt: string }) =>
+    request<{ image: CmsImage }>('/api/media/image', { method: 'POST', body: JSON.stringify(payload) }),
+  detachImage: (targetType: 'partner' | 'ad', targetId: string) =>
+    request<{ detached: boolean }>('/api/media/image', { method: 'DELETE', body: JSON.stringify({ targetType, targetId }) }),
   upsertMapPoint: (point: MapPoint) => request<MapPoint>(`/api/map-points/${point.id}`, { method: 'PUT', body: JSON.stringify(point) }),
   deleteMapPoint: (id: string) => request<{ deleted: boolean }>(`/api/map-points/${id}`, { method: 'DELETE' }),
   getStore: () => request<CMSStore>('/api/cms/store'),

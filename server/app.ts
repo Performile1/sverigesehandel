@@ -1,3 +1,4 @@
+import { firebaseFeatureStatus, prepareImage, uploadCmsImage, reportDays, getCmsAnalytics } from './firebaseFeatures.ts';
 import express, { type RequestHandler, type ErrorRequestHandler } from 'express';
 import type { CmsDataStore } from './firestoreStore.ts';
 import { publicStore } from './publicStore.ts';
@@ -32,7 +33,9 @@ const isMemberSubmission = (method: string, path: string) => (
   (method === 'PUT' && isMemberMessageReadRoute(path))
 );
 
-export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) => Promise<CmsIdentity>) {
+export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) => Promise<CmsIdentity>, features = {
+  status: firebaseFeatureStatus, upload: uploadCmsImage, report: getCmsAnalytics,
+}) {
   const app = express();
   app.disable('x-powered-by');
   app.use('/api', (_req, res, next) => {
@@ -71,6 +74,52 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     next();
   }));
   app.use(express.json({ limit: '800kb' }));
+
+  // Auth middleware above protects all feature endpoints, including disabled status.
+  app.get('/api/firebase-features', (_req, res) => { res.json(features.status()); });
+  app.get('/api/analytics/report', route(async (req, res) => {
+    if (!features.status().reportsEnabled) { res.json({ enabled: false }); return; }
+    let days: number;
+    try { days = reportDays(req.query.days); }
+    catch { res.status(400).json({ error: 'Välj 7, 30 eller 90 dagar.' }); return; }
+    try { res.json({ enabled: true, report: await features.report(days) }); }
+    catch { res.status(503).json({ error: 'Rapporten kunde inte hämtas. Kontrollera GA4-egendom, API och läsbehörighet på servern.' }); }
+  }));
+  app.post('/api/media/image', route(async (req, res) => {
+    if (!features.status().mediaEnabled) { res.status(409).json({ error: 'Firebase-bildlagring är avstängd i denna miljö.' }); return; }
+    const { targetType, targetId, data, alt } = req.body || {};
+    if (!['partner', 'ad'].includes(targetType) || typeof targetId !== 'string') {
+      res.status(400).json({ error: 'Välj partner eller annons.' }); return;
+    }
+    const snapshot = await store.getStore();
+    if (!(targetType === 'partner' ? snapshot.partners : snapshot.adBanners).some((item) => item.id === targetId)) {
+      res.status(404).json({ error: 'Partnern eller annonsen finns inte längre.' }); return;
+    }
+    let prepared;
+    try { prepared = await prepareImage(data, alt); }
+    catch { res.status(400).json({ error: 'Välj en PNG/JPEG/WebP-stillbild, högst 350 kB, 6000 × 6000 och 16 megapixel, samt alt-text (1–200 tecken).' }); return; }
+    try {
+      const image = await features.upload(prepared);
+      if (!await store.assignCmsImage(targetType, targetId, image)) {
+        res.status(409).json({ error: 'Bilden laddades upp men posten försvann. Filen behöver granskas vid lagringsstädning.' }); return;
+      }
+      res.json({ image });
+    } catch {
+      // No provider response, access URL or credential is logged or reflected.
+      res.status(503).json({ error: 'Bilden kunde inte kopplas säkert. Ladda om och kontrollera posten före nytt försök; en uppladdad fil kan finnas kvar. Kontrollera Storage-konfiguration och IAM.' });
+    }
+  }));
+  app.delete('/api/media/image', route(async (req, res) => {
+    const { targetType, targetId } = req.body || {};
+    if (!['partner', 'ad'].includes(targetType) || typeof targetId !== 'string') {
+      res.status(400).json({ error: 'Välj partner eller annons.' }); return;
+    }
+    if (!await store.assignCmsImage(targetType, targetId, null)) {
+      res.status(404).json({ error: 'Posten hittades inte.' }); return;
+    }
+    // Detach only: a file can be referenced by a backup or another item.
+    res.json({ detached: true });
+  }));
 
   app.use('/api', (req, res, next) => {
     const path = req.originalUrl.split('?')[0].replace(/\/$/, '');

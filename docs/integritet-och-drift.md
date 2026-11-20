@@ -6,30 +6,26 @@ normala arbetsytan för redaktionen: bildhantering och rapporter ska nås i CMS 
 serverkontrollerad adminbehörighet. Externa leverantörer kan fortfarande behandla
 data och ska redovisas öppet.
 
-## Rekommendation och föreslagen budget
+## Uppdaterat teknikval: Firebase
 
-- **Bilder:** Vercel Blob för publika partnerloggor och annonsbilder. Uppladdning,
-  byte och borttagning kräver CMS-admin. Endast avsedda publika bilder får läggas
-  i publik lagring. Spara bildreferenser i CMS, inte bildfiler i snapshotet.
-- **Grundstatistik:** Vercel Web Analytics med aggregerade rapporter i CMS genom
-  serverhämtning. Anpassa mätningen till portalens flikar. Undanta CMS, formulärdata,
-  privat kommunikation och testtrafik. Inga råa IP-adresser ska visas eller sparas
-  av någon ny analysfunktion.
-- **Budgetförslag:** 10 USD/månad i extra användning för dessa funktioner vid start,
-  utöver befintlig hosting, skatt och eventuella valutakostnader. Varningsnivå 5 USD.
-  Detta är en målbudget, inte en konfigurerad eller garanterad hård kostnadsgräns.
-  Godkänn implementation av kostnadskontroll innan aktivering; pausa inte hela
-  webbplatsen automatiskt för att statistikbudgeten nås.
-- **Web Analytics Plus behövs inte vid start.** Web Analytics debiteras på Pro
-  enligt dokumentationen med 0,03 USD/1 000 händelser: 100 000 händelser motsvarar
-  3 USD före eventuell användningskredit. Sidvisningar och anpassade händelser
-  räknas. Kostnaden är teamgemensam, inte ett isolerat tak per projekt.
-- Blob-lagring på Pro annonseras från 0,023 USD/GB, enkla operationer från
-  0,35 USD/miljon och avancerade från 4,50 USD/miljon. Region, trafik och övrig
-  användning påverkar utfallet. Bekräfta valda regionens villkor innan inköp.
+Beställaren har valt att gå vidare med Firebase i stället för det tidigare
+förslaget Vercel Blob/Web Analytics. Den nya CMS-integrationen och dess
+[aktiveringschecklista](firebase-bilder-statistik.md) är avstängda som standard.
 
-Inga resurser, köp, behörighetsändringar eller spårningsskript aktiveras av detta
-underlag. Budget och leverantörsval behöver godkännas separat.
+- **Bilder:** Cloud Storage for Firebase i befintligt projekt, med adminskyddad
+  uppladdning genom servern. Kräver separat godkänd Blaze-fakturering, bucketregion,
+  IAM, budgetövervakning och objektbackup. Filerna är avsedda att vara publika.
+- **Statistik:** befintliga Google Analytics/GA4-data kan läsas med Data API och
+  visas i CMS. Rapportläsning aktiverar ingen insamling. Ny insamling är inte
+  implementerad och behöver separat integritets-/samtyckesbeslut.
+- **Budget:** tidigare föreslagna 10 USD/månad är fortsatt endast diskussionsunderlag,
+  inte ett konfigurerat tak eller godkänd debitering. Ta fram region- och
+  trafikbaserad Storage-kalkyl innan aktivering. Vercels eventpriser gäller inte
+  Firebase/GA4 och ska inte användas för denna kalkyl. GA4-/API-kvoter och eventuell
+  framtida BigQuery-användning måste bedömas separat.
+
+Inga resurser, köp, behörighetsändringar, faktureringsplaner eller spårningsskript
+aktiveras av kodleveransen. Kontrollerad konfiguration och separat godkännande krävs.
 
 ## Beslut: råa IP-adresser och heatmaps förblir avstängda
 
@@ -75,9 +71,9 @@ Juridiskt ansvarig behöver godkänna upplägget; underlaget är inte juridisk r
 
 ## Källor
 
-- [Vercel Blob och offentlig prislista](https://vercel.com/pricing)
-- [Web Analytics-priser och teamgemensam användning](https://vercel.com/docs/analytics/limits-and-pricing)
-- [Web Analytics integritet och insamlade datapunkter](https://vercel.com/docs/analytics/privacy-policy)
+- [Firebase-priser](https://firebase.google.com/pricing)
+- [Firebase Storage och krav på Blaze](https://firebase.google.com/docs/storage/web/start)
+- [Google Analytics för Firebase](https://firebase.google.com/docs/analytics/reports)
 - [PTS: kakor, information och giltigt samtycke](https://pts.se/internet-och-telefoni/kakor-cookies/)
 - [IMY: personuppgiftsansvariga och biträden](https://www.imy.se/verksamhet/dataskydd/det-har-galler-enligt-gdpr/personuppgiftsansvariga-och-personuppgiftsbitraden)
 - [IMY: personuppgiftsbiträdesavtal](https://www.imy.se/verksamhet/dataskydd/det-har-galler-enligt-gdpr/personuppgiftsansvariga-och-personuppgiftsbitraden/personuppgiftsbitradesavtal/)

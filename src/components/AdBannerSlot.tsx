@@ -1,3 +1,4 @@
+import { CmsPublicImage } from './CmsPublicImage';
 import { ArrowRight, ExternalLink, Megaphone } from 'lucide-react';
 import type { AdBanner, AdBannerPlacement, PortalTab } from '../types';
 
@@ -59,6 +60,7 @@ export function AdBannerSlot({
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
         <div className="space-y-1.5 min-w-0">
+          {!isPlaceholder && <CmsPublicImage image={banner.image} kind="banner" />}
           <div className={`text-xs font-mono font-semibold flex flex-wrap items-center gap-2 ${kickerClass}`}>
             <Megaphone className="w-3.5 h-3.5 shrink-0" />
             <span>{banner.kicker}</span>

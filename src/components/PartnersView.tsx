@@ -1,3 +1,4 @@
+import { CmsPublicImage } from './CmsPublicImage';
 import { useMemo, useState } from 'react';
 import { Columns3, ExternalLink, LayoutGrid, Pencil, Plus, Search, Sparkles, Users } from 'lucide-react';
 import type { AdBanner, ContactFormConfig, PageCopyBlock, PortalTab, TechPartner } from '../types';
@@ -377,7 +378,7 @@ export function PartnersView({
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-400'
                     }`}
                   >
-                    {p.name}
+                    <CmsPublicImage image={p.image} kind="logo" />{p.name}
                   </button>
                 );
               })}
@@ -406,7 +407,7 @@ export function PartnersView({
                         {sideBySideActors.map((actor) => (
                           <th key={actor.id} className="py-3.5 px-3 align-top break-words">
                             <div className="font-display text-sm font-extrabold text-[#FECC02]">
-                              {actor.name}
+                              <CmsPublicImage image={actor.image} kind="logo" />{actor.name}
                             </div>
                             <a
                               href={getWebsiteHref(actor)}
@@ -626,7 +627,7 @@ export function PartnersView({
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="font-display text-base font-extrabold text-[#040B16]">
-                            {actor.name}
+                            <CmsPublicImage image={actor.image} kind="logo" />{actor.name}
                           </div>
                           <a
                             href={getWebsiteHref(actor)}
@@ -750,7 +751,7 @@ export function PartnersView({
                       <tr key={p.id} className="hover:bg-slate-50 align-top">
                         <td className="py-3.5 px-3 break-words">
                           <div className="font-display font-extrabold text-sm text-[#040B16]">
-                            {p.name}
+                            <CmsPublicImage image={p.image} kind="logo" />{p.name}
                           </div>
                           <a
                             href={getWebsiteHref(p)}
@@ -846,7 +847,7 @@ export function PartnersView({
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="font-display font-extrabold text-sm text-[#040B16]">
-                          {p.name}
+                          <CmsPublicImage image={p.image} kind="logo" />{p.name}
                         </div>
                         <a
                           href={getWebsiteHref(p)}
@@ -952,7 +953,7 @@ export function PartnersView({
                         <span className="font-mono text-slate-500 shrink-0">{p.origin}</span>
                       </div>
                       <div>
-                        <h3 className="font-display text-2xl font-extrabold text-[#040B16]">{p.name}</h3>
+                        <h3 className="font-display text-2xl font-extrabold text-[#040B16]"><CmsPublicImage image={p.image} kind="logo" />{p.name}</h3>
                         <a
                           href={getWebsiteHref(p)}
                           target="_blank"

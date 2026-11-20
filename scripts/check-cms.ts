@@ -1,3 +1,7 @@
+import { AdBannerSlot } from '../src/components/AdBannerSlot.tsx';
+import sharp from 'sharp';
+import { prepareImage, reportDays, parseAnalyticsReport } from '../server/firebaseFeatures.ts';
+import { CmsPublicImage } from '../src/components/CmsPublicImage.tsx';
 import { MARKET_TITLE, LEGACY_MARKET_TITLE, matchesJob, neutralPlaceholder } from '../shared/portalContent.ts';
 import { JobsView } from '../src/components/JobsView.tsx';
 import { articleUrl, jobSummary } from '../shared/editorial.ts';
@@ -50,12 +54,26 @@ const database = {
   },
 };
 const service = createFirestoreStore(() => database as unknown as ReturnType<typeof cmsFirestore>);
+let featureMedia = false;
+let featureReports = false;
+let uploads = 0;
+let reportCalls = 0;
+let providerFails = false;
+const fixtureImage = { path: 'cms-public/fixture.webp', url: 'https://firebasestorage.googleapis.com/v0/b/fixture/o/cms-public%2Ffixture.webp?alt=media',
+  alt: 'Fixture logo', width: 2, height: 2 };
 const app = createCmsApp(service, async (identity) => {
   if (identity === 'invalid-fixture') throw new Error('Invalid fixture identity');
   if (identity === 'member-two') {
     return { uid: 'fixture-user-two', email: 'two@example.invalid', verified: true, admin: false };
   }
   return { uid: 'fixture-user', email: 'fixture@example.invalid', verified: identity !== 'unverified-fixture', admin: identity === 'admin-fixture' };
+}, {
+  status: () => ({ mediaEnabled: featureMedia, reportsEnabled: featureReports,
+    collectionEnabled: false, rawIpEnabled: false, heatmapsEnabled: false }),
+  upload: async (image) => { uploads++; if (providerFails) throw new Error('provider-detail-not-for-client'); assert.ok(image.bytes.length); return fixtureImage; },
+  report: async (days) => { reportCalls++; if (providerFails) throw new Error('provider-detail-not-for-client'); return { days, timeZone: 'Europe/Stockholm', rows: [
+    { page: '/jobb', views: 10, activeUsers: 5, engagementSeconds: 60 },
+  ], truncated: false, dataLossFromOtherRow: false, subjectToThresholding: false }; },
 });
 // Ensures the API middleware doesn't intercept local Vite/static routes.
 app.get('/portal-fixture', (_req, res) => { res.send('portal'); });
@@ -195,6 +213,90 @@ try {
   assert.equal(neutralized.contactForms[0].fields[0].placeholder, 'Ditt namn');
   assert.equal(personalForm.fields[0].placeholder, 'Rickard Wigrund');
   snapshot = editorialSnapshot;
+
+  const featuresSnapshot = structuredClone(snapshot);
+  for (const [path, method] of [['/api/firebase-features', 'GET'], ['/api/analytics/report', 'GET'], ['/api/media/image', 'POST'], ['/api/media/image', 'DELETE']]) {
+    assert.equal((await request(path, method)).status, 401);
+    assert.equal((await request(path, method, method === 'GET' ? undefined : {}, 'member-fixture')).status, 403);
+  }
+  const disabledStatus = await (await request('/api/firebase-features', 'GET', undefined, 'admin-fixture')).json();
+  assert.equal(disabledStatus.mediaEnabled, false);
+  assert.equal(disabledStatus.collectionEnabled, false);
+  assert.equal(disabledStatus.rawIpEnabled, false);
+  assert.equal(disabledStatus.heatmapsEnabled, false);
+  assert.equal((await request('/api/media/image', 'POST', {}, 'admin-fixture')).status, 409);
+  assert.deepEqual(await (await request('/api/analytics/report', 'GET', undefined, 'admin-fixture')).json(), { enabled: false });
+  assert.equal(uploads, 0); assert.equal(reportCalls, 0);
+  const png = await sharp({ create: { width: 2, height: 2, channels: 4, background: '#006aa7' } }).png().toBuffer();
+  const prepared = await prepareImage(png.toString('base64'), ' Example logo ');
+  assert.equal(prepared.alt, 'Example logo');
+  const preparedMetadata = await sharp(prepared.bytes).metadata();
+  assert.equal(preparedMetadata.format, 'webp'); assert.equal(preparedMetadata.exif, undefined);
+  await assert.rejects(prepareImage(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"/>').toString('base64'), 'SVG'));
+  await assert.rejects(prepareImage('invalid data', 'Bad'));
+  await assert.rejects(prepareImage(Buffer.alloc(350001).toString('base64'), 'Large'));
+  await assert.rejects(prepareImage(png.toString('base64'), ''));
+  const tooWide = await sharp({ create: { width: 6001, height: 1, channels: 3, background: '#000000' } }).png().toBuffer();
+  await assert.rejects(prepareImage(tooWide.toString('base64'), 'Too wide'));
+
+  featureMedia = true;
+  const target = snapshot.partners[0];
+  const uploadBody = { targetType: 'partner', targetId: target.id, data: png.toString('base64'), alt: 'Fixture logo' };
+  assert.equal((await request('/api/media/image', 'POST', { ...uploadBody, targetId: 'not-found' }, 'admin-fixture')).status, 404);
+  assert.equal((await request('/api/media/image', 'POST', { ...uploadBody, data: 'not-an-image' }, 'admin-fixture')).status, 400);
+  assert.equal(uploads, 0);
+  assert.equal((await request('/api/media/image', 'POST', uploadBody, 'admin-fixture')).status, 200);
+  assert.equal(uploads, 1);
+  const withImage = await service.getStore();
+  assert.deepEqual(withImage.partners.find((item) => item.id === target.id)?.image, fixtureImage);
+  assert.equal(withImage.partners.find((item) => item.id === target.id)?.desc, target.desc);
+  assert.equal((await request('/api/media/image', 'DELETE', { targetType: 'partner', targetId: target.id }, 'admin-fixture')).status, 200);
+  assert.equal((await service.getStore()).partners.find((item) => item.id === target.id)?.image, undefined);
+  const adTarget = snapshot.adBanners[0];
+  assert.equal((await request('/api/media/image', 'POST', { ...uploadBody, targetType: 'ad', targetId: adTarget.id }, 'admin-fixture')).status, 200);
+  assert.deepEqual((await service.getStore()).adBanners.find((item) => item.id === adTarget.id)?.image, fixtureImage);
+  assert.equal((await service.getStore()).adBanners.find((item) => item.id === adTarget.id)?.targetUrl, adTarget.targetUrl);
+  featureReports = true;
+  assert.equal((await request('/api/analytics/report?days=999', 'GET', undefined, 'admin-fixture')).status, 400);
+  assert.equal(reportCalls, 0);
+  const report = await (await request('/api/analytics/report?days=30', 'GET', undefined, 'admin-fixture')).json();
+  assert.equal(report.report.days, 30); assert.equal(report.report.rows[0].views, 10); assert.equal(reportCalls, 1);
+  assert.throws(() => reportDays('7 OR 1=1')); assert.equal(reportDays(undefined), 7);
+  const parsedReport = parseAnalyticsReport({ metadata: { timeZone: 'Europe/Stockholm', subjectToThresholding: true }, rowCount: 2, rows: [
+    { dimensionValues: [{ value: '/jobb' }], metricValues: [{ value: '12' }, { value: '3' }, { value: '90' }] },
+    { dimensionValues: [{ value: '/private/user@example.invalid' }], metricValues: [{ value: '1' }] },
+  ] }, 7);
+  assert.equal(parsedReport.rows.length, 1); assert.equal(parsedReport.rows[0].engagementSeconds, 90);
+  assert.equal(parsedReport.subjectToThresholding, true);
+  assert.throws(() => parseAnalyticsReport({ rows: [{ dimensionValues: [{ value: '/jobb' }], metricValues: [{ value: 'NaN' }] }] }, 7));
+  const imageHtml = renderToString(createElement(CmsPublicImage, { image: fixtureImage, kind: 'logo' }));
+  assert.ok(imageHtml.includes('object-contain') && imageHtml.includes('Fixture logo'));
+  const partnerImageHtml = renderToString(createElement(PartnersView, {
+    partners: [{ ...snapshot.partners[0], image: fixtureImage, status: 'published' }], adBanners: [],
+    onNavigate: () => {}, onBookAdSlot: () => {}, onOpenDiscover: () => {}, onOpenEditor: () => {}, onRequestIntro: () => {},
+  }));
+  assert.ok(partnerImageHtml.includes('Fixture logo'));
+  assert.ok(!partnerImageHtml.includes('aria-label="Besök $&lt;'));
+  const bannerImageHtml = renderToString(createElement(AdBannerSlot, {
+    banners: [{ ...snapshot.adBanners[0], image: fixtureImage, mode: 'active', active: true }],
+    placement: snapshot.adBanners[0].placement, onNavigate: () => {},
+  }));
+  assert.ok(bannerImageHtml.includes('Fixture logo'));
+  const placeholderHtml = renderToString(createElement(AdBannerSlot, {
+    banners: [{ ...snapshot.adBanners[0], image: fixtureImage, mode: 'placeholder', active: true }],
+    placement: snapshot.adBanners[0].placement, onNavigate: () => {},
+  }));
+  assert.ok(!placeholderHtml.includes('Fixture logo'));
+
+  assert.equal(renderToString(createElement(CmsPublicImage, { image: { ...fixtureImage, url: 'javascript:alert(1)' }, kind: 'banner' })), '');
+  assert.equal(renderToString(createElement(CmsPublicImage, { kind: 'logo' })), '');
+  providerFails = true;
+  const failingReport = await request('/api/analytics/report?days=7', 'GET', undefined, 'admin-fixture');
+  assert.equal(failingReport.status, 503); assert.ok(!(await failingReport.text()).includes('provider-detail-not-for-client'));
+  const failingUpload = await request('/api/media/image', 'POST', uploadBody, 'admin-fixture');
+  assert.equal(failingUpload.status, 503); assert.ok(!(await failingUpload.text()).includes('provider-detail-not-for-client'));
+  providerFails = false;
+  featureMedia = false; featureReports = false; snapshot = featuresSnapshot;
 
   const currentSnapshot = structuredClone(snapshot);
   const legacy = structuredClone(snapshot) as Partial<typeof snapshot>;
