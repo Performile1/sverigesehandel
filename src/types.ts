@@ -62,8 +62,13 @@ export type PartnerSubType =
 export interface CarrierMetrics {
   serviceCount: number;
   parcelLockers: number;
+  lockerNote?: string;
   pickupAgents: number;
   homeDeliveryPct: number;
+  weightLimits?: string;
+  dimensionLimits?: string;
+  websiteUrl?: string;
+  integrations?: string[];
   sameDayAvailable?: boolean;
   weekendDelivery?: boolean;
   avgLeadTime?: string;
@@ -420,6 +425,78 @@ export interface EcommerceNewsItem {
   fetchedByAI?: boolean;
 }
 
+export interface PaketindexChannelSplit {
+  id: string;
+  label: string;
+  sharePct: number;
+  note: string;
+}
+
+export interface PaketindexComparisonPoint {
+  id: string;
+  period: string;
+  importSharePct: number;
+  secondHandSharePct: number;
+  note: string;
+}
+
+export interface PaketindexCarrierNote {
+  id: string;
+  carrier: string;
+  status: string;
+  note: string;
+}
+
+export interface PaketindexData {
+  quarterLabel: string;
+  publisher: string;
+  totalParcelsMillions: number;
+  yoyGrowthPct: number;
+  yoyGrowthMillions: number;
+  foreignImportSharePct: number;
+  foreignImportComparison: string;
+  secondHandParcelsLabel: string;
+  secondHandSharePct: number;
+  secondHandComparison: string;
+  summaryText: string;
+  deliveryChannels: PaketindexChannelSplit[];
+  historicalComparisons: PaketindexComparisonPoint[];
+  carrierScopeNotes: PaketindexCarrierNote[];
+  updatedNote: string;
+}
+
+export interface PageCopyBlock {
+  kicker: string;
+  title: string;
+  subtitle: string;
+}
+
+export interface PageContentMap {
+  marknad: PageCopyBlock & {
+    badgeLabel?: string;
+    heroHighlight?: string;
+    kpi1Label?: string;
+    kpi1Value?: string;
+    kpi2Label?: string;
+    kpi2Value?: string;
+    kpi3Label?: string;
+    kpi3Value?: string;
+    kpi4Label?: string;
+    kpi4Value?: string;
+  };
+  nyheter: PageCopyBlock;
+  event: PageCopyBlock;
+  historia: PageCopyBlock;
+  ehandlare: PageCopyBlock;
+  partners: PageCopyBlock;
+  logistics: PageCopyBlock;
+  jobb: PageCopyBlock;
+  community: PageCopyBlock;
+  kontakt: PageCopyBlock & {
+    contactEmail?: string;
+  };
+}
+
 export interface CMSStore {
   schemaVersion?: number;
   merchants: Merchant[];
@@ -434,6 +511,8 @@ export interface CMSStore {
   orderBenchmarks: CategoryOrderBenchmark[];
   shippingTiers: ShippingCostTier[];
   deliveryStats: DeliveryStatsData;
+  paketindex: PaketindexData;
+  pageContent: PageContentMap;
   laws: EcommerceLaw[];
   intelligenceSources: MarketIntelligenceSource[];
   techStackShares: TechStackShare[];
@@ -532,7 +611,11 @@ export type CMSSection =
   | 'discover'
   | 'merchants'
   | 'partners'
+  | 'logistics'
+  | 'paketindex'
   | 'news'
   | 'events'
+  | 'timeline'
   | 'jobs'
+  | 'pages'
   | 'content';

@@ -270,10 +270,12 @@ export default function App() {
                 orderBenchmarks={store.orderBenchmarks}
                 shippingTiers={store.shippingTiers}
                 deliveryStats={store.deliveryStats}
+                paketindex={store.paketindex}
                 laws={store.laws}
                 intelligenceSources={store.intelligenceSources}
                 techStackShares={store.techStackShares}
                 adBanners={store.adBanners}
+                pageCopy={store.pageContent?.marknad}
                 merchantCount={store.merchants.filter((m) => m.status === 'published').length}
                 partnerCount={store.partners.filter((p) => p.status === 'published').length}
                 onNavigate={handleNavigate}
@@ -284,6 +286,7 @@ export default function App() {
               <NewsView
                 news={store.news || []}
                 adBanners={store.adBanners}
+                pageCopy={store.pageContent?.nyheter}
                 isAdmin={isAdmin}
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
@@ -297,6 +300,7 @@ export default function App() {
                 events={store.events}
                 sessions={store.sessions}
                 adBanners={store.adBanners}
+                pageCopy={store.pageContent?.event}
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
                 onNotify={notify}
@@ -305,12 +309,15 @@ export default function App() {
                 }
               />
             )}
-            {activeTab === 'historia' && <HistoriaView timeline={store.timeline} />}
+            {activeTab === 'historia' && (
+              <HistoriaView timeline={store.timeline} pageCopy={store.pageContent?.historia} />
+            )}
             {activeTab === 'ehandlare' && (
               <MerchantsView
                 orderBenchmarks={store.orderBenchmarks}
                 merchants={store.merchants}
                 adBanners={store.adBanners}
+                pageCopy={store.pageContent?.ehandlare}
                 initialSearch={initialSearch}
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
@@ -330,6 +337,7 @@ export default function App() {
               <PartnersView
                 partners={store.partners}
                 adBanners={store.adBanners}
+                pageCopy={store.pageContent?.partners}
                 initialSearch={initialSearch}
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
@@ -357,6 +365,7 @@ export default function App() {
               <ThreePlView
                 logisticsProviders={store.logisticsProviders}
                 adBanners={store.adBanners}
+                pageCopy={store.pageContent?.logistics}
                 initialSearch={initialSearch}
                 isAdmin={isAdmin}
                 onRequireAdmin={() => setMode('cms')}
@@ -379,6 +388,7 @@ export default function App() {
                 jobs={store.jobs}
                 recruitmentSites={store.recruitmentSites}
                 adBanners={store.adBanners}
+                pageCopy={store.pageContent?.jobb}
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
                 onOpenDiscoverJobs={() =>
@@ -401,6 +411,7 @@ export default function App() {
             {activeTab === 'community' && (
               <CommunityView
                 threads={store.communityThreads}
+                pageCopy={store.pageContent?.community}
                 memberCount={store.communityMemberCount ?? store.communityMembers.length}
                 memberCities={
                   store.communityMemberCities ??
@@ -433,6 +444,7 @@ export default function App() {
             {activeTab === 'kontakt' && (
               <KontaktView
                 adBanners={store.adBanners}
+                pageCopy={store.pageContent?.kontakt}
                 initialAdSlot={selectedAdSlot}
                 onSubmitContact={async (payload) => {
                   await api.submitContactMessage(payload);
@@ -460,10 +472,10 @@ export default function App() {
                   <div>
                     Redaktion & Annons:{' '}
                     <a
-                      href="mailto:hej@sverigesehandel.se"
+                      href={`mailto:${store.pageContent?.kontakt?.contactEmail || 'hej@sverigesehandel.se'}`}
                       className="text-[#FECC02] font-semibold hover:underline"
                     >
-                      hej@sverigesehandel.se
+                      {store.pageContent?.kontakt?.contactEmail || 'hej@sverigesehandel.se'}
                     </a>
                   </div>
                   <div>

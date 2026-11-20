@@ -77,11 +77,29 @@ try {
   const upgraded = await service.getStore();
   assert.deepEqual(upgraded.logisticsProviders, INITIAL_CMS_DATA.logisticsProviders);
   assert.deepEqual(upgraded.news, INITIAL_CMS_DATA.news);
-  assert.equal(upgraded.schemaVersion, 2);
+  assert.equal(upgraded.schemaVersion, 3);
+  assert.ok(upgraded.paketindex && upgraded.paketindex.totalParcelsMillions === 64.2);
+  assert.ok(upgraded.pageContent && upgraded.pageContent.marknad.title.length > 5);
   assert.ok(upgraded.partners.some((p) => p.id === 'p-iboxen'), 'Legacy pre-v2 snapshot receives iBoxen');
   assert.ok(
     upgraded.partners.find((p) => p.id === 'p-postnord')?.carrierMetrics?.serviceCount,
     'Legacy pre-v2 snapshot enriches carriers with carrierMetrics'
+  );
+  assert.equal(
+    upgraded.partners.find((p) => p.id === 'p-iboxen')?.carrierMetrics?.homeDeliveryPct,
+    0,
+    'iBoxen homeDeliveryPct is corrected to 0'
+  );
+  assert.equal(
+    upgraded.partners.find((p) => p.id === 'p-dhl')?.carrierMetrics?.parcelLockers,
+    750,
+    'DHL own lockers synced to 750'
+  );
+  assert.ok(
+    upgraded.partners
+      .filter((p) => p.subType === 'Transportör')
+      .every((p) => p.customerCount === undefined),
+    'Transportör partners must not have customerCount'
   );
   // The same migrated public payload must render the market/map, news & partners cleanly in SSR.
   const visible = publicStore(upgraded);
@@ -91,6 +109,8 @@ try {
   }));
   assert.ok(marketHtml.includes('Sveriges'));
   assert.ok(marketHtml.includes('Svensk e-handelstillväxt'));
+  assert.ok(marketHtml.includes('64,2') || marketHtml.includes('64.2'));
+  assert.ok(marketHtml.includes('32,8') || marketHtml.includes('32.8'));
   const newsHtml = renderToString(createElement(NewsView, {
     news: visible.news,
     adBanners: visible.adBanners,
@@ -111,6 +131,9 @@ try {
   }));
   assert.ok(partnersHtml.includes('iBoxen'));
   assert.ok(partnersHtml.includes('Leveranstjänster'));
+  assert.ok(partnersHtml.includes('Paketskåp'));
+  assert.ok(partnersHtml.includes('Postombud'));
+  assert.ok(partnersHtml.includes('Integrationer:'));
   const threePlHtml = renderToString(createElement(ThreePlView, {
     logisticsProviders: visible.logisticsProviders,
     adBanners: visible.adBanners,
@@ -137,17 +160,17 @@ try {
   assert.equal(transactions, writesBeforeUpgrade);
   await service.upsertMerchant({ name: 'Migration fixture' });
   assert.deepEqual(snapshot.logisticsProviders, INITIAL_CMS_DATA.logisticsProviders);
-  const empty = { ...currentSnapshot, logisticsProviders: [], schemaVersion: 2 };
+  const empty = { ...currentSnapshot, logisticsProviders: [], schemaVersion: 3 };
   assert.deepEqual(upgradeSnapshot(empty), empty, 'An intentionally empty list stays empty');
-  const v2WithoutIboxen = {
+  const v3WithoutIboxen = {
     ...currentSnapshot,
-    schemaVersion: 2,
+    schemaVersion: 3,
     partners: currentSnapshot.partners.filter((p) => p.id !== 'p-iboxen'),
   };
-  const upgradedV2 = upgradeSnapshot(v2WithoutIboxen) as typeof currentSnapshot;
+  const upgradedV3 = upgradeSnapshot(v3WithoutIboxen) as typeof currentSnapshot;
   assert.ok(
-    !upgradedV2.partners.some((p) => p.id === 'p-iboxen'),
-    'Do not restore deleted iBoxen once snapshot is at schemaVersion >= 2'
+    !upgradedV3.partners.some((p) => p.id === 'p-iboxen'),
+    'Do not restore deleted iBoxen once snapshot is at schemaVersion >= 3'
   );
   const custom = { ...currentSnapshot, logisticsProviders: [{ ...currentSnapshot.logisticsProviders[0], name: 'Edited provider' }] };
   assert.deepEqual(upgradeSnapshot(custom), custom, 'Do not restore deleted providers or overwrite edits');
@@ -185,6 +208,7 @@ try {
     ['/api/ai/enrich', 'POST'], ['/api/ai/news', 'POST'], ['/api/news', 'POST'],
     ['/api/news/item', 'DELETE'], ['/api/cms/status', 'GET'],
     ['/api/jobs/validate', 'POST'], ['/api/contact/item', 'DELETE'],
+    ['/api/paketindex', 'PUT'], ['/api/pages', 'PUT'], ['/api/timeline', 'POST'],
   ]) {
     assert.equal((await request(path, method, method === 'GET' ? undefined : {})).status, 401, `${method} ${path}`);
     assert.equal((await request(path, method, method === 'GET' ? undefined : {}, 'member-fixture')).status, 403);
@@ -204,6 +228,33 @@ try {
   assert.ok(reloaded.merchants.some((item: { id: string }) => item.id === created.merchant.id));
   assert.equal((await request(`/api/merchants/${created.merchant.id}`, 'DELETE', undefined, 'admin-fixture')).status, 200);
   assert.ok(!snapshot.merchants.some((item) => item.id === created.merchant.id));
+  // Verify carrier partners strip customerCount and new CMS routes work
+  const carrierResp = await request(
+    '/api/partners',
+    'POST',
+    { name: 'Test Carrier', subType: 'Transportör', customerCount: '10 000+' },
+    'admin-fixture'
+  );
+  assert.equal(carrierResp.status, 201);
+  const carrierJson = await carrierResp.json();
+  assert.equal(carrierJson.partner.customerCount, undefined);
+  assert.equal((await request(`/api/partners/${carrierJson.partner.id}`, 'DELETE', undefined, 'admin-fixture')).status, 200);
+
+  const piResp = await request('/api/paketindex', 'PUT', { totalParcelsMillions: 64.5 }, 'admin-fixture');
+  assert.equal(piResp.status, 200);
+  assert.equal((await piResp.json()).totalParcelsMillions, 64.5);
+
+  const pagesResp = await request('/api/pages', 'PUT', {
+    kontakt: { ...snapshot.pageContent.kontakt, contactEmail: 'redaktion@sverigesehandel.se' },
+  }, 'admin-fixture');
+  assert.equal(pagesResp.status, 200);
+  assert.equal((await pagesResp.json()).kontakt.contactEmail, 'redaktion@sverigesehandel.se');
+
+  const tlResp = await request('/api/timeline', 'POST', { era: '20s', year: '2027', badge: 'Test', title: 'Test Milestone', desc: 'Test', stack: 'AI' }, 'admin-fixture');
+  assert.equal(tlResp.status, 201);
+  const tlItem = await tlResp.json();
+  assert.equal((await request(`/api/timeline/${tlItem.id}`, 'DELETE', undefined, 'admin-fixture')).status, 200);
+
   assert.equal((await request('/api/contact', 'POST', {})).status, 401);
   assert.equal((await request('/api/contact', 'POST', {}, 'unverified-fixture')).status, 403);
   assert.equal((await request('/api/contact', 'POST', { name: {}, email: 'x', topic: 'x', message: 'x' }, 'member-fixture')).status, 400);

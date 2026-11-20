@@ -16,13 +16,19 @@ import type {
   EcommerceNewsItem,
   JobValidityStatus,
   LogisticsProvider,
+  MarketIntelligenceSource,
   Merchant,
+  PageContentMap,
+  PaketindexData,
   RecruitmentSite,
   RegionMetric,
   ShippingCostTier,
   TechPartner,
+  TechStackShare,
+  TimelineMilestone,
 } from '../src/types.ts';
 import { INITIAL_CMS_DATA } from './seedData.ts';
+import { upgradeSnapshot } from './snapshot.ts';
 
 // Keep each Firestore transaction's synchronous domain operations isolated.
 // The file adapter below remains available for the original local data tooling.
@@ -156,19 +162,56 @@ function mergeSeedPartners(existing: TechPartner[]): { list: TechPartner[]; chan
   const updatedExisting = existing.map((p) => {
     const seed = seedById.get(p.id);
     if (!seed) return p;
-    if (!p.customerCount || !p.subType || !p.pricingModel || (!p.carrierMetrics && seed.carrierMetrics)) {
+    const isCarrier = p.subType === 'Transportör' || seed.subType === 'Transportör';
+    const needsUpgrade = isCarrier
+      ? Boolean(p.customerCount) ||
+        !p.carrierMetrics ||
+        !p.carrierMetrics.weightLimits ||
+        !p.carrierMetrics.websiteUrl ||
+        !p.carrierMetrics.integrations ||
+        (p.id === 'p-iboxen' && p.carrierMetrics.homeDeliveryPct === 70) ||
+        (p.id === 'p-dhl' && p.carrierMetrics.parcelLockers === 1100)
+      : !p.customerCount || !p.subType || !p.pricingModel;
+
+    if (needsUpgrade) {
       changed = true;
-      return {
+      const next: TechPartner = {
         ...seed,
         ...p,
         subType: p.subType ?? seed.subType,
-        customerCount: p.customerCount ?? seed.customerCount,
         pricingModel: p.pricingModel ?? seed.pricingModel,
         setupTime: p.setupTime ?? seed.setupTime,
         bestFor: p.bestFor ?? seed.bestFor,
         keyStrengths: p.keyStrengths && p.keyStrengths.length > 0 ? p.keyStrengths : seed.keyStrengths,
-        carrierMetrics: p.carrierMetrics ?? seed.carrierMetrics,
+        carrierMetrics: seed.carrierMetrics
+          ? {
+              ...seed.carrierMetrics,
+              ...(p.carrierMetrics ?? {}),
+              parcelLockers:
+                p.id === 'p-dhl' && p.carrierMetrics?.parcelLockers === 1100
+                  ? 750
+                  : p.carrierMetrics?.parcelLockers ?? seed.carrierMetrics.parcelLockers,
+              homeDeliveryPct:
+                p.id === 'p-iboxen' && p.carrierMetrics?.homeDeliveryPct === 70
+                  ? 0
+                  : p.carrierMetrics?.homeDeliveryPct ?? seed.carrierMetrics.homeDeliveryPct,
+              lockerNote: p.carrierMetrics?.lockerNote ?? seed.carrierMetrics.lockerNote,
+              weightLimits: p.carrierMetrics?.weightLimits ?? seed.carrierMetrics.weightLimits,
+              dimensionLimits: p.carrierMetrics?.dimensionLimits ?? seed.carrierMetrics.dimensionLimits,
+              websiteUrl: p.carrierMetrics?.websiteUrl ?? seed.carrierMetrics.websiteUrl,
+              integrations:
+                p.carrierMetrics?.integrations && p.carrierMetrics.integrations.length > 0
+                  ? p.carrierMetrics.integrations
+                  : seed.carrierMetrics.integrations,
+            }
+          : p.carrierMetrics,
       };
+      if (isCarrier) {
+        delete next.customerCount;
+      } else {
+        next.customerCount = p.customerCount ?? seed.customerCount;
+      }
+      return next;
     }
     return p;
   });
@@ -331,54 +374,73 @@ function ensureStoreFile(): CMSStore {
         }
       : INITIAL_CMS_DATA.deliveryStats;
 
+    const upgradedRaw = upgradeSnapshot(parsed) as Partial<CMSStore>;
     const hydrated: CMSStore = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       merchants: mergedMerchants.list,
       partners: mergedPartners.list,
       logisticsProviders: mergedLogistics,
-      news: Array.isArray(parsed.news) ? parsed.news : INITIAL_CMS_DATA.news,
+      news: Array.isArray(upgradedRaw.news) ? upgradedRaw.news : INITIAL_CMS_DATA.news,
       events:
-        Array.isArray(parsed.events) && parsed.events.length > 0
-          ? parsed.events
+        Array.isArray(upgradedRaw.events) && upgradedRaw.events.length > 0
+          ? upgradedRaw.events
           : INITIAL_CMS_DATA.events,
-      sessions: parsed.sessions ?? INITIAL_CMS_DATA.sessions,
+      sessions: upgradedRaw.sessions ?? INITIAL_CMS_DATA.sessions,
       jobs: mergedJobs.list,
       recruitmentSites:
-        Array.isArray(parsed.recruitmentSites) && parsed.recruitmentSites.length > 0
-          ? parsed.recruitmentSites
+        Array.isArray(upgradedRaw.recruitmentSites) && upgradedRaw.recruitmentSites.length > 0
+          ? upgradedRaw.recruitmentSites
           : INITIAL_CMS_DATA.recruitmentSites,
       regions: mergedRegions,
       orderBenchmarks:
-        Array.isArray(parsed.orderBenchmarks) && parsed.orderBenchmarks.length > 0
-          ? parsed.orderBenchmarks
+        Array.isArray(upgradedRaw.orderBenchmarks) && upgradedRaw.orderBenchmarks.length > 0
+          ? upgradedRaw.orderBenchmarks
           : INITIAL_CMS_DATA.orderBenchmarks,
       shippingTiers:
-        Array.isArray(parsed.shippingTiers) && parsed.shippingTiers.length > 0
-          ? parsed.shippingTiers
+        Array.isArray(upgradedRaw.shippingTiers) && upgradedRaw.shippingTiers.length > 0
+          ? upgradedRaw.shippingTiers
           : INITIAL_CMS_DATA.shippingTiers,
       deliveryStats: mergedDelivery,
+      paketindex:
+        upgradedRaw.paketindex && typeof upgradedRaw.paketindex === 'object'
+          ? upgradedRaw.paketindex
+          : INITIAL_CMS_DATA.paketindex,
+      pageContent:
+        upgradedRaw.pageContent && typeof upgradedRaw.pageContent === 'object'
+          ? { ...INITIAL_CMS_DATA.pageContent, ...upgradedRaw.pageContent }
+          : INITIAL_CMS_DATA.pageContent,
       laws:
-        Array.isArray(parsed.laws) && parsed.laws.length > 0
-          ? parsed.laws
+        Array.isArray(upgradedRaw.laws) && upgradedRaw.laws.length > 0
+          ? upgradedRaw.laws
           : INITIAL_CMS_DATA.laws,
       intelligenceSources:
-        Array.isArray(parsed.intelligenceSources) && parsed.intelligenceSources.length > 0
-          ? parsed.intelligenceSources
+        Array.isArray(upgradedRaw.intelligenceSources) && upgradedRaw.intelligenceSources.length > 0
+          ? upgradedRaw.intelligenceSources
           : INITIAL_CMS_DATA.intelligenceSources,
       techStackShares:
-        Array.isArray(parsed.techStackShares) && parsed.techStackShares.length > 0
-          ? parsed.techStackShares
+        Array.isArray(upgradedRaw.techStackShares) && upgradedRaw.techStackShares.length > 0
+          ? upgradedRaw.techStackShares
           : INITIAL_CMS_DATA.techStackShares,
       adBanners:
-        Array.isArray(parsed.adBanners) && parsed.adBanners.length > 0
-          ? parsed.adBanners
+        Array.isArray(upgradedRaw.adBanners) && upgradedRaw.adBanners.length > 0
+          ? upgradedRaw.adBanners
           : INITIAL_CMS_DATA.adBanners,
-      contactMessages: Array.isArray(parsed.contactMessages) ? parsed.contactMessages : [],
-      timeline: parsed.timeline ?? INITIAL_CMS_DATA.timeline,
-      communityThreads: parsed.communityThreads ?? INITIAL_CMS_DATA.communityThreads,
-      communityMembers: parsed.communityMembers ?? [],
-      updatedAt: parsed.updatedAt ?? new Date().toISOString(),
+      contactMessages: Array.isArray(upgradedRaw.contactMessages) ? upgradedRaw.contactMessages : [],
+      timeline: upgradedRaw.timeline ?? INITIAL_CMS_DATA.timeline,
+      communityThreads: upgradedRaw.communityThreads ?? INITIAL_CMS_DATA.communityThreads,
+      communityMembers: upgradedRaw.communityMembers ?? [],
+      updatedAt: upgradedRaw.updatedAt ?? new Date().toISOString(),
     };
+
+    const rawReceptionLegacy = mergedDelivery.receptionChannels?.some(
+      (c) => c.id === 'rc-locker' && c.sharePct === 46
+    );
+    if (rawReceptionLegacy && upgradedRaw.deliveryStats?.receptionChannels) {
+      hydrated.deliveryStats = {
+        ...hydrated.deliveryStats,
+        receptionChannels: upgradedRaw.deliveryStats.receptionChannels,
+      };
+    }
 
     if (
       mergedMerchants.changed ||
@@ -386,6 +448,9 @@ function ensureStoreFile(): CMSStore {
       mergedJobs.changed ||
       regionsChanged ||
       deliveryChanged ||
+      (parsed.schemaVersion ?? 1) < 3 ||
+      !parsed.paketindex ||
+      !parsed.pageContent ||
       !parsed.news ||
       !parsed.events ||
       !parsed.jobs ||
@@ -595,6 +660,8 @@ export function upsertPartner(input: Partial<TechPartner> & { name: string }): {
 
   if (existingIdx >= 0) {
     const existing = store.partners[existingIdx];
+    const resolvedSubType = input.subType ?? existing.subType;
+    const isCarrier = resolvedSubType === 'Transportör';
     const updated: TechPartner = {
       ...existing,
       ...input,
@@ -603,24 +670,32 @@ export function upsertPartner(input: Partial<TechPartner> & { name: string }): {
       domain: cleanDomain || existing.domain,
       updatedAt: now,
     };
+    if (isCarrier) {
+      delete updated.customerCount;
+    }
     store.partners[existingIdx] = updated;
     saveStore(store);
     return { partner: updated, created: false };
   }
 
+  const resolvedSubType = input.subType || input.cat || 'E-handelsplattform';
+  const isCarrier = resolvedSubType === 'Transportör';
   const created: TechPartner = {
     id: input.id || `p-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     name: cleanName,
     domain: cleanDomain || `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
     cat: input.cat || 'E-handelsplattform',
-    subType: input.subType || input.cat || 'E-handelsplattform',
+    subType: resolvedSubType,
     origin: input.origin?.trim() || 'Stockholm',
     stack: input.stack?.trim() || 'Cloud · API-first',
-    customerCount: input.customerCount?.trim() || 'Verifierade nordiska kunder',
+    ...(isCarrier
+      ? {}
+      : { customerCount: input.customerCount?.trim() || 'Verifierade nordiska kunder' }),
     pricingModel: input.pricingModel?.trim() || 'SaaS / Avtal',
     setupTime: input.setupTime?.trim() || '1–4 veckor',
     bestFor: input.bestFor?.trim() || 'Svenska e-handlare i tillväxt',
     keyStrengths: Array.isArray(input.keyStrengths) ? input.keyStrengths : [],
+    ...(input.carrierMetrics ? { carrierMetrics: input.carrierMetrics } : {}),
     notableClients: Array.isArray(input.notableClients) ? input.notableClients : [],
     desc: input.desc?.trim() || 'Teknisk partner för nordisk e-handel.',
     status: input.status || 'published',
@@ -653,19 +728,24 @@ export function batchAddPartners(items: Array<Partial<TechPartner> & { name: str
       continue;
     }
 
+    const resolvedSubType = input.subType || input.cat || 'E-handelsplattform';
+    const isCarrier = resolvedSubType === 'Transportör';
     const created: TechPartner = {
       id: `p-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       name: cleanName,
       domain: cleanDomain || `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
       cat: input.cat || 'E-handelsplattform',
-      subType: input.subType || input.cat || 'E-handelsplattform',
+      subType: resolvedSubType,
       origin: input.origin?.trim() || 'Stockholm',
       stack: input.stack?.trim() || 'SaaS · API-first',
-      customerCount: input.customerCount?.trim() || 'Nordiska & globala handlare',
+      ...(isCarrier
+        ? {}
+        : { customerCount: input.customerCount?.trim() || 'Nordiska & globala handlare' }),
       pricingModel: input.pricingModel?.trim() || 'SaaS / Transaktionsbaserad',
       setupTime: input.setupTime?.trim() || '1–4 veckor',
       bestFor: input.bestFor?.trim() || 'Växande svenska e-handlare',
       keyStrengths: Array.isArray(input.keyStrengths) ? input.keyStrengths : [],
+      ...(input.carrierMetrics ? { carrierMetrics: input.carrierMetrics } : {}),
       notableClients: Array.isArray(input.notableClients) ? input.notableClients : [],
       desc: input.desc?.trim() || `Nordisk tech-partner inom ${input.cat || 'e-handel'}.`,
       status: input.status || 'published',
@@ -1319,4 +1399,87 @@ export function deleteNews(id: string): boolean {
   if (store.news.length === before) return false;
   saveStore(store);
   return true;
+}
+
+export function updatePaketindex(patch: Partial<PaketindexData>): PaketindexData {
+  const store = ensureStoreFile();
+  const base = store.paketindex || INITIAL_CMS_DATA.paketindex;
+  store.paketindex = { ...base, ...patch };
+  saveStore(store);
+  return store.paketindex;
+}
+
+export function updateIntelligenceSource(
+  id: string,
+  patch: Partial<MarketIntelligenceSource>
+): MarketIntelligenceSource | null {
+  const store = ensureStoreFile();
+  const idx = store.intelligenceSources.findIndex((s) => s.id === id);
+  if (idx < 0) return null;
+  store.intelligenceSources[idx] = { ...store.intelligenceSources[idx], ...patch };
+  saveStore(store);
+  return store.intelligenceSources[idx];
+}
+
+export function updateTechStackShare(id: string, patch: Partial<TechStackShare>): TechStackShare | null {
+  const store = ensureStoreFile();
+  const idx = store.techStackShares.findIndex((t) => t.id === id);
+  if (idx < 0) return null;
+  store.techStackShares[idx] = { ...store.techStackShares[idx], ...patch, id };
+  saveStore(store);
+  return store.techStackShares[idx];
+}
+
+export function upsertTimelineMilestone(
+  input: Partial<TimelineMilestone> & { title: string }
+): TimelineMilestone {
+  const store = ensureStoreFile();
+  const idx = input.id ? store.timeline.findIndex((t) => t.id === input.id) : -1;
+  if (idx >= 0) {
+    const updated: TimelineMilestone = { ...store.timeline[idx], ...input };
+    store.timeline[idx] = updated;
+    saveStore(store);
+    return updated;
+  }
+  const created: TimelineMilestone = {
+    id: input.id || `t-${Date.now()}`,
+    era: input.era || '20s',
+    year: input.year?.trim() || '2026',
+    badge: input.badge?.trim() || 'Milstolpe',
+    title: input.title.trim(),
+    desc: input.desc?.trim() || '',
+    stack: input.stack?.trim() || '',
+  };
+  store.timeline.push(created);
+  saveStore(store);
+  return created;
+}
+
+export function deleteTimelineMilestone(id: string): boolean {
+  const store = ensureStoreFile();
+  const before = store.timeline.length;
+  store.timeline = store.timeline.filter((t) => t.id !== id);
+  if (store.timeline.length === before) return false;
+  saveStore(store);
+  return true;
+}
+
+export function updatePageContent(patch: Partial<PageContentMap>): PageContentMap {
+  const store = ensureStoreFile();
+  const base = store.pageContent || INITIAL_CMS_DATA.pageContent;
+  const merged: PageContentMap = {
+    marknad: { ...base.marknad, ...(patch.marknad ?? {}) },
+    nyheter: { ...base.nyheter, ...(patch.nyheter ?? {}) },
+    event: { ...base.event, ...(patch.event ?? {}) },
+    historia: { ...base.historia, ...(patch.historia ?? {}) },
+    ehandlare: { ...base.ehandlare, ...(patch.ehandlare ?? {}) },
+    partners: { ...base.partners, ...(patch.partners ?? {}) },
+    logistics: { ...base.logistics, ...(patch.logistics ?? {}) },
+    jobb: { ...base.jobb, ...(patch.jobb ?? {}) },
+    community: { ...base.community, ...(patch.community ?? {}) },
+    kontakt: { ...base.kontakt, ...(patch.kontakt ?? {}) },
+  };
+  store.pageContent = merged;
+  saveStore(store);
+  return merged;
 }

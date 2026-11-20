@@ -16,6 +16,7 @@ import type {
   EcommerceNewsItem,
   GroundingSource,
   NewsCategory,
+  PageCopyBlock,
   PortalTab,
 } from '../types';
 import { AdBannerSlot } from './AdBannerSlot';
@@ -24,6 +25,7 @@ import { CheckoutStrategyCTA } from './CheckoutStrategyCTA';
 interface NewsViewProps {
   news: EcommerceNewsItem[];
   adBanners: AdBanner[];
+  pageCopy?: PageCopyBlock;
   isAdmin?: boolean;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
@@ -70,6 +72,7 @@ type NewsCandidate = Omit<EcommerceNewsItem, 'id' | 'status'> & { alreadyExists?
 export function NewsView({
   news = [],
   adBanners = [],
+  pageCopy,
   isAdmin = false,
   onNavigate,
   onBookAdSlot,
@@ -236,13 +239,14 @@ export function NewsView({
           <div className="space-y-2">
             <div className="font-mono text-xs text-[#FECC02] font-semibold inline-flex items-center gap-1.5">
               <Newspaper className="w-3.5 h-3.5" />
-              Branschnyheter &amp; Omvärldsbevakning · {published.length} publicerade artiklar
+              {pageCopy?.kicker || 'Branschnyheter & Omvärldsbevakning'} · {published.length} publicerade artiklar
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-extrabold leading-tight">
-              Nyheter inom Svensk &amp; Europeisk E-handel
+              {pageCopy?.title || 'Nyheter inom Svensk & Europeisk E-handel'}
             </h1>
             <p className="text-slate-300 text-sm sm:text-base max-w-3xl leading-relaxed">
-              Kurerad och Google Search-groundad bevakning av Temu och marknadsplatser i Europa, nya e-handelsbutiker som öppnar i Sverige &amp; EU, samt nya SaaS-system, checkout-plattformar och logistikregler.
+              {pageCopy?.subtitle ||
+                'Kurerad och Google Search-groundad bevakning av Temu och marknadsplatser i Europa, nya e-handelsbutiker som öppnar i Sverige & EU, samt nya SaaS-system, checkout-plattformar och logistikregler.'}
             </p>
           </div>
 

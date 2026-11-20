@@ -15,6 +15,7 @@ import type {
   AdBanner,
   LogisticsProvider,
   LogisticsRoleType,
+  PageCopyBlock,
   PortalTab,
   PublishStatus,
 } from '../types';
@@ -23,6 +24,7 @@ import { AdBannerSlot } from './AdBannerSlot';
 interface ThreePlViewProps {
   logisticsProviders: LogisticsProvider[];
   adBanners: AdBanner[];
+  pageCopy?: PageCopyBlock;
   initialSearch?: string;
   isAdmin?: boolean;
   onRequireAdmin?: () => void;
@@ -53,6 +55,7 @@ const REGION_LABEL_MAP: Record<string, string> = {
 export function ThreePlView({
   logisticsProviders = [],
   adBanners = [],
+  pageCopy,
   initialSearch = '',
   isAdmin = false,
   onRequireAdmin,
@@ -237,13 +240,14 @@ export function ThreePlView({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="font-mono text-xs text-[#FECC02] font-semibold">
-              Svensk E-handelslogistik · {counts.total} verifierade 3PL &amp; 4PL-aktörer
+              {pageCopy?.kicker || 'Svensk E-handelslogistik'} · {counts.total} verifierade 3PL &amp; 4PL-aktörer
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight">
-              3PL &amp; 4PL i Sverige – Fulfillment, WMS &amp; Kontrolltorn
+              {pageCopy?.title || '3PL & 4PL i Sverige – Fulfillment, WMS & Kontrolltorn'}
             </h1>
             <p className="text-slate-300 text-sm sm:text-base max-w-3xl leading-relaxed">
-              Komplett jämförelselista över tredjepartslogistik (3PL) och fjärdepartslogistik (4PL) för svensk e-handel. Jämför lagerorter, AutoStore-automation, WMS-system, stopptider (cut-off) och minsta ordervolym.
+              {pageCopy?.subtitle ||
+                'Komplett jämförelselista över tredjepartslogistik (3PL) och fjärdepartslogistik (4PL) för svensk e-handel. Jämför lagerorter, AutoStore-automation, WMS-system, stopptider (cut-off) och minsta ordervolym.'}
             </p>
           </div>
 

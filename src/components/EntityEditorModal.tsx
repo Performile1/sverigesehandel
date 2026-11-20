@@ -63,9 +63,17 @@ export function EntityEditorModal({
   const [pStatus, setPStatus] = useState<PublishStatus>('published');
   const [pServiceCount, setPServiceCount] = useState('');
   const [pParcelLockers, setPParcelLockers] = useState('');
+  const [pLockerNote, setPLockerNote] = useState('');
   const [pPickupAgents, setPPickupAgents] = useState('');
   const [pHomeDeliveryPct, setPHomeDeliveryPct] = useState('');
   const [pAvgLeadTime, setPAvgLeadTime] = useState('');
+  const [pWeightLimits, setPWeightLimits] = useState('');
+  const [pDimensionLimits, setPDimensionLimits] = useState('');
+  const [pWebsiteUrl, setPWebsiteUrl] = useState('');
+  const [pIntegrations, setPIntegrations] = useState('');
+  const [pCoreServices, setPCoreServices] = useState('');
+  const [pSameDay, setPSameDay] = useState(false);
+  const [pWeekend, setPWeekend] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -116,6 +124,7 @@ export function EntityEditorModal({
       setPParcelLockers(
         partner?.carrierMetrics ? String(partner.carrierMetrics.parcelLockers) : ''
       );
+      setPLockerNote(partner?.carrierMetrics?.lockerNote ?? '');
       setPPickupAgents(
         partner?.carrierMetrics ? String(partner.carrierMetrics.pickupAgents) : ''
       );
@@ -123,6 +132,16 @@ export function EntityEditorModal({
         partner?.carrierMetrics ? String(partner.carrierMetrics.homeDeliveryPct) : ''
       );
       setPAvgLeadTime(partner?.carrierMetrics?.avgLeadTime ?? '');
+      setPWeightLimits(partner?.carrierMetrics?.weightLimits ?? '');
+      setPDimensionLimits(partner?.carrierMetrics?.dimensionLimits ?? '');
+      setPWebsiteUrl(
+        partner?.carrierMetrics?.websiteUrl ??
+          (partner?.domain ? `https://${partner.domain}` : '')
+      );
+      setPIntegrations(partner?.carrierMetrics?.integrations?.join(', ') ?? '');
+      setPCoreServices(partner?.carrierMetrics?.coreServices?.join(', ') ?? '');
+      setPSameDay(Boolean(partner?.carrierMetrics?.sameDayAvailable));
+      setPWeekend(Boolean(partner?.carrierMetrics?.weekendDelivery));
     }
   }, [open, mode, merchant, partner]);
 
@@ -162,10 +181,13 @@ export function EntityEditorModal({
         if (typeof d.name === 'string') setPName(d.name);
         if (typeof d.domain === 'string') setPDomain(d.domain);
         if (typeof d.cat === 'string') setPCat(d.cat);
+        const nextSub = typeof d.subType === 'string' ? d.subType : pSubType;
         if (typeof d.subType === 'string') setPSubType(d.subType);
         if (typeof d.origin === 'string') setPOrigin(d.origin);
         if (typeof d.stack === 'string') setPStack(d.stack);
-        if (typeof d.customerCount === 'string') setPCustomerCount(d.customerCount);
+        if (typeof d.customerCount === 'string' && nextSub !== 'Transportör') {
+          setPCustomerCount(d.customerCount);
+        }
         if (typeof d.pricingModel === 'string') setPPricingModel(d.pricingModel);
         if (typeof d.setupTime === 'string') setPSetupTime(d.setupTime);
         if (typeof d.bestFor === 'string') setPBestFor(d.bestFor);
@@ -216,17 +238,41 @@ export function EntityEditorModal({
         });
         onNotify(merchant ? `${mName} uppdaterad i CMS.` : `${mName} tillagd i CMS.`);
       } else {
+        const isCarrier = pSubType === 'Transportör';
         const hasCarrierMetricsInput =
-          pSubType === 'Transportör' &&
-          (pServiceCount !== '' || pParcelLockers !== '' || pPickupAgents !== '' || pHomeDeliveryPct !== '');
+          isCarrier &&
+          (pServiceCount !== '' ||
+            pParcelLockers !== '' ||
+            pLockerNote.trim() !== '' ||
+            pPickupAgents !== '' ||
+            pHomeDeliveryPct !== '' ||
+            pWeightLimits.trim() !== '' ||
+            pDimensionLimits.trim() !== '' ||
+            pWebsiteUrl.trim() !== '' ||
+            pIntegrations.trim() !== '' ||
+            pCoreServices.trim() !== '');
         const carrierMetrics = hasCarrierMetricsInput
           ? {
               ...(partner?.carrierMetrics || {}),
               serviceCount: Number(pServiceCount) || 0,
               parcelLockers: Number(pParcelLockers) || 0,
+              lockerNote: pLockerNote.trim() || undefined,
               pickupAgents: Number(pPickupAgents) || 0,
               homeDeliveryPct: Number(pHomeDeliveryPct) || 0,
               avgLeadTime: pAvgLeadTime.trim() || partner?.carrierMetrics?.avgLeadTime,
+              weightLimits: pWeightLimits.trim() || undefined,
+              dimensionLimits: pDimensionLimits.trim() || undefined,
+              websiteUrl: pWebsiteUrl.trim() || undefined,
+              integrations: pIntegrations
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean),
+              coreServices: pCoreServices
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean),
+              sameDayAvailable: pSameDay,
+              weekendDelivery: pWeekend,
             }
           : partner?.carrierMetrics;
 
@@ -238,7 +284,7 @@ export function EntityEditorModal({
           subType: pSubType.trim() || undefined,
           origin: pOrigin.trim(),
           stack: pStack.trim(),
-          customerCount: pCustomerCount.trim() || undefined,
+          customerCount: isCarrier ? undefined : pCustomerCount.trim() || undefined,
           pricingModel: pPricingModel.trim() || undefined,
           setupTime: pSetupTime.trim() || undefined,
           bestFor: pBestFor.trim() || undefined,
@@ -656,18 +702,20 @@ export function EntityEditorModal({
                     <option value="ERP & Omnichannel">ERP & Omnichannel</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Antal kunder
-                  </label>
-                  <input
-                    type="text"
-                    value={pCustomerCount}
-                    onChange={(e) => setPCustomerCount(e.target.value)}
-                    placeholder="t.ex. 25 000+ nordiska e-handlare"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm"
-                  />
-                </div>
+                {pSubType !== 'Transportör' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Antal kunder
+                    </label>
+                    <input
+                      type="text"
+                      value={pCustomerCount}
+                      onChange={(e) => setPCustomerCount(e.target.value)}
+                      placeholder="t.ex. 25 000+ nordiska e-handlare"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -710,9 +758,9 @@ export function EntityEditorModal({
               </div>
 
               {pSubType === 'Transportör' && (
-                <div className="p-3.5 rounded-xl bg-[#F4F6F9] border border-slate-200 space-y-2.5">
+                <div className="p-3.5 rounded-xl bg-[#F4F6F9] border border-slate-200 space-y-3">
                   <div className="text-xs font-bold text-[#040B16]">
-                    Transportörsdata (tjänster, paketskåp, ombud &amp; hemleverans)
+                    Transportörsdata (tjänster, paketskåp, ombud, hemleverans, vikt/mått &amp; integrationer)
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                     <div>
@@ -729,19 +777,19 @@ export function EntityEditorModal({
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                        Paketskåp
+                        Paketskåp (st)
                       </label>
                       <input
                         type="number"
                         value={pParcelLockers}
                         onChange={(e) => setPParcelLockers(e.target.value)}
-                        placeholder="5000"
+                        placeholder="2500"
                         className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono"
                       />
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                        Ombud
+                        Ombud (st)
                       </label>
                       <input
                         type="number"
@@ -775,6 +823,102 @@ export function EntityEditorModal({
                         className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
                       />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Skåpnotering (inomhus/utomhus/fack)
+                      </label>
+                      <input
+                        type="text"
+                        value={pLockerNote}
+                        onChange={(e) => setPLockerNote(e.target.value)}
+                        placeholder="t.ex. Utomhus + iBoxen"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Hemsida (URL)
+                      </label>
+                      <input
+                        type="text"
+                        value={pWebsiteUrl}
+                        onChange={(e) => setPWebsiteUrl(e.target.value)}
+                        placeholder="https://www.postnord.se"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Viktgränser
+                      </label>
+                      <input
+                        type="text"
+                        value={pWeightLimits}
+                        onChange={(e) => setPWeightLimits(e.target.value)}
+                        placeholder="Skåp/Ombud 20 kg · Hem 35 kg"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Måttgränser
+                      </label>
+                      <input
+                        type="text"
+                        value={pDimensionLimits}
+                        onChange={(e) => setPDimensionLimits(e.target.value)}
+                        placeholder="Max 60×40×40 cm (skåp)"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Integrationer (komma-separerat)
+                      </label>
+                      <input
+                        type="text"
+                        value={pIntegrations}
+                        onChange={(e) => setPIntegrations(e.target.value)}
+                        placeholder="API/EDI, nShift, Ingrid, Shopify"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Kärntjänster (komma-separerat)
+                      </label>
+                      <input
+                        type="text"
+                        value={pCoreServices}
+                        onChange={(e) => setPCoreServices(e.target.value)}
+                        placeholder="Paketskåp, MyPack Collect, MyPack Home"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-4 pt-1">
+                    <label className="inline-flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={pSameDay}
+                        onChange={(e) => setPSameDay(e.target.checked)}
+                        className="rounded border-slate-300"
+                      />
+                      Samma-dag-leverans tillgänglig
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={pWeekend}
+                        onChange={(e) => setPWeekend(e.target.checked)}
+                        className="rounded border-slate-300"
+                      />
+                      Helgleverans tillgänglig
+                    </label>
                   </div>
                 </div>
               )}

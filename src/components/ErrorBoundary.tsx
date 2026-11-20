@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               Öppna Firestore-kvot & uppgradering i Firebase Console &rarr;
             </a>
           )}
-          <pre className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-mono text-slate-700 overflow-x-auto max-h-40">
+          <pre className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-mono text-slate-700 whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
             {this.state.errorMessage}
           </pre>
           <button

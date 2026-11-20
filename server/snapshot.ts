@@ -1,4 +1,4 @@
-import type { CMSStore, TechPartner } from '../src/types.ts';
+import type { CMSStore, DeliveryStatsData, MarketIntelligenceSource, TechPartner } from '../src/types.ts';
 import { INITIAL_CMS_DATA } from './seedData.ts';
 
 function hasOwn(obj: object, key: string): boolean {
@@ -6,7 +6,7 @@ function hasOwn(obj: object, key: string): boolean {
 }
 
 // Only migrate newly introduced fields/versions. Never mutate the input object and
-// never restore deleted entities once a snapshot is at schemaVersion >= 2.
+// never restore deleted entities once a snapshot is at schemaVersion >= 3.
 export function upgradeSnapshot(value: unknown): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
   const obj = value as Record<string, unknown>;
@@ -22,12 +22,19 @@ export function upgradeSnapshot(value: unknown): unknown {
   if (!hasOwn(obj, 'news')) {
     ensureClone().news = structuredClone(INITIAL_CMS_DATA.news);
   }
+  if (!hasOwn(obj, 'paketindex')) {
+    ensureClone().paketindex = structuredClone(INITIAL_CMS_DATA.paketindex);
+  }
+  if (!hasOwn(obj, 'pageContent')) {
+    ensureClone().pageContent = structuredClone(INITIAL_CMS_DATA.pageContent);
+  }
 
   const version = typeof obj.schemaVersion === 'number' ? obj.schemaVersion : 1;
+  const seedPartnersById = new Map(INITIAL_CMS_DATA.partners.map((p) => [p.id, p]));
+
   if (version < 2) {
     const draft = ensureClone();
     if (Array.isArray(obj.partners)) {
-      const seedPartnersById = new Map(INITIAL_CMS_DATA.partners.map((p) => [p.id, p]));
       const upgradedPartners: TechPartner[] = (obj.partners as TechPartner[]).map((partner) => {
         const seed = seedPartnersById.get(partner.id);
         if (seed?.carrierMetrics && !partner.carrierMetrics) {
@@ -44,7 +51,88 @@ export function upgradeSnapshot(value: unknown): unknown {
       }
       draft.partners = upgradedPartners;
     }
-    draft.schemaVersion = 2;
+  }
+
+  if (version < 3) {
+    const draft = ensureClone();
+    const currentPartners = Array.isArray(draft.partners) ? (draft.partners as TechPartner[]) : [];
+    draft.partners = currentPartners.map((partner) => {
+      const isCarrier =
+        partner.subType === 'Transportör' ||
+        (partner.cat === 'Logistik & Last-mile' && Boolean(partner.carrierMetrics));
+      if (!isCarrier) return partner;
+
+      const seed = seedPartnersById.get(partner.id);
+      const copy: TechPartner = { ...partner };
+      delete copy.customerCount;
+
+      if (copy.carrierMetrics || seed?.carrierMetrics) {
+        const currentMetrics = copy.carrierMetrics ?? seed!.carrierMetrics!;
+        const seedMetrics = seed?.carrierMetrics;
+        copy.carrierMetrics = {
+          ...seedMetrics,
+          ...currentMetrics,
+          parcelLockers:
+            partner.id === 'p-dhl' && currentMetrics.parcelLockers === 1100
+              ? 750
+              : currentMetrics.parcelLockers,
+          homeDeliveryPct:
+            partner.id === 'p-iboxen' && currentMetrics.homeDeliveryPct === 70
+              ? 0
+              : currentMetrics.homeDeliveryPct,
+          lockerNote: currentMetrics.lockerNote ?? seedMetrics?.lockerNote,
+          weightLimits: currentMetrics.weightLimits ?? seedMetrics?.weightLimits,
+          dimensionLimits: currentMetrics.dimensionLimits ?? seedMetrics?.dimensionLimits,
+          websiteUrl: currentMetrics.websiteUrl ?? seedMetrics?.websiteUrl,
+          integrations:
+            Array.isArray(currentMetrics.integrations) && currentMetrics.integrations.length > 0
+              ? currentMetrics.integrations
+              : seedMetrics?.integrations,
+        };
+      }
+      if (partner.id === 'p-iboxen' && seed && copy.desc === 'Transportörsoberoende, rikstäckande infrastruktur för öppna paketboxar utomhus som delas av Sveriges ledande last-mile-bolag.') {
+        copy.desc = seed.desc;
+      }
+      if (partner.id === 'p-dhl' && seed && Array.isArray(copy.keyStrengths)) {
+        copy.keyStrengths = copy.keyStrengths.map((s) =>
+          s.includes('1 100+ boxar') ? '1 750+ svenska ombud & 750 egna boxar (+ 1 200 iBoxen)' : s
+        );
+      }
+      return copy;
+    });
+
+    if (draft.deliveryStats && typeof draft.deliveryStats === 'object') {
+      const ds = { ...(draft.deliveryStats as DeliveryStatsData) };
+      if (Array.isArray(ds.receptionChannels)) {
+        const legacyLocker = ds.receptionChannels.find((c) => c.id === 'rc-locker' && c.sharePct === 46);
+        if (legacyLocker) {
+          ds.receptionChannels = structuredClone(INITIAL_CMS_DATA.deliveryStats.receptionChannels);
+        }
+      }
+      if (Array.isArray(ds.carrierCoverage)) {
+        ds.carrierCoverage = ds.carrierCoverage.map((row) =>
+          row.id === 'cc-dhl' && row.parcelLockersCount === 1100
+            ? {
+                ...row,
+                parcelLockersCount: 750,
+                boxNetworkNote: '750 egna skåp + tillgång till 1 200 iBoxen-skåp via partnerupplägg',
+              }
+            : row
+        );
+      }
+      draft.deliveryStats = ds;
+    }
+
+    if (Array.isArray(draft.intelligenceSources)) {
+      const seedPi = INITIAL_CMS_DATA.intelligenceSources.find((s) => s.id === 'paketindex');
+      draft.intelligenceSources = (draft.intelligenceSources as MarketIntelligenceSource[]).map((src) =>
+        src.id === 'paketindex' && src.headlineValue === '182 milj paket' && seedPi
+          ? structuredClone(seedPi)
+          : src
+      );
+    }
+
+    draft.schemaVersion = 3;
   }
 
   return next;
@@ -57,7 +145,7 @@ export function validateSnapshot(value: unknown): value is CMSStore {
     'orderBenchmarks', 'shippingTiers', 'laws', 'intelligenceSources', 'techStackShares',
     'adBanners', 'contactMessages', 'timeline', 'communityThreads', 'communityMembers'];
   return arrays.every((key) => Array.isArray(store[key])) &&
-    ['regions', 'deliveryStats'].every((key) => store[key] !== null &&
+    ['regions', 'deliveryStats', 'paketindex', 'pageContent'].every((key) => store[key] !== null &&
       typeof store[key] === 'object' && !Array.isArray(store[key])) &&
     typeof store.updatedAt === 'string';
 }

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Star } from 'lucide-react';
-import type { TimelineMilestone } from '../types';
+import type { PageCopyBlock, TimelineMilestone } from '../types';
 
 interface HistoriaViewProps {
   timeline: TimelineMilestone[];
+  pageCopy?: PageCopyBlock;
 }
 
-export function HistoriaView({ timeline }: HistoriaViewProps) {
+export function HistoriaView({ timeline, pageCopy }: HistoriaViewProps) {
   const [tmEra, setTmEra] = useState<'1998' | '2027'>('1998');
   const [eraFilter, setEraFilter] = useState<'all' | '90s' | '00s' | '10s' | '20s'>('all');
 
@@ -20,13 +21,18 @@ export function HistoriaView({ timeline }: HistoriaViewProps) {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-7 space-y-4">
               <div className="font-mono text-xs text-[#FECC02] font-semibold">
-                1994–2027 · Svensk e-handelsevolution
+                {pageCopy?.kicker || '1994–2027 · Svensk e-handelsevolution'}
               </div>
               <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight text-balance">
-                Från 8-bitars skärmpixlar till <span className="text-[#10B981]">Meta CAPI</span> & Agentic AI.
+                {pageCopy?.title || (
+                  <>
+                    Från 8-bitars skärmpixlar till <span className="text-[#10B981]">Meta CAPI</span> &amp; Agentic AI.
+                  </>
+                )}
               </h1>
               <p className="text-slate-300 text-sm sm:text-base max-w-2xl leading-relaxed">
-                Tre decennier av svensk e-handelsteknik. Följ resan från 90-talets synliga GIF-pixlar och postförskott, via Facebook-pixelns guldålder, till dagens integritetssäkrade server-side spårning och AI-drivna köp.
+                {pageCopy?.subtitle ||
+                  'Tre decennier av svensk e-handelsteknik. Följ resan från 90-talets synliga GIF-pixlar och postförskott, via Facebook-pixelns guldålder, till dagens integritetssäkrade server-side spårning och AI-drivna köp.'}
               </p>
             </div>
 

@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Briefcase, ExternalLink, MapPin, Plus, Search, Sparkles, Users } from 'lucide-react';
-import type { AdBanner, EcommerceJob, JobRoleCategory, PortalTab, RecruitmentSite } from '../types';
+import type { AdBanner, EcommerceJob, JobRoleCategory, PageCopyBlock, PortalTab, RecruitmentSite } from '../types';
 import { AdBannerSlot } from './AdBannerSlot';
 
 interface JobsViewProps {
   jobs: EcommerceJob[];
   recruitmentSites: RecruitmentSite[];
   adBanners: AdBanner[];
+  pageCopy?: PageCopyBlock;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
   onOpenDiscoverJobs: () => void;
@@ -28,6 +29,7 @@ export function JobsView({
   jobs,
   recruitmentSites,
   adBanners,
+  pageCopy,
   onNavigate,
   onBookAdSlot,
   onOpenDiscoverJobs,
@@ -105,14 +107,15 @@ export function JobsView({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="font-mono text-xs text-[#10B981] font-semibold">
-              Karriär & rekrytering · {publishedJobs.length} aktuella jobb · {publishedRecruiters.length} rekryteringssidor
+              {pageCopy?.kicker || 'Karriär & rekrytering'} · {publishedJobs.length} aktuella jobb · {publishedRecruiters.length} rekryteringssidor
               {closedOrExpiredCount > 0 && ` · ${closedOrExpiredCount} utgångna/stängda bortfiltrerade`}
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-extrabold mt-1">
-              Jobb inom Sveriges E-handel & Rekryteringssidor
+              {pageCopy?.title || 'Jobb inom Sveriges E-handel & Rekryteringssidor'}
             </h1>
             <p className="text-slate-300 text-sm mt-2 max-w-2xl leading-relaxed">
-              Endast granskade, aktiva roller med giltigt ansökningsdatum och verifierad karriärlänk – samt specialiserade rekryteringsbyråer och jobbportaler för din roll.
+              {pageCopy?.subtitle ||
+                'Endast granskade, aktiva roller med giltigt ansökningsdatum och verifierad karriärlänk – samt specialiserade rekryteringsbyråer och jobbportaler för din roll.'}
             </p>
           </div>
 

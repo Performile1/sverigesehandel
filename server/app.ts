@@ -587,6 +587,57 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.json(updated);
   }));
 
+  app.put('/api/paketindex', route(async (req, res) => {
+    const updated = await store.updatePaketindex(req.body);
+    res.json(updated);
+  }));
+
+  app.put('/api/intelligence/:id', route(async (req, res) => {
+    const updated = await store.updateIntelligenceSource(req.params.id, req.body);
+    if (!updated) {
+      res.status(404).json({ error: 'Marknadskälla hittades inte.' });
+      return;
+    }
+    res.json(updated);
+  }));
+
+  app.put('/api/techstack/:id', route(async (req, res) => {
+    const updated = await store.updateTechStackShare(req.params.id, req.body);
+    if (!updated) {
+      res.status(404).json({ error: 'Tech-stackrad hittades inte.' });
+      return;
+    }
+    res.json(updated);
+  }));
+
+  app.post('/api/timeline', route(async (req, res) => {
+    if (!req.body?.title) {
+      res.status(400).json({ error: 'Titel krävs för tidslinje-händelse.' });
+      return;
+    }
+    const created = await store.upsertTimelineMilestone(req.body);
+    res.status(201).json(created);
+  }));
+
+  app.put('/api/timeline/:id', route(async (req, res) => {
+    const updated = await store.upsertTimelineMilestone({ ...req.body, id: req.params.id });
+    res.json(updated);
+  }));
+
+  app.delete('/api/timeline/:id', route(async (req, res) => {
+    const ok = await store.deleteTimelineMilestone(req.params.id);
+    if (!ok) {
+      res.status(404).json({ error: 'Tidslinje-händelse hittades inte.' });
+      return;
+    }
+    res.json({ deleted: true });
+  }));
+
+  app.put('/api/pages', route(async (req, res) => {
+    const updated = await store.updatePageContent(req.body);
+    res.json(updated);
+  }));
+
   // --- E-COMMERCE LAWS ---
   app.post('/api/laws', route(async (req, res) => {
     if (!req.body?.title) {

@@ -20,6 +20,12 @@
 }
 
 @layer base {
+  html,
+  body {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
   body {
     font-family: var(--font-sans);
     background-color: #F4F6F9;

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, ExternalLink, Loader2, Mail, Megaphone, Send } from 'lucide-react';
-import type { AdBanner } from '../types';
+import type { AdBanner, PageCopyBlock } from '../types';
 
 interface KontaktViewProps {
   adBanners: AdBanner[];
+  pageCopy?: PageCopyBlock & { contactEmail?: string };
   initialAdSlot?: string;
   onSubmitContact: (payload: {
     name: string;
@@ -16,14 +17,16 @@ interface KontaktViewProps {
   onNotify: (msg: string) => void;
 }
 
-const CONTACT_EMAIL = 'hej@sverigesehandel.se';
+const DEFAULT_CONTACT_EMAIL = 'hej@sverigesehandel.se';
 
 export function KontaktView({
   adBanners,
+  pageCopy,
   initialAdSlot = '',
   onSubmitContact,
   onNotify,
 }: KontaktViewProps) {
+  const contactEmail = pageCopy?.contactEmail?.trim() || DEFAULT_CONTACT_EMAIL;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [company, setCompany] = useState('');
@@ -45,12 +48,12 @@ export function KontaktView({
 
   async function handleCopyEmail() {
     try {
-      await navigator.clipboard.writeText(CONTACT_EMAIL);
+      await navigator.clipboard.writeText(contactEmail);
       setCopied(true);
-      onNotify(`Kopierade ${CONTACT_EMAIL} till urklipp.`);
+      onNotify(`Kopierade ${contactEmail} till urklipp.`);
       window.setTimeout(() => setCopied(false), 2200);
     } catch {
-      onNotify(`E-postadress: ${CONTACT_EMAIL}`);
+      onNotify(`E-postadress: ${contactEmail}`);
     }
   }
 
@@ -85,28 +88,29 @@ export function KontaktView({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-8 space-y-3">
             <div className="text-xs font-mono text-[#FECC02] font-semibold">
-              Kontakt & Annonsering · Redaktionen sverigesehandel.se
+              {pageCopy?.kicker || 'Kontakt & Annonsering · Redaktionen sverigesehandel.se'}
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-balance">
-              Kontakta oss, tipsa om data eller boka annonsbanner
+              {pageCopy?.title || 'Kontakta oss, tipsa om data eller boka annonsbanner'}
             </h1>
             <p className="text-slate-300 text-sm sm:text-base max-w-2xl leading-relaxed">
-              Vill ni lägga till en svensk e-handlare, uppdatera en tech-partner, annonsera inför D-Congress 2027 eller diskutera checkoutstrategi? Hör av er direkt till vår redaktion.
+              {pageCopy?.subtitle ||
+                'Vill ni lägga till en svensk e-handlare, uppdatera en tech-partner, annonsera inför D-Congress 2027 eller diskutera checkoutstrategi? Hör av er direkt till vår redaktion.'}
             </p>
           </div>
 
           <div className="lg:col-span-4 bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
             <div className="text-xs font-mono text-slate-400">Direktkontakt redaktion & annons</div>
             <a
-              href={`mailto:${CONTACT_EMAIL}`}
+              href={`mailto:${contactEmail}`}
               className="font-display text-xl font-extrabold text-[#FECC02] hover:underline flex items-center gap-2 break-all"
             >
               <Mail className="w-5 h-5 shrink-0" />
-              {CONTACT_EMAIL}
+              {contactEmail}
             </a>
             <div className="flex flex-wrap gap-2 pt-1">
               <a
-                href={`mailto:${CONTACT_EMAIL}?subject=Kontakt%20via%20sverigesehandel.se`}
+                href={`mailto:${contactEmail}?subject=Kontakt%20via%20sverigesehandel.se`}
                 className="px-3.5 py-2 rounded-lg bg-[#FECC02] hover:bg-[#EAB308] text-[#040B16] text-xs font-bold inline-flex items-center gap-1.5"
               >
                 <Mail className="w-3.5 h-3.5" />
@@ -131,7 +135,7 @@ export function KontaktView({
           <div>
             <div className="text-xs font-mono font-semibold text-[#006AA7]">Kontaktformulär</div>
             <h2 className="font-display text-2xl font-extrabold text-[#040B16] mt-0.5">
-              Skicka meddelande till {CONTACT_EMAIL}
+              Skicka meddelande till {contactEmail}
             </h2>
             <p className="text-xs text-slate-600 mt-1">
               Vi svarar normalt inom 1 arbetsdag på förfrågningar om data, partnerskap och annonsering.
@@ -140,9 +144,9 @@ export function KontaktView({
 
           {sent && (
             <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium">
-              Ditt meddelande har sparats och skickats till redaktionen ({CONTACT_EMAIL}). Vill du komplettera med bilagor kan du även mejla direkt till{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`} className="underline font-bold">
-                {CONTACT_EMAIL}
+              Ditt meddelande har sparats och skickats till redaktionen ({contactEmail}). Vill du komplettera med bilagor kan du även mejla direkt till{' '}
+              <a href={`mailto:${contactEmail}`} className="underline font-bold">
+                {contactEmail}
               </a>
               .
             </div>
@@ -248,8 +252,8 @@ export function KontaktView({
             <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
               <span className="text-xs text-slate-500">
                 Eller mejla direkt:{' '}
-                <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-[#006AA7] hover:underline">
-                  {CONTACT_EMAIL}
+                <a href={`mailto:${contactEmail}`} className="font-semibold text-[#006AA7] hover:underline">
+                  {contactEmail}
                 </a>
               </span>
               <button

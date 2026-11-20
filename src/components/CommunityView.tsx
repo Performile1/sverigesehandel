@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { ChevronUp, MessageSquare } from 'lucide-react';
-import type { CommunityThread } from '../types';
+import type { CommunityThread, PageCopyBlock } from '../types';
 
 interface CommunityViewProps {
   threads: CommunityThread[];
+  pageCopy?: PageCopyBlock;
   memberCount?: number;
   memberCities?: string[];
   userDisplayName?: string | null;
@@ -25,6 +26,7 @@ const CHANNELS = [
 
 export function CommunityView({
   threads,
+  pageCopy,
   memberCount = 0,
   memberCities = [],
   userDisplayName = null,
@@ -102,13 +104,18 @@ export function CommunityView({
       <div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         <div className="lg:col-span-7 space-y-4">
           <div className="font-mono text-xs font-semibold text-[#10B981]">
-            Sveriges E-handel Network · {memberCount} sökande till nätverket
+            {pageCopy?.kicker || 'Sveriges E-handel Network'} · {memberCount} sökande till nätverket
           </div>
           <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight text-balance">
-            Där svenska e-handlare <span className="text-[#FECC02]">delar riktig data.</span>
+            {pageCopy?.title || (
+              <>
+                Där svenska e-handlare <span className="text-[#FECC02]">delar riktig data.</span>
+              </>
+            )}
           </h1>
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-            Ett leverantörsoberoende branschnätverk under uppbyggnad för e-handlare, E-commerce Managers, tillväxtteam och logistikledare. Utbyt erfarenheter digitalt och anmäl ditt intresse för kommande träffar.
+            {pageCopy?.subtitle ||
+              'Ett leverantörsoberoende branschnätverk under uppbyggnad för e-handlare, E-commerce Managers, tillväxtteam och logistikledare. Utbyt erfarenheter digitalt och anmäl ditt intresse för kommande träffar.'}
           </p>
           <div className="grid grid-cols-3 gap-4 pt-2 border-t border-white/10">
             <div>

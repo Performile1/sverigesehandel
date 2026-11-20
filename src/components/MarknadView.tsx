@@ -32,6 +32,8 @@ import type {
   LogisticsProvider,
   MarketIntelligenceSource,
   Merchant,
+  PageContentMap,
+  PaketindexData,
   PortalTab,
   RegionMetric,
   ShippingCostTier,
@@ -56,6 +58,8 @@ interface MarknadViewProps {
   orderBenchmarks: CategoryOrderBenchmark[];
   shippingTiers: ShippingCostTier[];
   deliveryStats: DeliveryStatsData;
+  paketindex?: PaketindexData;
+  pageCopy?: PageContentMap['marknad'];
   laws: EcommerceLaw[];
   intelligenceSources: MarketIntelligenceSource[];
   techStackShares: TechStackShare[];
@@ -142,6 +146,8 @@ export function MarknadView({
   orderBenchmarks = [],
   shippingTiers = [],
   deliveryStats,
+  paketindex,
+  pageCopy,
   laws = [],
   intelligenceSources = [],
   techStackShares = [],
@@ -324,13 +330,18 @@ export function MarknadView({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
             <div className="lg:col-span-7 flex flex-col justify-center space-y-6">
               <div className="text-xs font-mono text-slate-300">
-                Svensk e-handelsdata · Index Q4 2026 · {merchantCount} e-handlare & {partnerCount} tech-partners i CMS
+                {pageCopy?.kicker || 'Svensk e-handelsdata · Index 2026–2027'} · {merchantCount} e-handlare &amp; {partnerCount} tech-partners i CMS
               </div>
               <h1 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.08] max-w-2xl text-balance">
-                Hela Sveriges <span className="text-[#FECC02]">e-handelsdata</span> och ekosystem på ett ställe.
+                {pageCopy?.title || (
+                  <>
+                    Hela Sveriges <span className="text-[#FECC02]">e-handelsdata</span> och ekosystem på ett ställe.
+                  </>
+                )}
               </h1>
               <p className="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed">
-                Datadriven plattform för svenska e-handlare, tech-partners och rekrytering. Utforska regional marknadsdata, gränshandel, branschmässor 2027 och lediga jobb inom svensk e-handel.
+                {pageCopy?.subtitle ||
+                  'Datadriven plattform för svenska e-handlare, tech-partners och rekrytering. Utforska regional marknadsdata, gränshandel, Paketindex Q1 2026 och lediga jobb inom svensk e-handel.'}
               </p>
 
               <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3 pt-1 max-w-xl">
@@ -381,32 +392,40 @@ export function MarknadView({
           {/* 4-column KPI strip below hero split */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-10 pt-8 border-t border-white/10">
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-              <div className="text-xs font-mono text-slate-400">Total omsättning</div>
-              <div className="font-display text-2xl font-extrabold text-white mt-1 tabular-nums">
-                168,4 mdr SEK
+              <div className="text-xs font-mono text-slate-400">
+                {pageCopy?.kpi1Label || 'Total omsättning (SE)'}
               </div>
-              <div className="text-xs text-[#10B981] font-medium mt-1">+8,4% jämfört med föregående år</div>
+              <div className="font-display text-2xl font-extrabold text-white mt-1 tabular-nums">
+                {pageCopy?.kpi1Value || '168,4 mdr SEK'}
+              </div>
+              <div className="text-xs text-[#10B981] font-medium mt-1">
+                {pageCopy?.kpi2Value || '+8,4 %'} jämfört med föregående år
+              </div>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-              <div className="text-xs font-mono text-slate-400">Exportvolym</div>
+              <div className="text-xs font-mono text-slate-400">
+                {pageCopy?.kpi3Label || 'Paketindex Q1 2026'}
+              </div>
               <div className="font-display text-2xl font-extrabold text-[#FECC02] mt-1 tabular-nums">
-                44,2 mdr SEK
+                {pageCopy?.kpi3Value || '64,2M (+16,9 %)'}
               </div>
-              <div className="text-xs text-slate-300 mt-1">Norden, DACH & Nordamerika</div>
+              <div className="text-xs text-slate-300 mt-1">32,8 % från utlandet · &gt;7M second hand</div>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-              <div className="text-xs font-mono text-slate-400">Import (Cross-border)</div>
+              <div className="text-xs font-mono text-slate-400">Import &amp; Export</div>
               <div className="font-display text-2xl font-extrabold text-white mt-1 tabular-nums">
-                35,8 mdr SEK
+                44,2 / 35,8 mdr
               </div>
-              <div className="text-xs text-slate-300 mt-1">Asien 39% · EU 52%</div>
+              <div className="text-xs text-slate-300 mt-1">Norden, DACH &amp; Cross-border</div>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-              <div className="text-xs font-mono text-slate-400">Snittorder (AOV)</div>
-              <div className="font-display text-2xl font-extrabold text-white mt-1 tabular-nums">
-                945 SEK
+              <div className="text-xs font-mono text-slate-400">
+                {pageCopy?.kpi4Label || 'Snittorder (AOV)'}
               </div>
-              <div className="text-xs text-slate-300 mt-1">71% genomförs via smartphone</div>
+              <div className="font-display text-2xl font-extrabold text-white mt-1 tabular-nums">
+                {pageCopy?.kpi4Value || '945 SEK'}
+              </div>
+              <div className="text-xs text-slate-300 mt-1">71 % genomförs via smartphone</div>
             </div>
           </div>
         </div>
@@ -840,33 +859,22 @@ export function MarknadView({
             )}
 
             {demoTab === 'delivery' && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="p-5 rounded-xl border border-slate-200">
-                  <div className="flex justify-between items-center font-bold text-sm">
-                    <span>Paketskåp (Instabox, PostNord, Budbee)</span>
-                    <span className="font-mono text-[#059669] tabular-nums">46 %</span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                    Svenskarnas favorit tack vare dygnet-runt-tillgänglighet utan kötid.
-                  </p>
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {deliveryStats.receptionChannels.map((rc) => (
+                    <div key={rc.id} className="p-5 rounded-xl border border-slate-200">
+                      <div className="flex justify-between items-center font-bold text-sm gap-2">
+                        <span>{rc.channel.split(' (')[0]}</span>
+                        <span className="font-mono text-[#006AA7] tabular-nums shrink-0">
+                          {rc.sharePct} %
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-2 leading-relaxed">{rc.insight}</p>
+                    </div>
+                  ))}
                 </div>
-                <div className="p-5 rounded-xl border border-slate-200">
-                  <div className="flex justify-between items-center font-bold text-sm">
-                    <span>Postombud i butik</span>
-                    <span className="font-mono text-[#040B16] tabular-nums">31 %</span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                    Fortsatt starkt för större paket och på orter utanför storstadskärnorna.
-                  </p>
-                </div>
-                <div className="p-5 rounded-xl border border-slate-200">
-                  <div className="flex justify-between items-center font-bold text-sm">
-                    <span>Hemleverans (Kväll / Same-day)</span>
-                    <span className="font-mono text-[#006AA7] tabular-nums">23 %</span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                    Standard för dagligvaror, möbler, apotek och skrymmande hemelektronik.
-                  </p>
+                <div className="text-[11px] font-mono text-slate-500">
+                  Källa: Paketindex {paketindex?.quarterLabel || 'Kvartal 1 2026'} ({paketindex?.publisher || 'Transportföretagen & HUI'}) · Konsumentens senaste e-handelspaket (mars 2026).
                 </div>
               </div>
             )}
@@ -970,17 +978,17 @@ export function MarknadView({
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="hidden lg:block border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full table-fixed text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-500 font-mono">
-                      <th className="py-3 pr-4 font-semibold">Ordervärde (Orderkostnad)</th>
-                      <th className="py-3 px-4 font-semibold text-right">Kundbetald frakt</th>
-                      <th className="py-3 px-4 font-semibold text-right">Handlarens kostnad</th>
-                      <th className="py-3 px-4 font-semibold text-right">Subvention / order</th>
-                      <th className="py-3 px-4 font-semibold text-right">Andel fri frakt</th>
-                      <th className="py-3 px-4 font-semibold text-right">Frakt / Ordervärde</th>
-                      <th className="py-3 pl-4 font-semibold">Vanligaste leveranssätt</th>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
+                      <th className="py-3 px-3 font-semibold w-[28%]">Ordervärde (Orderkostnad)</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[10%]">Kundfrakt</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[12%]">Handlarens kostn.</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[10%]">Subvention</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[9%]">Fri frakt</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[9%]">Frakt/AOV</th>
+                      <th className="py-3 px-3 font-semibold w-[22%]">Vanligaste leveranssätt</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -990,36 +998,36 @@ export function MarknadView({
                       );
                       const subsidy = Math.max(0, adjustedMerchantCost - tier.customerShippingFeeSek);
                       return (
-                        <tr key={tier.id} className="hover:bg-slate-50">
-                          <td className="py-3.5 pr-4">
+                        <tr key={tier.id} className="hover:bg-slate-50 align-top">
+                          <td className="py-3.5 px-3 break-words">
                             <div className="font-display font-bold text-sm text-[#040B16] tabular-nums">
                               {tier.orderValueRange}
                             </div>
-                            <div className="text-[11px] text-slate-500 mt-0.5 max-w-sm">
+                            <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">
                               {tier.insight}
                             </div>
                           </td>
-                          <td className="py-3.5 px-4 text-right font-mono font-bold text-[#006AA7] tabular-nums whitespace-nowrap">
+                          <td className="py-3.5 px-2 text-right font-mono font-bold text-[#006AA7] tabular-nums">
                             {tier.customerShippingFeeSek} SEK
                           </td>
-                          <td className="py-3.5 px-4 text-right font-mono font-bold text-[#040B16] tabular-nums whitespace-nowrap">
+                          <td className="py-3.5 px-2 text-right font-mono font-bold text-[#040B16] tabular-nums">
                             {adjustedMerchantCost} SEK
                             {activeVolumeTier.id !== 'scaleup' && (
                               <span className="block text-[10px] font-normal text-slate-500">
-                                Rikssnitt {tier.merchantShippingCostSek} SEK
+                                Snitt {tier.merchantShippingCostSek} SEK
                               </span>
                             )}
                           </td>
-                          <td className="py-3.5 px-4 text-right font-mono font-semibold text-amber-700 tabular-nums whitespace-nowrap">
+                          <td className="py-3.5 px-2 text-right font-mono font-semibold text-amber-700 tabular-nums">
                             -{subsidy} SEK
                           </td>
-                          <td className="py-3.5 px-4 text-right font-mono font-bold text-[#059669] tabular-nums whitespace-nowrap">
+                          <td className="py-3.5 px-2 text-right font-mono font-bold text-[#059669] tabular-nums">
                             {tier.freeShippingSharePct} %
                           </td>
-                          <td className="py-3.5 px-4 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                          <td className="py-3.5 px-2 text-right font-mono text-slate-700 tabular-nums">
                             {tier.shippingToAovPct.toFixed(1)} %
                           </td>
-                          <td className="py-3.5 pl-4 text-slate-700 font-medium whitespace-nowrap">
+                          <td className="py-3.5 px-3 text-slate-700 font-medium break-words">
                             {tier.dominantMethod}
                           </td>
                         </tr>
@@ -1027,6 +1035,48 @@ export function MarknadView({
                     })}
                   </tbody>
                 </table>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:hidden">
+                {shippingTiers.map((tier) => {
+                  const adjustedMerchantCost = Math.round(
+                    tier.merchantShippingCostSek * activeVolumeTier.costMultiplier
+                  );
+                  const subsidy = Math.max(0, adjustedMerchantCost - tier.customerShippingFeeSek);
+                  return (
+                    <div
+                      key={tier.id}
+                      className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2 text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-display font-bold text-sm text-[#040B16] tabular-nums">
+                          {tier.orderValueRange}
+                        </span>
+                        <span className="font-mono font-bold text-[#059669] tabular-nums">
+                          {tier.freeShippingSharePct} % fri frakt
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600">{tier.insight}</p>
+                      <div className="grid grid-cols-3 gap-2 pt-1 font-mono bg-white border border-slate-200 rounded-lg p-2.5">
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Kundfrakt</span>
+                          <span className="font-bold text-[#006AA7] tabular-nums">{tier.customerShippingFeeSek} SEK</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Handlare</span>
+                          <span className="font-bold text-[#040B16] tabular-nums">{adjustedMerchantCost} SEK</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Subvention</span>
+                          <span className="font-bold text-amber-700 tabular-nums">-{subsidy} SEK</span>
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-slate-700">
+                        <strong>Leveranssätt:</strong> {tier.dominantMethod}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               <div className="text-xs text-slate-500 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
                 <span>
@@ -1046,43 +1096,43 @@ export function MarknadView({
           {/* Sub-view 2: Benchmarks by Category */}
           {econTab === 'categories' && (
             <div className="space-y-4">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="hidden lg:block border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full table-fixed text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-500 font-mono">
-                      <th className="py-3 pr-4 font-semibold">Bransch</th>
-                      <th className="py-3 px-3 font-semibold text-right">Snittorder (AOV)</th>
-                      <th className="py-3 px-3 font-semibold text-right">Artiklar / order</th>
-                      <th className="py-3 px-3 font-semibold text-right">Kundfrakt</th>
-                      <th className="py-3 px-3 font-semibold text-right">Handlarfrakt</th>
-                      <th className="py-3 px-3 font-semibold text-right">Fri frakt-gräns</th>
-                      <th className="py-3 px-3 font-semibold text-right">Returgrad</th>
-                      <th className="py-3 pl-3 font-semibold text-right">Konvertering</th>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
+                      <th className="py-3 px-3 font-semibold w-[23%]">Bransch</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[12%]">Snittorder</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[11%]">Artiklar/order</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[10%]">Kundfrakt</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[11%]">Handlarfrakt</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[12%]">Fri frakt-gräns</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[10%]">Returgrad</th>
+                      <th className="py-3 px-3 font-semibold text-right w-[11%]">Konvertering</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {orderBenchmarks.map((b) => (
                       <tr key={b.id} className="hover:bg-slate-50 h-11">
-                        <td className="py-2.5 pr-4 font-display font-bold text-sm text-[#040B16] whitespace-nowrap">
+                        <td className="py-2.5 px-3 font-display font-bold text-sm text-[#040B16] break-words">
                           {b.category}
                         </td>
-                        <td className="py-2.5 px-3 text-right font-mono font-bold text-[#006AA7] tabular-nums whitespace-nowrap">
+                        <td className="py-2.5 px-2 text-right font-mono font-bold text-[#006AA7] tabular-nums">
                           {b.avgOrderValueSek.toLocaleString('sv-SE')} SEK
                         </td>
-                        <td className="py-2.5 px-3 text-right font-mono font-bold text-[#040B16] tabular-nums whitespace-nowrap">
+                        <td className="py-2.5 px-2 text-right font-mono font-bold text-[#040B16] tabular-nums">
                           {b.itemsPerOrder.toFixed(1)} st
                         </td>
-                        <td className="py-2.5 px-3 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                        <td className="py-2.5 px-2 text-right font-mono text-slate-700 tabular-nums">
                           {b.avgCustomerShippingFeeSek} SEK
                         </td>
-                        <td className="py-2.5 px-3 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                        <td className="py-2.5 px-2 text-right font-mono text-slate-700 tabular-nums">
                           {b.merchantShippingCostSek} SEK
                         </td>
-                        <td className="py-2.5 px-3 text-right font-mono font-semibold text-[#059669] tabular-nums whitespace-nowrap">
+                        <td className="py-2.5 px-2 text-right font-mono font-semibold text-[#059669] tabular-nums">
                           {b.freeShippingThresholdSek} SEK
                         </td>
                         <td
-                          className={`py-2.5 px-3 text-right font-mono font-semibold tabular-nums whitespace-nowrap ${
+                          className={`py-2.5 px-2 text-right font-mono font-semibold tabular-nums ${
                             b.returnRatePct >= 15
                               ? 'text-amber-700'
                               : 'text-slate-700'
@@ -1090,7 +1140,7 @@ export function MarknadView({
                         >
                           {b.returnRatePct.toFixed(1)} %
                         </td>
-                        <td className="py-2.5 pl-3 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                        <td className="py-2.5 px-3 text-right font-mono text-slate-700 tabular-nums">
                           {b.conversionRatePct.toFixed(1)} %
                         </td>
                       </tr>
@@ -1098,8 +1148,35 @@ export function MarknadView({
                   </tbody>
                 </table>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:hidden">
+                {orderBenchmarks.map((b) => (
+                  <div key={b.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-display font-bold text-sm text-[#040B16]">{b.category}</span>
+                      <span className="font-mono font-bold text-[#006AA7] tabular-nums">
+                        {b.avgOrderValueSek.toLocaleString('sv-SE')} SEK
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 font-mono bg-white border border-slate-200 rounded-lg p-2.5">
+                      <div>
+                        <span className="text-[10px] text-slate-500 block">UPT</span>
+                        <span className="font-bold text-[#040B16]">{b.itemsPerOrder.toFixed(1)} st</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-500 block">Handlarfrakt</span>
+                        <span className="font-bold text-[#040B16]">{b.merchantShippingCostSek} kr</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-500 block">Retur</span>
+                        <span className="font-bold text-amber-700">{b.returnRatePct.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
               <div className="text-xs text-slate-500 pt-2 border-t border-slate-100">
-                Data avser svenska B2C-ehandlare (2026–2027). Alla siffror kan justeras i CMS Studio under Annons, Data &amp; Inkorg.
+                Data avser svenska B2C-ehandlare (2026–2027). Alla siffror kan justeras i CMS Studio.
               </div>
             </div>
           )}
@@ -1123,22 +1200,22 @@ export function MarknadView({
                   </span>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
+                <div className="hidden lg:block border border-slate-200 rounded-xl overflow-hidden">
+                  <table className="w-full table-fixed text-left border-collapse text-xs">
                     <thead>
-                      <tr className="border-b border-slate-200 text-slate-500 font-mono">
-                        <th className="py-2.5 pr-4 font-semibold">Volymnivå (Paket / år)</th>
-                        <th className="py-2.5 px-3 font-semibold text-right">Transportavgift</th>
-                        <th className="py-2.5 px-3 font-semibold text-right">Plock &amp; emballage</th>
-                        <th className="py-2.5 px-3 font-semibold text-right">Total kostnad / paket</th>
-                        <th className="py-2.5 px-3 font-semibold text-right">Volymrabatt</th>
-                        <th className="py-2.5 pl-4 font-semibold">Typiskt transportupplägg</th>
+                      <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
+                        <th className="py-2.5 px-3 font-semibold w-[26%]">Volymnivå (Paket / år)</th>
+                        <th className="py-2.5 px-2 font-semibold text-right w-[12%]">Transport</th>
+                        <th className="py-2.5 px-2 font-semibold text-right w-[12%]">Plock &amp; emb.</th>
+                        <th className="py-2.5 px-2 font-semibold text-right w-[12%]">Total / paket</th>
+                        <th className="py-2.5 px-2 font-semibold text-right w-[11%]">Volymrabatt</th>
+                        <th className="py-2.5 px-3 font-semibold w-[27%]">Typiskt transportupplägg</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {PARCEL_VOLUME_TIERS.map((vt) => (
-                        <tr key={vt.id} className="hover:bg-slate-50">
-                          <td className="py-3 pr-4">
+                        <tr key={vt.id} className="hover:bg-slate-50 align-top">
+                          <td className="py-3 px-3 break-words">
                             <div className="font-display font-bold text-sm text-[#040B16]">
                               {vt.rangeLabel}
                             </div>
@@ -1146,23 +1223,36 @@ export function MarknadView({
                               {vt.label} · Omsättning {vt.typicalMerchantRevenue}
                             </div>
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-semibold text-slate-700 tabular-nums whitespace-nowrap">
+                          <td className="py-3 px-2 text-right font-mono font-semibold text-slate-700 tabular-nums">
                             {vt.transportFeeSek} SEK
                           </td>
-                          <td className="py-3 px-3 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                          <td className="py-3 px-2 text-right font-mono text-slate-700 tabular-nums">
                             {vt.pickPackPackagingSek} SEK
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-extrabold text-[#006AA7] tabular-nums whitespace-nowrap">
+                          <td className="py-3 px-2 text-right font-mono font-extrabold text-[#006AA7] tabular-nums">
                             {vt.totalPerParcelSek} SEK
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-bold text-[#059669] tabular-nums whitespace-nowrap">
+                          <td className="py-3 px-2 text-right font-mono font-bold text-[#059669] tabular-nums">
                             {vt.discountVsStarterPct === 0 ? 'Baspris' : `-${vt.discountVsStarterPct} %`}
                           </td>
-                          <td className="py-3 pl-4 text-slate-600">{vt.carrierAgreementNote}</td>
+                          <td className="py-3 px-3 text-slate-600 break-words">{vt.carrierAgreementNote}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:hidden">
+                  {PARCEL_VOLUME_TIERS.map((vt) => (
+                    <div key={vt.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-display font-bold text-sm text-[#040B16]">{vt.rangeLabel}</span>
+                        <span className="font-mono font-extrabold text-[#006AA7] tabular-nums">{vt.totalPerParcelSek} SEK</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500">{vt.label} · {vt.typicalMerchantRevenue}</div>
+                      <div className="text-[11px] text-slate-700">{vt.carrierAgreementNote}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -1189,23 +1279,23 @@ export function MarknadView({
                   </div>
                 </div>
 
-                <div className="overflow-x-auto max-h-[420px] overflow-y-auto border border-slate-200 rounded-xl">
-                  <table className="w-full text-left border-collapse text-xs">
+                <div className="hidden lg:block max-h-[420px] overflow-y-auto border border-slate-200 rounded-xl">
+                  <table className="w-full table-fixed text-left border-collapse text-xs">
                     <thead className="sticky top-0 bg-slate-50 z-10">
                       <tr className="border-b border-slate-200 text-slate-500 font-mono">
-                        <th className="py-2.5 px-4 font-semibold">E-handlare</th>
-                        <th className="py-2.5 px-3 font-semibold text-right">Omsättning</th>
-                        <th className="py-2.5 px-3 font-semibold text-right">Est. paket / år</th>
-                        <th className="py-2.5 px-3 font-semibold text-right">Paket / dag</th>
-                        <th className="py-2.5 px-3 font-semibold text-right">Kostnad / paket</th>
-                        <th className="py-2.5 px-3 font-semibold text-right">Est. fraktbudget / år</th>
-                        <th className="py-2.5 px-4 font-semibold text-right">Kalkyl</th>
+                        <th className="py-2.5 px-3 font-semibold w-[26%]">E-handlare</th>
+                        <th className="py-2.5 px-2 font-semibold text-right w-[13%]">Omsättning</th>
+                        <th className="py-2.5 px-2 font-semibold text-right w-[15%]">Est. paket / år</th>
+                        <th className="py-2.5 px-2 font-semibold text-right w-[12%]">Paket / dag</th>
+                        <th className="py-2.5 px-2 font-semibold text-right w-[11%]">Kostnad / pkt</th>
+                        <th className="py-2.5 px-2 font-semibold text-right w-[13%]">Fraktbudget/år</th>
+                        <th className="py-2.5 px-3 font-semibold text-right w-[10%]">Kalkyl</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
                       {filteredParcelRows.map(({ merchant, estimate }) => (
                         <tr key={merchant.id} className="hover:bg-slate-50">
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-3 break-words">
                             <div className="font-display font-bold text-sm text-[#040B16]">
                               {merchant.name}
                             </div>
@@ -1213,25 +1303,25 @@ export function MarknadView({
                               {merchant.category} · Snitt AOV {estimate.categoryAovSek} SEK
                             </div>
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-semibold text-slate-700 tabular-nums whitespace-nowrap">
+                          <td className="py-3 px-2 text-right font-mono font-semibold text-slate-700 tabular-nums">
                             {merchant.revenue}
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-extrabold text-[#040B16] tabular-nums whitespace-nowrap">
+                          <td className="py-3 px-2 text-right font-mono font-extrabold text-[#040B16] tabular-nums">
                             {formatParcelCountCompact(estimate.annualParcels)}
                             <span className="block text-[10px] font-normal text-slate-500">
                               {estimate.volumeTier.label}
                             </span>
                           </td>
-                          <td className="py-3 px-3 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                          <td className="py-3 px-2 text-right font-mono text-slate-700 tabular-nums">
                             {estimate.parcelsPerDay.toLocaleString('sv-SE')} / dag
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-bold text-[#006AA7] tabular-nums whitespace-nowrap">
+                          <td className="py-3 px-2 text-right font-mono font-bold text-[#006AA7] tabular-nums">
                             {estimate.estimatedCostPerParcelSek} SEK
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-bold text-[#059669] tabular-nums whitespace-nowrap">
+                          <td className="py-3 px-2 text-right font-mono font-bold text-[#059669] tabular-nums">
                             {formatSekCompact(estimate.estimatedAnnualFreightCostSek)}
                           </td>
-                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <td className="py-3 px-3 text-right">
                             <button
                               type="button"
                               onClick={() => {
@@ -1249,13 +1339,59 @@ export function MarknadView({
                               }}
                               className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-[#040B16] hover:text-white text-[#040B16] font-bold text-[11px] transition-colors cursor-pointer"
                             >
-                              Simulera &rarr;
+                              Simulera
                             </button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:hidden max-h-[420px] overflow-y-auto pr-1">
+                  {filteredParcelRows.map(({ merchant, estimate }) => (
+                    <div key={merchant.id} className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-display font-bold text-sm text-[#040B16]">{merchant.name}</div>
+                          <div className="text-[11px] text-slate-500">{merchant.category} · {merchant.revenue}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const bench =
+                              orderBenchmarks.find((b) => b.category === merchant.category) ||
+                              orderBenchmarks[0];
+                            if (bench) {
+                              setCalcCategoryId(bench.id);
+                              setCalcOrderValue(bench.avgOrderValueSek);
+                              setCalcFreeThreshold(bench.freeShippingThresholdSek);
+                            }
+                            setCalcSelectedMerchantId(merchant.id);
+                            setCalcAnnualParcels(estimate.annualParcels);
+                            setEconTab('calculator');
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-[#040B16] text-white font-bold text-[11px] cursor-pointer"
+                        >
+                          Simulera
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 font-mono bg-slate-50 rounded-lg p-2">
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Paket/år</span>
+                          <span className="font-bold text-[#040B16]">{formatParcelCountCompact(estimate.annualParcels)}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Kostnad/pkt</span>
+                          <span className="font-bold text-[#006AA7]">{estimate.estimatedCostPerParcelSek} kr</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Budget/år</span>
+                          <span className="font-bold text-[#059669]">{formatSekCompact(estimate.estimatedAnnualFreightCostSek)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1701,28 +1837,28 @@ export function MarknadView({
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
+                <div className="hidden lg:block border border-slate-200 rounded-xl overflow-hidden">
+                  <table className="w-full table-fixed text-left border-collapse text-xs">
                     <thead>
-                      <tr className="border-b border-slate-200 text-slate-500 font-mono">
-                        <th className="py-3 pr-4 font-semibold">Transportör</th>
-                        <th className="py-3 px-3 font-semibold">Hemleverans (Hushåll)</th>
-                        <th className="py-3 px-3 font-semibold">Kväll / Tidig morgon</th>
-                        <th className="py-3 px-3 font-semibold text-right">Paketskåp</th>
-                        <th className="py-3 px-3 font-semibold text-right">Ombud</th>
-                        <th className="py-3 pl-4 font-semibold">Leveranstid &amp; Glesbygd</th>
+                      <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
+                        <th className="py-3 px-3 font-semibold w-[25%]">Transportör</th>
+                        <th className="py-3 px-3 font-semibold w-[14%]">Hemleverans</th>
+                        <th className="py-3 px-3 font-semibold w-[14%]">Kväll / Morgon</th>
+                        <th className="py-3 px-2 font-semibold text-right w-[11%]">Paketskåp</th>
+                        <th className="py-3 px-2 font-semibold text-right w-[10%]">Ombud</th>
+                        <th className="py-3 px-3 font-semibold w-[26%]">Leveranstid &amp; Glesbygd</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {(deliveryStats.carrierCoverage || []).map((cc) => (
                         <tr key={cc.id} className="hover:bg-slate-50 align-top">
-                          <td className="py-3.5 pr-4 min-w-[200px]">
+                          <td className="py-3.5 px-3 break-words">
                             <div className="font-display font-bold text-sm text-[#040B16]">
                               {cc.carrierName}
                             </div>
-                            <div className="text-[11px] text-slate-500 mt-0.5">{cc.boxNetworkNote}</div>
+                            <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">{cc.boxNetworkNote}</div>
                           </td>
-                          <td className="py-3.5 px-3 min-w-[140px]">
+                          <td className="py-3.5 px-3">
                             <div className="flex items-center justify-between font-mono font-bold text-[#059669] tabular-nums mb-1">
                               <span>{cc.homeDeliveryHouseholdPct} %</span>
                             </div>
@@ -1733,7 +1869,7 @@ export function MarknadView({
                               />
                             </div>
                           </td>
-                          <td className="py-3.5 px-3 min-w-[140px]">
+                          <td className="py-3.5 px-3">
                             <div className="flex items-center justify-between font-mono font-bold text-[#006AA7] tabular-nums mb-1">
                               <span>{cc.eveningOrExpressPct} %</span>
                             </div>
@@ -1744,42 +1880,66 @@ export function MarknadView({
                               />
                             </div>
                           </td>
-                          <td className="py-3.5 px-3 text-right font-mono font-semibold text-[#040B16] tabular-nums whitespace-nowrap">
+                          <td className="py-3.5 px-2 text-right font-mono font-semibold text-[#040B16] tabular-nums">
                             {cc.parcelLockersCount.toLocaleString('sv-SE')} st
                           </td>
-                          <td className="py-3.5 px-3 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                          <td className="py-3.5 px-2 text-right font-mono text-slate-700 tabular-nums">
                             {cc.pickupAgentsCount > 0
                               ? `${cc.pickupAgentsCount.toLocaleString('sv-SE')} st`
                               : '–'}
                           </td>
-                          <td className="py-3.5 pl-4 min-w-[210px]">
+                          <td className="py-3.5 px-3 break-words">
                             <div className="font-semibold text-[#040B16]">{cc.timeWindow}</div>
-                            <div className="text-[11px] text-slate-500 mt-0.5">{cc.ruralCoverage}</div>
+                            <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">{cc.ruralCoverage}</div>
                           </td>
                         </tr>
                       ))}
                       <tr className="bg-[#040B16] text-white font-semibold">
-                        <td className="py-3.5 px-4 rounded-bl-xl">
-                          Samlat svenskt nätverk (Multi-carrier i checkout)
+                        <td className="py-3.5 px-3">
+                          Samlat svenskt nätverk (Multi-carrier)
                         </td>
                         <td className="py-3.5 px-3 font-mono font-extrabold text-[#FECC02] tabular-nums">
-                          100 % av alla hushåll
+                          100 % av hushåll
                         </td>
                         <td className="py-3.5 px-3 font-mono font-bold text-[#10B981] tabular-nums">
-                          76 % kväll · 97 % morgon
+                          76 % kväll · 97 % morg.
                         </td>
-                        <td className="py-3.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
-                          10 850+ stationer
+                        <td className="py-3.5 px-2 text-right font-mono tabular-nums">
+                          10 850+ st
                         </td>
-                        <td className="py-3.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
-                          7 200+ ombud
+                        <td className="py-3.5 px-2 text-right font-mono tabular-nums">
+                          7 200+ st
                         </td>
-                        <td className="py-3.5 px-4 text-[11px] text-slate-300 rounded-br-xl">
+                        <td className="py-3.5 px-3 text-[11px] text-slate-300">
                           Optimal mix: 1 rikstäckande + 1 kvälls-/boxspecialist via TA-system
                         </td>
                       </tr>
                     </tbody>
                   </table>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:hidden">
+                  {(deliveryStats.carrierCoverage || []).map((cc) => (
+                    <div key={cc.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2 text-xs">
+                      <div className="font-display font-bold text-sm text-[#040B16]">{cc.carrierName}</div>
+                      <div className="text-[11px] text-slate-500">{cc.boxNetworkNote}</div>
+                      <div className="grid grid-cols-3 gap-2 font-mono bg-white border border-slate-200 rounded-lg p-2.5">
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Hemlev.</span>
+                          <span className="font-bold text-[#059669] tabular-nums">{cc.homeDeliveryHouseholdPct} %</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Paketskåp</span>
+                          <span className="font-bold text-[#006AA7] tabular-nums">{cc.parcelLockersCount.toLocaleString('sv-SE')}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Ombud</span>
+                          <span className="font-bold text-[#040B16] tabular-nums">{cc.pickupAgentsCount > 0 ? cc.pickupAgentsCount.toLocaleString('sv-SE') : '–'}</span>
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-slate-700">{cc.timeWindow} · {cc.ruralCoverage}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -1828,15 +1988,15 @@ export function MarknadView({
                     </h3>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
+                  <div className="hidden sm:block border border-slate-200 rounded-xl overflow-hidden">
+                    <table className="w-full table-fixed text-left border-collapse text-xs">
                       <thead>
-                        <tr className="border-b border-slate-200 text-slate-500 font-mono">
-                          <th className="py-2.5 pr-3 font-semibold">Region</th>
-                          <th className="py-2.5 px-2.5 font-semibold text-right">Inv / km²</th>
-                          <th className="py-2.5 px-2.5 font-semibold text-right">Skåp / 10k inv</th>
-                          <th className="py-2.5 px-2.5 font-semibold text-right">Skåp / 100 km²</th>
-                          <th className="py-2.5 pl-2.5 font-semibold text-right">Kvällshemlev.</th>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
+                          <th className="py-2.5 px-3 font-semibold w-[36%]">Region</th>
+                          <th className="py-2.5 px-2 font-semibold text-right w-[15%]">Inv/km²</th>
+                          <th className="py-2.5 px-2 font-semibold text-right w-[17%]">Skåp/10k</th>
+                          <th className="py-2.5 px-2 font-semibold text-right w-[16%]">/100 km²</th>
+                          <th className="py-2.5 px-3 font-semibold text-right w-[16%]">Kväll</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -1849,7 +2009,7 @@ export function MarknadView({
                               onClick={() => setSelectedRegion(rKey)}
                               className="hover:bg-slate-50 cursor-pointer"
                             >
-                              <td className="py-3 pr-3">
+                              <td className="py-3 px-3 break-words">
                                 <div className="font-bold text-[#040B16]">
                                   {reg.name.split(' (')[0]}
                                 </div>
@@ -1857,16 +2017,16 @@ export function MarknadView({
                                   {reg.populationLabel} · {reg.parcelLockersTotal?.toLocaleString('sv-SE')} skåp
                                 </div>
                               </td>
-                              <td className="py-3 px-2.5 text-right font-mono font-bold text-[#040B16] tabular-nums whitespace-nowrap">
+                              <td className="py-3 px-2 text-right font-mono font-bold text-[#040B16] tabular-nums">
                                 {(reg.populationDensityPerKm2 ?? 0).toFixed(1).replace('.', ',')}
                               </td>
-                              <td className="py-3 px-2.5 text-right font-mono font-bold text-[#006AA7] tabular-nums whitespace-nowrap">
+                              <td className="py-3 px-2 text-right font-mono font-bold text-[#006AA7] tabular-nums">
                                 {(reg.lockersPer10kResidents ?? 0).toFixed(1).replace('.', ',')}
                               </td>
-                              <td className="py-3 px-2.5 text-right font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                              <td className="py-3 px-2 text-right font-mono text-slate-700 tabular-nums">
                                 {(reg.lockersPer100Km2 ?? 0).toFixed(1).replace('.', ',')}
                               </td>
-                              <td className="py-3 pl-2.5 text-right font-mono font-extrabold text-[#059669] tabular-nums whitespace-nowrap">
+                              <td className="py-3 px-3 text-right font-mono font-extrabold text-[#059669] tabular-nums">
                                 {reg.homeDeliveryEveningPct ?? 0} %
                               </td>
                             </tr>
@@ -1874,6 +2034,29 @@ export function MarknadView({
                         })}
                       </tbody>
                     </table>
+                  </div>
+
+                  <div className="space-y-2 sm:hidden">
+                    {(['syd', 'vast', 'svealand', 'smaland', 'norrland'] as const).map((rKey) => {
+                      const reg = regions[rKey];
+                      if (!reg) return null;
+                      return (
+                        <button
+                          key={rKey}
+                          type="button"
+                          onClick={() => setSelectedRegion(rKey)}
+                          className="w-full text-left p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1 text-xs"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-[#040B16]">{reg.name.split(' (')[0]}</span>
+                            <span className="font-mono font-bold text-[#059669]">{reg.homeDeliveryEveningPct ?? 0}% kväll</span>
+                          </div>
+                          <div className="font-mono text-[11px] text-slate-600">
+                            {(reg.populationDensityPerKm2 ?? 0).toFixed(1).replace('.', ',')} inv/km² · {(reg.lockersPer10kResidents ?? 0).toFixed(1).replace('.', ',')} skåp/10k
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <p className="text-xs text-slate-600 leading-relaxed pt-2 border-t border-slate-100">
@@ -1913,7 +2096,7 @@ export function MarknadView({
               {/* Reception Channels */}
               <div className="lg:col-span-6 space-y-4">
                 <h3 className="font-display font-bold text-base text-[#040B16]">
-                  Hur vill man ta emot paketet? (Skåp vs Ombud vs Hem)
+                  Hur vill man ta emot paketet? (Paketindex K1 2026)
                 </h3>
                 <div className="space-y-3">
                   {deliveryStats.receptionChannels.map((rc) => (
@@ -1942,37 +2125,52 @@ export function MarknadView({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="hidden lg:block border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full table-fixed text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-500 font-mono">
-                      <th className="py-3 pr-4 font-semibold">Storleksklass</th>
-                      <th className="py-3 px-4 font-semibold">Typiska mått (L×B×H)</th>
-                      <th className="py-3 px-4 font-semibold">Viktintervall</th>
-                      <th className="py-3 px-4 font-semibold text-right">Andel av ordrar</th>
-                      <th className="py-3 pl-4 font-semibold">Dominerande fraktsätt</th>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
+                      <th className="py-3 px-3 font-semibold w-[28%]">Storleksklass</th>
+                      <th className="py-3 px-3 font-semibold w-[18%]">Typiska mått</th>
+                      <th className="py-3 px-3 font-semibold w-[14%]">Viktintervall</th>
+                      <th className="py-3 px-2 font-semibold text-right w-[11%]">Andel ordrar</th>
+                      <th className="py-3 px-3 font-semibold w-[29%]">Dominerande fraktsätt</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {deliveryStats.parcelSizeTiers.map((ps) => (
-                      <tr key={ps.id} className="hover:bg-slate-50">
-                        <td className="py-3.5 pr-4 font-display font-bold text-sm text-[#040B16]">
+                      <tr key={ps.id} className="hover:bg-slate-50 align-top">
+                        <td className="py-3.5 px-3 font-display font-bold text-sm text-[#040B16] break-words">
                           {ps.sizeClass}
                         </td>
-                        <td className="py-3.5 px-4 font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                        <td className="py-3.5 px-3 font-mono text-slate-700 tabular-nums">
                           {ps.typicalDimensionsCm}
                         </td>
-                        <td className="py-3.5 px-4 font-mono text-[#006AA7] font-semibold tabular-nums whitespace-nowrap">
+                        <td className="py-3.5 px-3 font-mono text-[#006AA7] font-semibold tabular-nums">
                           {ps.weightRangeKg}
                         </td>
-                        <td className="py-3.5 px-4 text-right font-mono font-extrabold text-[#059669] tabular-nums whitespace-nowrap">
+                        <td className="py-3.5 px-2 text-right font-mono font-extrabold text-[#059669] tabular-nums">
                           {ps.shareOfOrdersPct} %
                         </td>
-                        <td className="py-3.5 pl-4 text-slate-700">{ps.dominantCarrierOption}</td>
+                        <td className="py-3.5 px-3 text-slate-700 break-words">{ps.dominantCarrierOption}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:hidden">
+                {deliveryStats.parcelSizeTiers.map((ps) => (
+                  <div key={ps.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-display font-bold text-sm text-[#040B16]">{ps.sizeClass}</span>
+                      <span className="font-mono font-extrabold text-[#059669]">{ps.shareOfOrdersPct} %</span>
+                    </div>
+                    <div className="font-mono text-[11px] text-slate-700">
+                      {ps.typicalDimensionsCm} · {ps.weightRangeKg}
+                    </div>
+                    <div className="text-[11px] text-slate-600">{ps.dominantCarrierOption}</div>
+                  </div>
+                ))}
               </div>
               <div className="text-xs text-slate-500 pt-2 border-t border-slate-100 flex flex-wrap justify-between gap-2">
                 <span>
@@ -1983,7 +2181,7 @@ export function MarknadView({
                   onClick={() => onNavigate('partners', 'Transportör')}
                   className="font-bold text-[#006AA7] hover:underline cursor-pointer"
                 >
-                  Jämför transportörer & TA-system &rarr;
+                  Jämför transportörer &amp; TA-system &rarr;
                 </button>
               </div>
             </div>
@@ -2245,6 +2443,168 @@ export function MarknadView({
           );
         })()}
 
+        {/* Paketindex Kvartal 1 2026 (Transportföretagen & HUI) */}
+        {paketindex && (
+          <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+              <div>
+                <div className="text-xs font-mono font-semibold text-[#006AA7] inline-flex items-center gap-1.5">
+                  <Package className="w-3.5 h-3.5" />
+                  Paketindex · {paketindex.quarterLabel} ({paketindex.publisher})
+                </div>
+                <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#040B16] mt-1">
+                  Officiell svensk paketstatistik: {paketindex.totalParcelsMillions.toFixed(1).replace('.', ',')} miljoner B2C-paket i K1
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-3xl leading-relaxed">
+                  {paketindex.summaryText}
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-[#040B16] text-white shrink-0 space-y-0.5">
+                <div className="text-[11px] font-mono text-[#FECC02]">Kvartalstillväxt YoY</div>
+                <div className="font-display text-2xl font-extrabold tabular-nums">
+                  +{paketindex.yoyGrowthPct.toFixed(1).replace('.', ',')} %
+                </div>
+                <div className="text-xs text-slate-300 tabular-nums">
+                  +{paketindex.yoyGrowthMillions.toFixed(1).replace('.', ',')} milj paket mot K1 2025
+                </div>
+              </div>
+            </div>
+
+            {/* Headline KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-5 rounded-xl bg-[#F4F6F9] border border-slate-200 space-y-1.5">
+                <div className="text-xs font-mono text-slate-500">E-handelspaket totalt ({paketindex.quarterLabel})</div>
+                <div className="font-display text-2xl font-extrabold text-[#040B16] tabular-nums">
+                  {paketindex.totalParcelsMillions.toFixed(1).replace('.', ',')} miljoner
+                </div>
+                <div className="text-xs text-[#059669] font-semibold">
+                  Inrikes + Utlandspaket (Returer &amp; Export redovisas separat)
+                </div>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[#F4F6F9] border border-slate-200 space-y-1.5">
+                <div className="text-xs font-mono text-slate-500">Andel paket från utlandet</div>
+                <div className="font-display text-2xl font-extrabold text-[#006AA7] tabular-nums">
+                  {paketindex.foreignImportSharePct.toFixed(1).replace('.', ',')} %
+                </div>
+                <div className="text-xs text-slate-600 leading-snug">
+                  {paketindex.foreignImportComparison}
+                </div>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[#F4F6F9] border border-slate-200 space-y-1.5">
+                <div className="text-xs font-mono text-slate-500">Second hand via marknadsplatser</div>
+                <div className="font-display text-2xl font-extrabold text-[#059669] tabular-nums">
+                  {paketindex.secondHandParcelsLabel} (~{paketindex.secondHandSharePct.toFixed(0)} %)
+                </div>
+                <div className="text-xs text-slate-600 leading-snug">
+                  {paketindex.secondHandComparison}
+                </div>
+              </div>
+            </div>
+
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-6 p-5 rounded-2xl border border-slate-200 space-y-4">
+                <div>
+                  <h3 className="font-display font-bold text-base text-[#040B16]">
+                    Konsumentens senaste leveransval (Mars 2026)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Fler än 2 av 5 valde utlämningsställe; paketskåp ~1 av 5 (majoritet inomhus).
+                  </p>
+                </div>
+                <div className="h-[220px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={paketindex.deliveryChannels}
+                      layout="vertical"
+                      margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" horizontal={false} />
+                      <XAxis type="number" domain={[0, 55]} unit="%" tick={{ fontSize: 11, fill: '#64748B' }} />
+                      <YAxis
+                        type="category"
+                        dataKey="label"
+                        width={145}
+                        tick={{ fontSize: 11, fill: '#0F172A', fontWeight: 600 }}
+                      />
+                      <Tooltip
+                        formatter={(val: unknown) => [`${String(val)} %`, 'Andel']}
+                        contentStyle={{
+                          backgroundColor: '#040B16',
+                          borderRadius: '12px',
+                          border: 'none',
+                          color: '#fff',
+                          fontSize: '12px',
+                        }}
+                      />
+                      <Bar dataKey="sharePct" fill="#006AA7" radius={[0, 6, 6, 0]} barSize={24} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-600">
+                  {paketindex.deliveryChannels.map((ch) => (
+                    <div key={ch.id} className="flex justify-between gap-2 border-t border-slate-100 pt-1.5">
+                      <span className="font-semibold text-[#040B16]">{ch.label}</span>
+                      <span className="text-right text-slate-500">{ch.note}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="lg:col-span-6 p-5 rounded-2xl border border-slate-200 space-y-4">
+                <div>
+                  <h3 className="font-display font-bold text-base text-[#040B16]">
+                    Utlandspaket &amp; Second hand-trend (K1 2022–K1 2026)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Utlandsandelen ökade från vart sjätte till vart tredje paket; second hand fyrdubblades sedan K1 2023.
+                  </p>
+                </div>
+                <div className="h-[220px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={paketindex.historicalComparisons}
+                      margin={{ top: 8, right: 16, left: 0, bottom: 4 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                      <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#0F172A', fontWeight: 600 }} />
+                      <YAxis domain={[0, 40]} unit="%" tick={{ fontSize: 11, fill: '#64748B' }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#040B16',
+                          borderRadius: '12px',
+                          border: 'none',
+                          color: '#fff',
+                          fontSize: '12px',
+                        }}
+                      />
+                      <Bar dataKey="importSharePct" name="Utlandspaket (%)" fill="#040B16" radius={[6, 6, 0, 0]} barSize={28} />
+                      <Bar dataKey="secondHandSharePct" name="Second hand (%)" fill="#059669" radius={[6, 6, 0, 0]} barSize={28} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-2 pt-1">
+                  <div className="text-[11px] font-mono font-bold text-slate-500">
+                    Ingående transportörer &amp; metodiknoteringar:
+                  </div>
+                  {paketindex.carrierScopeNotes.map((cn) => (
+                    <div key={cn.id} className="text-xs text-slate-600 bg-[#F4F6F9] rounded-lg px-3 py-2 border border-slate-200">
+                      <span className="font-bold text-[#040B16]">{cn.carrier}</span>{' '}
+                      <span className="font-mono text-[11px] text-[#006AA7]">({cn.status})</span>: {cn.note}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs text-slate-500 pt-2 border-t border-slate-100">
+              {paketindex.updatedNote}
+            </div>
+          </section>
+        )}
+
         {/* Checkoutstrategi.se Dedicated CTA + Open Ad Holder */}
         <CheckoutStrategyCTA />
 
@@ -2269,7 +2629,7 @@ export function MarknadView({
               <div>
                 <div className="text-xs font-mono text-[#006AA7] font-semibold">Checkout-data</div>
                 <h3 className="font-display font-bold text-lg text-[#040B16] mt-1">
-                  One-Click BankID & Swish sänker avhopp med 34%
+                  One-Click BankID &amp; Swish sänker avhopp med 34%
                 </h3>
                 <p className="text-xs text-slate-600 mt-2 leading-relaxed">
                   Svenska konsumenter överger kassan direkt om manuella kortuppgifter krävs. Friktionsfri identifiering är standard 2027.
@@ -2297,10 +2657,10 @@ export function MarknadView({
               <div>
                 <div className="text-xs font-mono text-[#059669] font-semibold">Grön logistik</div>
                 <h3 className="font-display font-bold text-lg text-[#040B16] mt-1">
-                  64% väljer fossilfritt paketskåp i kassan
+                  Klimatdata i kassan styr mot fossilfri last-mile
                 </h3>
                 <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                  När speditören märker leveransvalet med tydlig klimatdata väljer majoriteten av svenskarna eldrivna transporter.
+                  När e-handlaren visar tydlig miljödata för eldrivna hemleveranser och paketskåp väljer majoriteten av konsumenterna ett fossilfritt alternativ.
                 </p>
               </div>
               <button
@@ -2308,7 +2668,7 @@ export function MarknadView({
                 onClick={() => onNavigate('partners')}
                 className="text-xs font-bold text-[#059669] hover:underline text-left cursor-pointer"
               >
-                Se tech- & logistikpartners &rarr;
+                Se tech- &amp; logistikpartners &rarr;
               </button>
             </div>
           </div>

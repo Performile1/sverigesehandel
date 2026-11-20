@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CalendarCheck, Check, ExternalLink, MapPin, Plus, Ticket, X } from 'lucide-react';
 import { useFirebase } from '../contexts/FirebaseContext';
-import type { AdBanner, DCSession, EcommerceEvent, PortalTab } from '../types';
+import type { AdBanner, DCSession, EcommerceEvent, PageCopyBlock, PortalTab } from '../types';
 import { AdBannerSlot } from './AdBannerSlot';
 import { ResilientImage } from './ResilientImage';
 
@@ -9,6 +9,7 @@ interface EventsViewProps {
   events: EcommerceEvent[];
   sessions: DCSession[];
   adBanners: AdBanner[];
+  pageCopy?: PageCopyBlock;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
   onNotify: (msg: string) => void;
@@ -19,6 +20,7 @@ export function EventsView({
   events,
   sessions,
   adBanners,
+  pageCopy,
   onNavigate,
   onBookAdSlot,
   onNotify,
@@ -78,14 +80,19 @@ export function EventsView({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
             <div className="lg:col-span-7 flex flex-col justify-center space-y-5">
               <div className="text-xs font-mono text-[#FECC02]">
-                Svenska & nordiska branschevent 2026–2027 · Göteborg · Stockholm · Oslo
+                {pageCopy?.kicker || 'Svenska & nordiska branschevent 2026–2027 · Göteborg · Stockholm · Oslo'}
               </div>
 
               <h1 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.06] max-w-2xl text-balance">
-                Mässor, konferenser & <span className="text-[#FECC02]">D-Congress 2027.</span>
+                {pageCopy?.title || (
+                  <>
+                    Mässor, konferenser &amp; <span className="text-[#FECC02]">D-Congress 2027.</span>
+                  </>
+                )}
               </h1>
               <p className="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed">
-                Alla viktiga mötesplatser för svenska e-handlare och tech-leverantörer: från D-Congress på Svenska Mässan till E-commerce Expo på Kistamässan, Retail Technology i Älvsjö, Stora Ehandelsdagen och NXT Nordic i Oslo.
+                {pageCopy?.subtitle ||
+                  'Alla viktiga mötesplatser för svenska e-handlare och tech-leverantörer: från D-Congress på Svenska Mässan till E-commerce Expo på Kistamässan, Retail Technology i Älvsjö, Stora Ehandelsdagen och NXT Nordic i Oslo.'}
               </p>
 
               <div className="flex flex-wrap gap-3 pt-2">

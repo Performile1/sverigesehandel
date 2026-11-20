@@ -18,11 +18,16 @@ import type {
   EcommerceNewsItem,
   GroundingSource,
   LogisticsProvider,
+  MarketIntelligenceSource,
   Merchant,
+  PageContentMap,
+  PaketindexData,
   RecruitmentSite,
   RegionMetric,
   ShippingCostTier,
   TechPartner,
+  TechStackShare,
+  TimelineMilestone,
 } from './types';
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
@@ -192,6 +197,38 @@ export const api = {
 
   updateDeliveryStats: (patch: Partial<DeliveryStatsData>) =>
     request<DeliveryStatsData>('/api/benchmarks/delivery', {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    }),
+
+  updatePaketindex: (patch: Partial<PaketindexData>) =>
+    request<PaketindexData>('/api/paketindex', {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    }),
+
+  updateIntelligenceSource: (id: string, patch: Partial<MarketIntelligenceSource>) =>
+    request<MarketIntelligenceSource>(`/api/intelligence/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    }),
+
+  updateTechStackShare: (id: string, patch: Partial<TechStackShare>) =>
+    request<TechStackShare>(`/api/techstack/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    }),
+
+  upsertTimelineMilestone: (milestone: Partial<TimelineMilestone> & { title: string }) =>
+    request<TimelineMilestone>(milestone.id ? `/api/timeline/${milestone.id}` : '/api/timeline', {
+      method: milestone.id ? 'PUT' : 'POST',
+      body: JSON.stringify(milestone),
+    }),
+  deleteTimelineMilestone: (id: string) =>
+    request<{ deleted: boolean }>(`/api/timeline/${id}`, { method: 'DELETE' }),
+
+  updatePageContent: (patch: Partial<PageContentMap>) =>
+    request<PageContentMap>('/api/pages', {
       method: 'PUT',
       body: JSON.stringify(patch),
     }),

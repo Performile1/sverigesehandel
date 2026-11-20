@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ExternalLink, Package, Pencil, Plus, Search, ShieldCheck, Sparkles, Star, TrendingUp } from 'lucide-react';
-import type { AdBanner, CategoryOrderBenchmark, Merchant, PortalTab } from '../types';
+import type { AdBanner, CategoryOrderBenchmark, Merchant, PageCopyBlock, PortalTab } from '../types';
 import {
   estimateMerchantParcels,
   formatParcelCountCompact,
@@ -12,6 +12,7 @@ interface MerchantsViewProps {
   merchants: Merchant[];
   orderBenchmarks: CategoryOrderBenchmark[];
   adBanners: AdBanner[];
+  pageCopy?: PageCopyBlock;
   initialSearch?: string;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
@@ -23,6 +24,7 @@ export function MerchantsView({
   merchants = [],
   orderBenchmarks = [],
   adBanners = [],
+  pageCopy,
   initialSearch = '',
   onNavigate,
   onBookAdSlot,
@@ -92,13 +94,14 @@ export function MerchantsView({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="font-mono text-xs text-[#10B981] font-semibold">
-              Verifierad branschkatalog · {published.length} aktiva e-handlare med omsättning & tillväxt
+              {pageCopy?.kicker || 'Verifierad branschkatalog'} · {published.length} aktiva e-handlare med omsättning &amp; tillväxt
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-extrabold mt-1">
-              Svenska E-handlare, Omsättning, Tillväxt & Tech-stack
+              {pageCopy?.title || 'Svenska E-handlare, Omsättning, Tillväxt & Tech-stack'}
             </h1>
             <p className="text-slate-300 text-sm mt-2 max-w-2xl leading-relaxed">
-              Jämför Sveriges största nätbutiker och D2C-varumärken på omsättning, årlig tillväxt (YoY), Trustpilot-betyg och teknisk stack – eller sök webben för att lägga till fler.
+              {pageCopy?.subtitle ||
+                'Jämför Sveriges största nätbutiker och D2C-varumärken på omsättning, årlig tillväxt (YoY), Trustpilot-betyg och teknisk stack – eller sök webben för att lägga till fler.'}
             </p>
           </div>
 

@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  BarChart3,
   Briefcase,
   Building2,
   Calendar,
   Check,
+  Clock,
   Database,
   Download,
   ExternalLink,
+  FileText,
   Layers,
   LayoutDashboard,
   Loader2,
@@ -22,6 +25,7 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
+  Warehouse,
 } from 'lucide-react';
 import { api } from '../api';
 import { useFirebase } from '../contexts/FirebaseContext';
@@ -40,10 +44,16 @@ import type {
   GroundingSource,
   JobRoleCategory,
   LawCategory,
+  LogisticsProvider,
+  LogisticsRoleType,
   Merchant,
   NewsCategory,
+  PageContentMap,
+  PaketindexData,
+  PublishStatus,
   RecruitmentSite,
   TechPartner,
+  TimelineMilestone,
 } from '../types';
 
 interface CMSStudioProps {
@@ -263,6 +273,116 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
     'Temu, nya svenska e-handelsbutiker och nya SaaS-system i Europa 2026–2027'
   );
   const [cmsNewsAiLoading, setCmsNewsAiLoading] = useState(false);
+
+  // 3PL & 4PL editor state
+  const [editingLogisticsId, setEditingLogisticsId] = useState<string>('new');
+  const [lpName, setLpName] = useState('');
+  const [lpDomain, setLpDomain] = useState('');
+  const [lpType, setLpType] = useState<LogisticsRoleType>('3PL');
+  const [lpHqCity, setLpHqCity] = useState('Jönköping');
+  const [lpRegion, setLpRegion] = useState('smaland');
+  const [lpWarehouses, setLpWarehouses] = useState('Jönköping, Borås');
+  const [lpSqm, setLpSqm] = useState('25 000 m²');
+  const [lpAutomation, setLpAutomation] = useState('AutoStore & plockrobot');
+  const [lpWms, setLpWms] = useState('Ongoing WMS');
+  const [lpMinVol, setLpMinVol] = useState('Från 15 000 ordrar/år');
+  const [lpCutoff, setLpCutoff] = useState('17:00');
+  const [lpPricing, setLpPricing] = useState('Startavgift + pallplats + plock/order');
+  const [lpIntegrations, setLpIntegrations] = useState('Centra, Shopify, Ingrid, nShift');
+  const [lpSpecialties, setLpSpecialties] = useState('Mode & D2C, Returhantering');
+  const [lpClients, setLpClients] = useState('');
+  const [lpDesc, setLpDesc] = useState('');
+  const [lpStatus, setLpStatus] = useState<PublishStatus>('published');
+
+  // Paketindex & Intelligence editor state
+  const [piDraft, setPiDraft] = useState<PaketindexData>(() => store.paketindex);
+  const [editingIntelId, setEditingIntelId] = useState<string>('paketindex');
+  const [editingTechShareId, setEditingTechShareId] = useState<string>(
+    () => store.techStackShares[0]?.id || ''
+  );
+
+  // Timeline editor state
+  const [editingTimelineId, setEditingTimelineId] = useState<string>('new');
+  const [tlEra, setTlEra] = useState<TimelineMilestone['era']>('20s');
+  const [tlYear, setTlYear] = useState('2026');
+  const [tlBadge, setTlBadge] = useState('Nytt skifte');
+  const [tlTitle, setTlTitle] = useState('');
+  const [tlDesc, setTlDesc] = useState('');
+  const [tlStack, setTlStack] = useState('Agentic AI · Server-Side · Paketbox');
+
+  // PageContent editor state
+  const [pagesDraft, setPagesDraft] = useState<PageContentMap>(() => store.pageContent);
+  const [activePageKey, setActivePageKey] = useState<keyof PageContentMap>('marknad');
+
+  useEffect(() => {
+    setPiDraft(store.paketindex);
+  }, [store.paketindex]);
+
+  useEffect(() => {
+    setPagesDraft(store.pageContent);
+  }, [store.pageContent]);
+
+  function loadLogisticsForEdit(lp?: LogisticsProvider) {
+    if (!lp) {
+      setEditingLogisticsId('new');
+      setLpName('');
+      setLpDomain('');
+      setLpType('3PL');
+      setLpHqCity('Jönköping');
+      setLpRegion('smaland');
+      setLpWarehouses('Jönköping');
+      setLpSqm('25 000 m²');
+      setLpAutomation('AutoStore & plockrobot');
+      setLpWms('Ongoing WMS');
+      setLpMinVol('Från 15 000 ordrar/år');
+      setLpCutoff('17:00');
+      setLpPricing('Startavgift + pallplats + plock/order');
+      setLpIntegrations('Centra, Shopify, Ingrid, nShift');
+      setLpSpecialties('E-handel D2C, Returhantering');
+      setLpClients('');
+      setLpDesc('');
+      setLpStatus('published');
+      return;
+    }
+    setEditingLogisticsId(lp.id);
+    setLpName(lp.name);
+    setLpDomain(lp.domain);
+    setLpType(lp.logisticsType);
+    setLpHqCity(lp.hqCity);
+    setLpRegion(lp.region || 'smaland');
+    setLpWarehouses(lp.warehouseCities.join(', '));
+    setLpSqm(lp.warehouseSqm);
+    setLpAutomation(lp.automation);
+    setLpWms(lp.wmsPlatform);
+    setLpMinVol(lp.minOrderVolume);
+    setLpCutoff(lp.cutoffTime);
+    setLpPricing(lp.pricingModel);
+    setLpIntegrations(lp.integrations.join(', '));
+    setLpSpecialties(lp.specialties.join(', '));
+    setLpClients(lp.notableClients.join(', '));
+    setLpDesc(lp.desc);
+    setLpStatus(lp.status);
+  }
+
+  function loadTimelineForEdit(m?: TimelineMilestone) {
+    if (!m) {
+      setEditingTimelineId('new');
+      setTlEra('20s');
+      setTlYear('2026');
+      setTlBadge('Nytt skifte');
+      setTlTitle('');
+      setTlDesc('');
+      setTlStack('');
+      return;
+    }
+    setEditingTimelineId(m.id);
+    setTlEra(m.era);
+    setTlYear(m.year);
+    setTlBadge(m.badge);
+    setTlTitle(m.title);
+    setTlDesc(m.desc);
+    setTlStack(m.stack);
+  }
 
   // Server CMS diagnostics (non-secret booleans)
   const [cmsStatus, setCmsStatus] = useState<{
@@ -640,9 +760,13 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
     { id: 'discover', label: 'Sök & Lägg till', icon: Sparkles },
     { id: 'merchants', label: 'E-handlare', icon: Building2, count: store.merchants.length },
     { id: 'partners', label: 'Tech & Partners', icon: Layers, count: store.partners.length },
+    { id: 'logistics', label: '3PL & 4PL', icon: Warehouse, count: (store.logisticsProviders || []).length },
+    { id: 'paketindex', label: 'Paketindex & Marknad', icon: BarChart3 },
     { id: 'news', label: 'Nyheter', icon: Newspaper, count: (store.news || []).length },
     { id: 'events', label: 'Event & Mässor', icon: Calendar, count: store.events.length },
+    { id: 'timeline', label: 'Historia (Tidslinje)', icon: Clock, count: store.timeline.length },
     { id: 'jobs', label: 'Jobb & Rekrytering', icon: Briefcase, count: store.jobs.length + store.recruitmentSites.length },
+    { id: 'pages', label: 'Sidtexter & Kontakt', icon: FileText },
     { id: 'content', label: 'Annons, Data & Inkorg', icon: MapPin, count: store.adBanners.length + store.contactMessages.length },
     { id: 'overview', label: 'Översikt & Backup', icon: Database },
   ];
@@ -668,7 +792,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
             <div className="text-xs text-slate-400 mt-0.5">Hantera hela katalogen</div>
           </div>
 
-          <nav className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0">
+          <nav className="flex flex-wrap lg:flex-col gap-1 pb-1 lg:pb-0">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
               const active = section === item.id;
@@ -1002,7 +1126,10 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                               </div>
                               <div className="text-xs text-slate-500">
                                 {p.subType || p.cat} · {p.origin}
-                                {p.customerCount ? ` · Kunder: ${p.customerCount}` : ''} · {p.stack}
+                                {p.subType !== 'Transportör' && p.customerCount
+                                  ? ` · Kunder: ${p.customerCount}`
+                                  : ''}{' '}
+                                · {p.stack}
                               </div>
                               <p className="text-xs text-slate-700">{p.desc}</p>
                             </div>
@@ -1129,7 +1256,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
               <div className="p-5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2.5 flex-1">
-                  <div className="relative flex-1 min-w-[220px] max-w-sm">
+                  <div className="relative flex-1 min-w-0 w-full sm:w-auto sm:max-w-sm">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                     <input
                       type="text"
@@ -1165,29 +1292,29 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                 </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="hidden lg:block">
+                <table className="w-full table-fixed text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
-                      <th className="py-2.5 px-4 font-semibold">Butik</th>
-                      <th className="py-2.5 px-4 font-semibold">Omsättning & Tillväxt</th>
-                      <th className="py-2.5 px-4 font-semibold">Plattform</th>
-                      <th className="py-2.5 px-4 font-semibold text-right">Trustpilot</th>
-                      <th className="py-2.5 px-4 font-semibold">Status</th>
-                      <th className="py-2.5 px-4 font-semibold text-right">Åtgärder</th>
+                      <th className="py-2.5 px-4 font-semibold w-[30%]">Butik</th>
+                      <th className="py-2.5 px-4 font-semibold w-[22%]">Omsättning & Tillväxt</th>
+                      <th className="py-2.5 px-4 font-semibold w-[16%]">Plattform</th>
+                      <th className="py-2.5 px-4 font-semibold text-right w-[10%]">Trustpilot</th>
+                      <th className="py-2.5 px-4 font-semibold w-[12%]">Status</th>
+                      <th className="py-2.5 px-4 font-semibold text-right w-[10%]">Åtgärder</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredMerchants.map((m) => (
                       <tr key={m.id} className="hover:bg-slate-50 h-11">
                         <td className="py-2 px-4">
-                          <div className="font-semibold text-[#040B16]">{m.name}</div>
-                          <div className="text-[11px] text-slate-500">
+                          <div className="font-semibold text-[#040B16] truncate">{m.name}</div>
+                          <div className="text-[11px] text-slate-500 truncate">
                             {m.domain} · {m.city} · {m.category}
                           </div>
                         </td>
                         <td className="py-2 px-4 font-mono tabular-nums">
-                          <div className="font-semibold text-[#040B16]">{m.revenue}</div>
+                          <div className="font-semibold text-[#040B16] truncate">{m.revenue}</div>
                           {m.yoyGrowth && (
                             <div
                               className={`text-[11px] font-semibold ${
@@ -1198,7 +1325,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                             </div>
                           )}
                         </td>
-                        <td className="py-2 px-4 text-slate-600">{m.platform}</td>
+                        <td className="py-2 px-4 text-slate-600 truncate">{m.platform}</td>
                         <td className="py-2 px-4 text-right font-mono font-bold text-[#059669] tabular-nums">
                           {m.trustpilot.toFixed(1)}
                         </td>
@@ -1238,6 +1365,49 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                   </tbody>
                 </table>
               </div>
+
+              <div className="lg:hidden divide-y divide-slate-100">
+                {filteredMerchants.map((m) => (
+                  <div key={m.id} className="p-4 flex items-start justify-between gap-3 text-xs">
+                    <div className="min-w-0 space-y-1">
+                      <div className="font-semibold text-[#040B16]">{m.name}</div>
+                      <div className="text-[11px] text-slate-500">
+                        {m.domain} · {m.city} · {m.platform}
+                      </div>
+                      <div className="font-mono text-[11px] tabular-nums text-slate-700">
+                        {m.revenue} {m.yoyGrowth ? `(${m.yoyGrowth})` : ''} · TP {m.trustpilot.toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => toggleMerchantStatus(m)}
+                        className={`text-[11px] font-semibold cursor-pointer ${
+                          m.status === 'published' ? 'text-[#059669]' : 'text-amber-700'
+                        }`}
+                      >
+                        {m.status === 'published' ? 'Publicerad' : 'Utkast'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onOpenEditor('merchant', m)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-[#040B16] cursor-pointer"
+                        aria-label={`Redigera ${m.name}`}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMerchant(m)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 cursor-pointer"
+                        aria-label={`Ta bort ${m.name}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -1246,7 +1416,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
               <div className="p-5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2.5 flex-1">
-                  <div className="relative flex-1 min-w-[220px] max-w-sm">
+                  <div className="relative flex-1 min-w-0 w-full sm:w-auto sm:max-w-sm">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                     <input
                       type="text"
@@ -1283,70 +1453,121 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                 </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="hidden lg:block">
+                <table className="w-full table-fixed text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
-                      <th className="py-2.5 px-4 font-semibold">Partner</th>
-                      <th className="py-2.5 px-4 font-semibold">Kategori / Subtyp</th>
-                      <th className="py-2.5 px-4 font-semibold">Antal kunder</th>
-                      <th className="py-2.5 px-4 font-semibold">Status</th>
-                      <th className="py-2.5 px-4 font-semibold text-right">Åtgärder</th>
+                      <th className="py-2.5 px-4 font-semibold w-[26%]">Partner</th>
+                      <th className="py-2.5 px-4 font-semibold w-[28%]">Kategori / Subtyp</th>
+                      <th className="py-2.5 px-4 font-semibold w-[24%]">Kunder / Transportnät</th>
+                      <th className="py-2.5 px-4 font-semibold w-[12%]">Status</th>
+                      <th className="py-2.5 px-4 font-semibold text-right w-[10%]">Åtgärder</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredPartners.map((p) => (
-                      <tr key={p.id} className="hover:bg-slate-50 h-11">
-                        <td className="py-2 px-4">
-                          <div className="font-semibold text-[#040B16]">{p.name}</div>
-                          <div className="text-[11px] text-slate-500">
-                            {p.domain} · {p.origin}
-                          </div>
-                        </td>
-                        <td className="py-2 px-4 text-slate-700">
-                          <div>{p.subType || p.cat}</div>
-                          <div className="text-[11px] text-slate-500 truncate max-w-[200px]">
-                            {p.stack}
-                          </div>
-                        </td>
-                        <td className="py-2 px-4 text-slate-700 font-mono text-[11px]">
-                          {p.customerCount || 'Ej angivet'}
-                        </td>
-                        <td className="py-2 px-4">
-                          <button
-                            type="button"
-                            onClick={() => togglePartnerStatus(p)}
-                            className={`text-xs font-semibold cursor-pointer hover:underline ${
-                              p.status === 'published' ? 'text-[#059669]' : 'text-amber-700'
-                            }`}
-                          >
-                            {p.status === 'published' ? 'Publicerad' : 'Utkast'}
-                          </button>
-                        </td>
-                        <td className="py-2 px-4 text-right">
-                          <div className="inline-flex items-center gap-1">
+                    {filteredPartners.map((p) => {
+                      const isCarrier = p.subType === 'Transportör';
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-50 h-11">
+                          <td className="py-2 px-4">
+                            <div className="font-semibold text-[#040B16] truncate">{p.name}</div>
+                            <div className="text-[11px] text-slate-500 truncate">
+                              {p.domain} · {p.origin}
+                            </div>
+                          </td>
+                          <td className="py-2 px-4 text-slate-700">
+                            <div className="truncate">{p.subType || p.cat}</div>
+                            <div className="text-[11px] text-slate-500 truncate">
+                              {p.stack}
+                            </div>
+                          </td>
+                          <td className="py-2 px-4 text-slate-700 font-mono text-[11px] tabular-nums">
+                            {isCarrier
+                              ? `${(p.carrierMetrics?.parcelLockers ?? 0).toLocaleString('sv-SE')} skåp · ${(p.carrierMetrics?.pickupAgents ?? 0).toLocaleString('sv-SE')} ombud · ${p.carrierMetrics?.homeDeliveryPct ?? 0}% hem`
+                              : p.customerCount || 'Ej angivet'}
+                          </td>
+                          <td className="py-2 px-4">
                             <button
                               type="button"
-                              onClick={() => onOpenEditor('partner', p)}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-[#040B16] hover:bg-slate-100 cursor-pointer"
-                              aria-label={`Redigera ${p.name}`}
+                              onClick={() => togglePartnerStatus(p)}
+                              className={`text-xs font-semibold cursor-pointer hover:underline ${
+                                p.status === 'published' ? 'text-[#059669]' : 'text-amber-700'
+                              }`}
                             >
-                              <Pencil className="w-3.5 h-3.5" />
+                              {p.status === 'published' ? 'Publicerad' : 'Utkast'}
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeletePartner(p)}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-                              aria-label={`Ta bort ${p.name}`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="py-2 px-4 text-right">
+                            <div className="inline-flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => onOpenEditor('partner', p)}
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-[#040B16] hover:bg-slate-100 cursor-pointer"
+                                aria-label={`Redigera ${p.name}`}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePartner(p)}
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                                aria-label={`Ta bort ${p.name}`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
+              </div>
+
+              <div className="lg:hidden divide-y divide-slate-100">
+                {filteredPartners.map((p) => {
+                  const isCarrier = p.subType === 'Transportör';
+                  return (
+                    <div key={p.id} className="p-4 flex items-start justify-between gap-3 text-xs">
+                      <div className="min-w-0 space-y-1">
+                        <div className="font-semibold text-[#040B16]">{p.name}</div>
+                        <div className="text-[11px] text-slate-500">
+                          {p.subType || p.cat} · {p.domain}
+                        </div>
+                        <div className="font-mono text-[11px] text-slate-700 tabular-nums">
+                          {isCarrier
+                            ? `${(p.carrierMetrics?.parcelLockers ?? 0).toLocaleString('sv-SE')} skåp · ${(p.carrierMetrics?.pickupAgents ?? 0).toLocaleString('sv-SE')} ombud`
+                            : p.customerCount || p.stack}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => togglePartnerStatus(p)}
+                          className={`text-[11px] font-semibold cursor-pointer ${
+                            p.status === 'published' ? 'text-[#059669]' : 'text-amber-700'
+                          }`}
+                        >
+                          {p.status === 'published' ? 'Publicerad' : 'Utkast'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onOpenEditor('partner', p)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-[#040B16] cursor-pointer"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePartner(p)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1445,31 +1666,31 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                 <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50 font-display font-bold text-sm text-[#040B16]">
                   Branschevent & Mässor ({store.events.length})
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
+                <div className="hidden lg:block">
+                  <table className="w-full table-fixed text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
-                        <th className="py-2.5 px-4 font-semibold">Event</th>
-                        <th className="py-2.5 px-4 font-semibold">Datum & Stad</th>
-                        <th className="py-2.5 px-4 font-semibold">Biljett</th>
-                        <th className="py-2.5 px-4 font-semibold">Status</th>
-                        <th className="py-2.5 px-4 font-semibold text-right">Ta bort</th>
+                        <th className="py-2.5 px-4 font-semibold w-[36%]">Event</th>
+                        <th className="py-2.5 px-4 font-semibold w-[22%]">Datum & Stad</th>
+                        <th className="py-2.5 px-4 font-semibold w-[20%]">Biljett</th>
+                        <th className="py-2.5 px-4 font-semibold w-[12%]">Status</th>
+                        <th className="py-2.5 px-4 font-semibold text-right w-[10%]">Ta bort</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {store.events.map((ev) => (
                         <tr key={ev.id} className="hover:bg-slate-50">
                           <td className="py-2.5 px-4">
-                            <div className="font-semibold text-[#040B16]">{ev.name}</div>
-                            <div className="text-[11px] text-slate-500">
+                            <div className="font-semibold text-[#040B16] truncate">{ev.name}</div>
+                            <div className="text-[11px] text-slate-500 truncate">
                               {ev.venue} · {ev.organizer}
                             </div>
                           </td>
                           <td className="py-2.5 px-4 text-slate-600">
-                            <div className="font-mono">{ev.dateLabel}</div>
-                            <div className="text-[11px]">{ev.city}</div>
+                            <div className="font-mono truncate">{ev.dateLabel}</div>
+                            <div className="text-[11px] truncate">{ev.city}</div>
                           </td>
-                          <td className="py-2.5 px-4 text-slate-700">{ev.ticketInfo}</td>
+                          <td className="py-2.5 px-4 text-slate-700 truncate">{ev.ticketInfo}</td>
                           <td className="py-2.5 px-4">
                             <button
                               type="button"
@@ -1498,6 +1719,41 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                <div className="lg:hidden divide-y divide-slate-100">
+                  {store.events.map((ev) => (
+                    <div key={ev.id} className="p-4 flex items-start justify-between gap-3 text-xs">
+                      <div className="min-w-0 space-y-1">
+                        <div className="font-semibold text-[#040B16]">{ev.name}</div>
+                        <div className="text-[11px] text-slate-500">
+                          {ev.dateLabel} · {ev.city} · {ev.ticketInfo}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => toggleEventStatus(ev)}
+                          className={`text-[11px] font-semibold cursor-pointer ${
+                            ev.status === 'published' ? 'text-[#059669]' : 'text-amber-700'
+                          }`}
+                        >
+                          {ev.status === 'published' ? 'Publicerad' : 'Utkast'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await api.deleteEvent(ev.id);
+                            await onRefresh();
+                            onNotify(`${ev.name} borttagen.`);
+                          }}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -1786,15 +2042,15 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                   </form>
 
                   <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse text-xs">
+                    <div className="hidden lg:block">
+                      <table className="w-full table-fixed text-left border-collapse text-xs">
                         <thead>
                           <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
-                            <th className="py-2.5 px-4 font-semibold">Roll & Företag</th>
-                            <th className="py-2.5 px-4 font-semibold">Giltighet & Kontroll</th>
-                            <th className="py-2.5 px-4 font-semibold">Plats</th>
-                            <th className="py-2.5 px-4 font-semibold">Status</th>
-                            <th className="py-2.5 px-4 font-semibold text-right">Åtgärder</th>
+                            <th className="py-2.5 px-4 font-semibold w-[30%]">Roll & Företag</th>
+                            <th className="py-2.5 px-4 font-semibold w-[26%]">Giltighet & Kontroll</th>
+                            <th className="py-2.5 px-4 font-semibold w-[18%]">Plats</th>
+                            <th className="py-2.5 px-4 font-semibold w-[12%]">Status</th>
+                            <th className="py-2.5 px-4 font-semibold text-right w-[14%]">Åtgärder</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -1806,8 +2062,8 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                             return (
                               <tr key={j.id} className={`hover:bg-slate-50 ${isClosed ? 'opacity-70 bg-slate-50/50' : ''}`}>
                                 <td className="py-2.5 px-4">
-                                  <div className="font-semibold text-[#040B16]">{j.title}</div>
-                                  <div className="text-[11px] text-slate-500">
+                                  <div className="font-semibold text-[#040B16] truncate">{j.title}</div>
+                                  <div className="text-[11px] text-slate-500 truncate">
                                     {j.company} · {j.roleCategory} · {j.seniority}
                                   </div>
                                 </td>
@@ -1816,12 +2072,12 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                                     {j.expiresAt ? `T.o.m. ${j.expiresAt}` : 'Ingen slutdatum'}
                                   </div>
                                   {j.validationNote && (
-                                    <div className="text-[11px] text-slate-500 truncate max-w-[220px]">
+                                    <div className="text-[11px] text-slate-500 truncate">
                                       {j.validationNote}
                                     </div>
                                   )}
                                 </td>
-                                <td className="py-2.5 px-4 text-slate-600">
+                                <td className="py-2.5 px-4 text-slate-600 truncate">
                                   {j.city} · {j.workModel}
                                 </td>
                                 <td className="py-2.5 px-4">
@@ -1848,7 +2104,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                                       onClick={() => toggleJobStatus(j)}
                                       className="text-[11px] font-semibold text-[#006AA7] hover:underline cursor-pointer"
                                     >
-                                      {isClosed ? 'Återaktivera' : 'Stäng annons'}
+                                      {isClosed ? 'Återaktivera' : 'Stäng'}
                                     </button>
                                     <button
                                       type="button"
@@ -1868,6 +2124,45 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                           })}
                         </tbody>
                       </table>
+                    </div>
+
+                    <div className="lg:hidden divide-y divide-slate-100">
+                      {store.jobs.map((j) => {
+                        const isClosed =
+                          j.status !== 'published' ||
+                          j.jobStatus === 'expired' ||
+                          j.jobStatus === 'closed';
+                        return (
+                          <div key={j.id} className="p-4 flex items-start justify-between gap-3 text-xs">
+                            <div className="min-w-0 space-y-1">
+                              <div className="font-semibold text-[#040B16]">{j.title}</div>
+                              <div className="text-[11px] text-slate-500">
+                                {j.company} · {j.city} · {j.workModel}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => toggleJobStatus(j)}
+                                className="text-[11px] font-semibold text-[#006AA7] cursor-pointer"
+                              >
+                                {isClosed ? 'Aktivera' : 'Stäng'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await api.deleteJob(j.id);
+                                  await onRefresh();
+                                  onNotify('Jobb borttaget.');
+                                }}
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </>
@@ -2832,31 +3127,31 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
               </form>
 
               <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
+                <div className="hidden lg:block">
+                  <table className="w-full table-fixed text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-mono">
-                        <th className="py-2.5 px-4 font-semibold">Artikel &amp; Källa</th>
-                        <th className="py-2.5 px-4 font-semibold">Kategori &amp; Region</th>
-                        <th className="py-2.5 px-4 font-semibold">Datum</th>
-                        <th className="py-2.5 px-4 font-semibold">Status</th>
-                        <th className="py-2.5 px-4 font-semibold text-right">Ta bort</th>
+                        <th className="py-2.5 px-4 font-semibold w-[40%]">Artikel &amp; Källa</th>
+                        <th className="py-2.5 px-4 font-semibold w-[26%]">Kategori &amp; Region</th>
+                        <th className="py-2.5 px-4 font-semibold w-[14%]">Datum</th>
+                        <th className="py-2.5 px-4 font-semibold w-[12%]">Status</th>
+                        <th className="py-2.5 px-4 font-semibold text-right w-[8%]">Ta bort</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {(store.news || []).map((item) => (
                         <tr key={item.id} className="hover:bg-slate-50">
-                          <td className="py-3 px-4 max-w-md">
-                            <div className="font-semibold text-[#040B16]">{item.title}</div>
-                            <div className="text-[11px] text-slate-500">{item.sourceName}</div>
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-[#040B16] truncate">{item.title}</div>
+                            <div className="text-[11px] text-slate-500 truncate">{item.sourceName}</div>
                           </td>
-                          <td className="py-3 px-4 text-slate-700 whitespace-nowrap">
+                          <td className="py-3 px-4 text-slate-700 truncate">
                             {item.category} · {item.region}
                           </td>
-                          <td className="py-3 px-4 font-mono text-slate-500 whitespace-nowrap tabular-nums">
+                          <td className="py-3 px-4 font-mono text-slate-500 tabular-nums">
                             {item.publishedDate}
                           </td>
-                          <td className="py-3 px-4 whitespace-nowrap">
+                          <td className="py-3 px-4">
                             <button
                               type="button"
                               onClick={async () => {
@@ -2891,8 +3186,1098 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                     </tbody>
                   </table>
                 </div>
+
+                <div className="lg:hidden divide-y divide-slate-100">
+                  {(store.news || []).map((item) => (
+                    <div key={item.id} className="p-4 flex items-start justify-between gap-3 text-xs">
+                      <div className="min-w-0 space-y-1">
+                        <div className="font-semibold text-[#040B16]">{item.title}</div>
+                        <div className="text-[11px] text-slate-500">
+                          {item.category} · {item.publishedDate} · {item.sourceName}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await api.upsertNews({
+                              ...item,
+                              status: item.status === 'published' ? 'draft' : 'published',
+                            });
+                            await onRefresh();
+                          }}
+                          className={`text-[11px] font-semibold cursor-pointer ${
+                            item.status === 'published' ? 'text-[#059669]' : 'text-amber-700'
+                          }`}
+                        >
+                          {item.status === 'published' ? 'Publicerad' : 'Utkast'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await api.deleteNews(item.id);
+                            await onRefresh();
+                            onNotify('Nyhetsartikel borttagen.');
+                          }}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
+          )}
+
+          {/* SECTION: 3PL & 4PL */}
+          {section === 'logistics' && (
+            <div className="space-y-6">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!lpName.trim()) return;
+                  const splitCsv = (val: string) =>
+                    val
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                  await api.upsertLogisticsProvider({
+                    id: editingLogisticsId === 'new' ? undefined : editingLogisticsId,
+                    name: lpName.trim(),
+                    domain: lpDomain.trim() || `${lpName.trim().toLowerCase().replace(/\s+/g, '')}.se`,
+                    logisticsType: lpType,
+                    hqCity: lpHqCity.trim() || 'Stockholm',
+                    region: lpRegion,
+                    warehouseCities: splitCsv(lpWarehouses),
+                    warehouseSqm: lpSqm.trim() || 'Ej angivet',
+                    automation: lpAutomation.trim() || 'AutoStore',
+                    wmsPlatform: lpWms.trim() || 'Ongoing WMS',
+                    minOrderVolume: lpMinVol.trim() || 'Enligt offert',
+                    cutoffTime: lpCutoff.trim() || '17:00',
+                    pricingModel: lpPricing.trim() || 'Plock + lageryta',
+                    integrations: splitCsv(lpIntegrations),
+                    specialties: splitCsv(lpSpecialties),
+                    notableClients: splitCsv(lpClients),
+                    desc: lpDesc.trim() || `${lpName.trim()} erbjuder ${lpType}-logistik i Sverige.`,
+                    status: lpStatus,
+                  });
+                  await onRefresh();
+                  onNotify(
+                    editingLogisticsId === 'new'
+                      ? `${lpName} skapad i 3PL & 4PL.`
+                      : `${lpName} uppdaterad.`
+                  );
+                  loadLogisticsForEdit();
+                }}
+                className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="font-display text-lg font-bold text-[#040B16]">
+                    {editingLogisticsId === 'new'
+                      ? 'Lägg till ny 3PL / 4PL-aktör'
+                      : `Redigerar 3PL/4PL: ${lpName}`}
+                  </h2>
+                  {editingLogisticsId !== 'new' && (
+                    <button
+                      type="button"
+                      onClick={() => loadLogisticsForEdit()}
+                      className="text-xs font-semibold text-[#006AA7] hover:underline cursor-pointer"
+                    >
+                      + Skapa ny istället
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <input
+                    type="text"
+                    required
+                    value={lpName}
+                    onChange={(e) => setLpName(e.target.value)}
+                    placeholder="Aktörsnamn * (t.ex. Bring Shelfless)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={lpDomain}
+                    onChange={(e) => setLpDomain(e.target.value)}
+                    placeholder="Domän (t.ex. bringshelfless.se)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <select
+                    value={lpType}
+                    onChange={(e) => setLpType(e.target.value as LogisticsRoleType)}
+                    className="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white"
+                  >
+                    <option value="3PL">3PL</option>
+                    <option value="4PL">4PL</option>
+                    <option value="3PL & 4PL">3PL &amp; 4PL</option>
+                  </select>
+                  <select
+                    value={lpStatus}
+                    onChange={(e) => setLpStatus(e.target.value as PublishStatus)}
+                    className="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white"
+                  >
+                    <option value="published">Publicerad</option>
+                    <option value="draft">Utkast</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={lpHqCity}
+                    onChange={(e) => setLpHqCity(e.target.value)}
+                    placeholder="Huvudkontor / Stad"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <select
+                    value={lpRegion}
+                    onChange={(e) => setLpRegion(e.target.value)}
+                    className="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white"
+                  >
+                    <option value="vast">Västsverige</option>
+                    <option value="svealand">Svealand</option>
+                    <option value="smaland">Småland &amp; Östergötland</option>
+                    <option value="syd">Sydsverige</option>
+                    <option value="norrland">Norrland</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={lpWarehouses}
+                    onChange={(e) => setLpWarehouses(e.target.value)}
+                    placeholder="Lagerorter (komma-separerat)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={lpSqm}
+                    onChange={(e) => setLpSqm(e.target.value)}
+                    placeholder="Lageryta (t.ex. 45 000 m²)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={lpAutomation}
+                    onChange={(e) => setLpAutomation(e.target.value)}
+                    placeholder="Automation (AutoStore etc.)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={lpWms}
+                    onChange={(e) => setLpWms(e.target.value)}
+                    placeholder="WMS-plattform"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={lpCutoff}
+                    onChange={(e) => setLpCutoff(e.target.value)}
+                    placeholder="Stopptid / Cut-off (t.ex. 17:30)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono"
+                  />
+                  <input
+                    type="text"
+                    value={lpMinVol}
+                    onChange={(e) => setLpMinVol(e.target.value)}
+                    placeholder="Minsta ordervolym"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <input
+                    type="text"
+                    value={lpIntegrations}
+                    onChange={(e) => setLpIntegrations(e.target.value)}
+                    placeholder="Integrationer (komma-separerat)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={lpSpecialties}
+                    onChange={(e) => setLpSpecialties(e.target.value)}
+                    placeholder="Specialiteter (komma-separerat)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={lpPricing}
+                    onChange={(e) => setLpPricing(e.target.value)}
+                    placeholder="Prismodell"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={lpClients}
+                    onChange={(e) => setLpClients(e.target.value)}
+                    placeholder="Exempelkunder (komma-separerat)"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                  <input
+                    type="text"
+                    value={lpDesc}
+                    onChange={(e) => setLpDesc(e.target.value)}
+                    placeholder="Beskrivning av logistikupplägg"
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer"
+                  >
+                    {editingLogisticsId === 'new' ? '+ Spara 3PL/4PL-aktör' : 'Uppdatera 3PL/4PL'}
+                  </button>
+                </div>
+              </form>
+
+              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100">
+                {(store.logisticsProviders || []).map((lp) => (
+                  <div key={lp.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="font-semibold text-[#040B16]">
+                        {lp.name}{' '}
+                        <span className="font-mono text-[#006AA7] font-semibold">
+                          · {lp.logisticsType}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        {lp.warehouseCities.join(', ')} · {lp.wmsPlatform} · Cut-off {lp.cutoffTime} · {lp.warehouseSqm}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await api.upsertLogisticsProvider({
+                            ...lp,
+                            status: lp.status === 'published' ? 'draft' : 'published',
+                          });
+                          await onRefresh();
+                        }}
+                        className={`text-xs font-semibold cursor-pointer hover:underline ${
+                          lp.status === 'published' ? 'text-[#059669]' : 'text-amber-700'
+                        }`}
+                      >
+                        {lp.status === 'published' ? 'Publicerad' : 'Utkast'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => loadLogisticsForEdit(lp)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-[#040B16] hover:bg-slate-100 cursor-pointer"
+                        aria-label={`Redigera ${lp.name}`}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await api.deleteLogisticsProvider(lp.id);
+                          await onRefresh();
+                          onNotify(`${lp.name} borttagen.`);
+                        }}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                        aria-label={`Ta bort ${lp.name}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION: PAKETINDEX & MARKNADSDATA */}
+          {section === 'paketindex' && (
+            <div className="space-y-6">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  await api.updatePaketindex(piDraft);
+                  await onRefresh();
+                  onNotify('Paketindex och kvartalssiffror uppdaterade.');
+                }}
+                className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h2 className="font-display text-lg font-bold text-[#040B16]">
+                      Redigera Paketindex (Transportföretagen &amp; HUI)
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Styr KPI-kort, grafer och transportörsnoter under Marknad &amp; Insikter.
+                    </p>
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer"
+                  >
+                    Spara Paketindex
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Kvartal / Period
+                    </label>
+                    <input
+                      type="text"
+                      value={piDraft.quarterLabel}
+                      onChange={(e) => setPiDraft({ ...piDraft, quarterLabel: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Total volym (milj paket)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={piDraft.totalParcelsMillions}
+                      onChange={(e) =>
+                        setPiDraft({ ...piDraft, totalParcelsMillions: Number(e.target.value) })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Tillväxt YoY (%)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={piDraft.yoyGrowthPct}
+                      onChange={(e) =>
+                        setPiDraft({ ...piDraft, yoyGrowthPct: Number(e.target.value) })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Ökning (milj fler paket)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={piDraft.yoyGrowthMillions}
+                      onChange={(e) =>
+                        setPiDraft({ ...piDraft, yoyGrowthMillions: Number(e.target.value) })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Utlandspaket andel (%)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={piDraft.foreignImportSharePct}
+                      onChange={(e) =>
+                        setPiDraft({ ...piDraft, foreignImportSharePct: Number(e.target.value) })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Utlandsjämförelse
+                    </label>
+                    <input
+                      type="text"
+                      value={piDraft.foreignImportComparison}
+                      onChange={(e) =>
+                        setPiDraft({ ...piDraft, foreignImportComparison: e.target.value })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Second hand volymtext
+                    </label>
+                    <input
+                      type="text"
+                      value={piDraft.secondHandParcelsLabel}
+                      onChange={(e) =>
+                        setPiDraft({ ...piDraft, secondHandParcelsLabel: e.target.value })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Second hand andel (%)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={piDraft.secondHandSharePct}
+                      onChange={(e) =>
+                        setPiDraft({ ...piDraft, secondHandSharePct: Number(e.target.value) })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    Sammanfattning / Huvudinsikt
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={piDraft.summaryText}
+                    onChange={(e) => setPiDraft({ ...piDraft, summaryText: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                  <div className="space-y-2">
+                    <div className="text-xs font-bold text-[#040B16]">
+                      Leveranssätt (Mars fördelning %)
+                    </div>
+                    {piDraft.deliveryChannels.map((ch, idx) => (
+                      <div key={ch.id} className="grid grid-cols-12 gap-2 items-center text-xs">
+                        <input
+                          type="text"
+                          value={ch.label}
+                          onChange={(e) => {
+                            const next = [...piDraft.deliveryChannels];
+                            next[idx] = { ...ch, label: e.target.value };
+                            setPiDraft({ ...piDraft, deliveryChannels: next });
+                          }}
+                          className="col-span-5 px-2.5 py-1.5 rounded-lg border border-slate-200"
+                        />
+                        <input
+                          type="number"
+                          value={ch.sharePct}
+                          onChange={(e) => {
+                            const next = [...piDraft.deliveryChannels];
+                            next[idx] = { ...ch, sharePct: Number(e.target.value) };
+                            setPiDraft({ ...piDraft, deliveryChannels: next });
+                          }}
+                          className="col-span-2 px-2 py-1.5 rounded-lg border border-slate-200 font-mono"
+                        />
+                        <input
+                          type="text"
+                          value={ch.note}
+                          onChange={(e) => {
+                            const next = [...piDraft.deliveryChannels];
+                            next[idx] = { ...ch, note: e.target.value };
+                            setPiDraft({ ...piDraft, deliveryChannels: next });
+                          }}
+                          className="col-span-5 px-2.5 py-1.5 rounded-lg border border-slate-200"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="text-xs font-bold text-[#040B16]">
+                      Transportörsnoter i Paketindex
+                    </div>
+                    {piDraft.carrierScopeNotes.map((cn, idx) => (
+                      <div key={cn.id} className="grid grid-cols-12 gap-2 items-center text-xs">
+                        <input
+                          type="text"
+                          value={cn.carrier}
+                          onChange={(e) => {
+                            const next = [...piDraft.carrierScopeNotes];
+                            next[idx] = { ...cn, carrier: e.target.value };
+                            setPiDraft({ ...piDraft, carrierScopeNotes: next });
+                          }}
+                          className="col-span-4 px-2.5 py-1.5 rounded-lg border border-slate-200 font-semibold"
+                        />
+                        <input
+                          type="text"
+                          value={cn.status}
+                          onChange={(e) => {
+                            const next = [...piDraft.carrierScopeNotes];
+                            next[idx] = { ...cn, status: e.target.value };
+                            setPiDraft({ ...piDraft, carrierScopeNotes: next });
+                          }}
+                          className="col-span-3 px-2.5 py-1.5 rounded-lg border border-slate-200"
+                        />
+                        <input
+                          type="text"
+                          value={cn.note}
+                          onChange={(e) => {
+                            const next = [...piDraft.carrierScopeNotes];
+                            next[idx] = { ...cn, note: e.target.value };
+                            setPiDraft({ ...piDraft, carrierScopeNotes: next });
+                          }}
+                          className="col-span-5 px-2.5 py-1.5 rounded-lg border border-slate-200"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </form>
+
+              {/* Intelligence Sources & Tech Stack Shares */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {(() => {
+                  const activeIntel =
+                    store.intelligenceSources.find((s) => s.id === editingIntelId) ||
+                    store.intelligenceSources[0];
+                  if (!activeIntel) return null;
+                  return (
+                    <form
+                      key={activeIntel.id}
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const form = new FormData(e.currentTarget);
+                        await api.updateIntelligenceSource(activeIntel.id, {
+                          headlineMetric: String(form.get('headlineMetric') || activeIntel.headlineMetric),
+                          headlineValue: String(form.get('headlineValue') || activeIntel.headlineValue),
+                          updatedPeriod: String(form.get('updatedPeriod') || activeIntel.updatedPeriod),
+                          summary: String(form.get('summary') || activeIntel.summary),
+                        });
+                        await onRefresh();
+                        onNotify(`Uppdaterade ${activeIntel.name}.`);
+                      }}
+                      className="bg-white border border-slate-200 rounded-2xl p-6 space-y-3 text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-display text-base font-bold text-[#040B16]">
+                          Datakällor (ECDB, Statista, Paketindex, HUI)
+                        </h3>
+                        <select
+                          value={activeIntel.id}
+                          onChange={(e) => setEditingIntelId(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-semibold"
+                        >
+                          {store.intelligenceSources.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <input
+                          name="headlineMetric"
+                          defaultValue={activeIntel.headlineMetric}
+                          placeholder="Nyckeltal"
+                          className="px-3 py-2 rounded-xl border border-slate-200"
+                        />
+                        <input
+                          name="headlineValue"
+                          defaultValue={activeIntel.headlineValue}
+                          placeholder="Värde"
+                          className="px-3 py-2 rounded-xl border border-slate-200 font-mono"
+                        />
+                      </div>
+                      <input
+                        name="updatedPeriod"
+                        defaultValue={activeIntel.updatedPeriod}
+                        placeholder="Period"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200"
+                      />
+                      <textarea
+                        name="summary"
+                        rows={2}
+                        defaultValue={activeIntel.summary}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200"
+                      />
+                      <button
+                        type="submit"
+                        className="px-4 py-2 rounded-xl bg-[#040B16] hover:bg-[#006AA7] text-white font-bold cursor-pointer"
+                      >
+                        Spara datakälla
+                      </button>
+                    </form>
+                  );
+                })()}
+
+                {(() => {
+                  const activeShare =
+                    store.techStackShares.find((t) => t.id === editingTechShareId) ||
+                    store.techStackShares[0];
+                  if (!activeShare) return null;
+                  return (
+                    <form
+                      key={activeShare.id}
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const form = new FormData(e.currentTarget);
+                        await api.updateTechStackShare(activeShare.id, {
+                          sharePct: Number(form.get('sharePct') || activeShare.sharePct),
+                          detectedSites: String(form.get('detectedSites') || activeShare.detectedSites),
+                        });
+                        await onRefresh();
+                        onNotify(`Uppdaterade marknadsandel för ${activeShare.name}.`);
+                      }}
+                      className="bg-white border border-slate-200 rounded-2xl p-6 space-y-3 text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-display text-base font-bold text-[#040B16]">
+                          Tech-andelar (BuiltWith &amp; Wappalyzer)
+                        </h3>
+                        <select
+                          value={activeShare.id}
+                          onChange={(e) => setEditingTechShareId(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-semibold"
+                        >
+                          {store.techStackShares.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name} ({t.layer})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            Marknadsandel (%)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            name="sharePct"
+                            defaultValue={activeShare.sharePct}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            Upptäckta sajter
+                          </label>
+                          <input
+                            type="text"
+                            name="detectedSites"
+                            defaultValue={activeShare.detectedSites}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 rounded-xl bg-[#040B16] hover:bg-[#006AA7] text-white font-bold cursor-pointer"
+                      >
+                        Spara tech-andel
+                      </button>
+                    </form>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION: TIMELINE (HISTORIA) */}
+          {section === 'timeline' && (
+            <div className="space-y-6">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!tlTitle.trim()) return;
+                  await api.upsertTimelineMilestone({
+                    id: editingTimelineId === 'new' ? undefined : editingTimelineId,
+                    era: tlEra,
+                    year: tlYear.trim() || '2026',
+                    badge: tlBadge.trim() || 'Milstolpe',
+                    title: tlTitle.trim(),
+                    desc: tlDesc.trim() || 'Viktig händelse i svensk e-handelshistoria.',
+                    stack: tlStack.trim() || 'Svensk e-handel',
+                  });
+                  await onRefresh();
+                  onNotify(
+                    editingTimelineId === 'new'
+                      ? 'Milstolpe tillagd i Historia.'
+                      : 'Milstolpe uppdaterad.'
+                  );
+                  loadTimelineForEdit();
+                }}
+                className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 text-xs"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="font-display text-lg font-bold text-[#040B16]">
+                    {editingTimelineId === 'new'
+                      ? 'Lägg till milstolpe i Historia / Tidslinje'
+                      : `Redigerar milstolpe: ${tlTitle}`}
+                  </h2>
+                  {editingTimelineId !== 'new' && (
+                    <button
+                      type="button"
+                      onClick={() => loadTimelineForEdit()}
+                      className="text-xs font-semibold text-[#006AA7] hover:underline cursor-pointer"
+                    >
+                      + Lägg till ny istället
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <select
+                    value={tlEra}
+                    onChange={(e) => setTlEra(e.target.value as TimelineMilestone['era'])}
+                    className="px-3 py-2 rounded-xl border border-slate-200 bg-white"
+                  >
+                    <option value="90s">1990-tal (90s)</option>
+                    <option value="00s">2000-tal (00s)</option>
+                    <option value="10s">2010-tal (10s)</option>
+                    <option value="20s">2020-tal (20s)</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={tlYear}
+                    onChange={(e) => setTlYear(e.target.value)}
+                    placeholder="År (t.ex. 2026)"
+                    className="px-3 py-2 rounded-xl border border-slate-200 font-mono"
+                  />
+                  <input
+                    type="text"
+                    value={tlBadge}
+                    onChange={(e) => setTlBadge(e.target.value)}
+                    placeholder="Etikett / Tema"
+                    className="px-3 py-2 rounded-xl border border-slate-200"
+                  />
+                  <input
+                    type="text"
+                    value={tlStack}
+                    onChange={(e) => setTlStack(e.target.value)}
+                    placeholder="Teknik / Aktörer"
+                    className="px-3 py-2 rounded-xl border border-slate-200"
+                  />
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={tlTitle}
+                  onChange={(e) => setTlTitle(e.target.value)}
+                  placeholder="Rubrik *"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200"
+                />
+                <textarea
+                  rows={2}
+                  value={tlDesc}
+                  onChange={(e) => setTlDesc(e.target.value)}
+                  placeholder="Beskrivning av milstolpen"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-[#040B16] hover:bg-[#006AA7] text-white font-bold cursor-pointer"
+                  >
+                    {editingTimelineId === 'new' ? '+ Spara milstolpe' : 'Uppdatera milstolpe'}
+                  </button>
+                </div>
+              </form>
+
+              <div className="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100">
+                {store.timeline.map((m) => (
+                  <div key={m.id} className="p-4 flex items-start justify-between gap-4 text-xs">
+                    <div className="space-y-1">
+                      <div className="font-mono text-[#006AA7] font-semibold">
+                        {m.year} · {m.era} · {m.badge}
+                      </div>
+                      <div className="font-bold text-[#040B16]">{m.title}</div>
+                      <div className="text-slate-600">{m.desc}</div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => loadTimelineForEdit(m)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-[#040B16] hover:bg-slate-100 cursor-pointer"
+                        aria-label={`Redigera ${m.title}`}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await api.deleteTimelineMilestone(m.id);
+                          await onRefresh();
+                          onNotify('Milstolpe borttagen.');
+                        }}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                        aria-label={`Ta bort ${m.title}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION: PAGE CONTENT & KONTAKT */}
+          {section === 'pages' && (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                await api.updatePageContent(pagesDraft);
+                await onRefresh();
+                onNotify('Sidtexter & kontaktinställningar sparade i CMS.');
+              }}
+              className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg font-bold text-[#040B16]">
+                    Redigera rubriker &amp; texter på alla sidor
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Välj sida nedan för att redigera kicker, huvudrubrik, ingress, KPI-värden och kontaktmejl.
+                  </p>
+                </div>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer"
+                >
+                  Spara sidtexter
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1.5 rounded-xl text-xs font-semibold">
+                {(
+                  [
+                    ['marknad', 'Marknad & Karta'],
+                    ['nyheter', 'Nyheter'],
+                    ['event', 'Event & Mässor'],
+                    ['historia', 'Historia'],
+                    ['ehandlare', 'E-handlare'],
+                    ['partners', 'Jämför Partners'],
+                    ['logistics', '3PL & 4PL'],
+                    ['jobb', 'Jobb'],
+                    ['community', 'Community'],
+                    ['kontakt', 'Kontakt'],
+                  ] as Array<[keyof PageContentMap, string]>
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setActivePageKey(key)}
+                    className={`px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                      activePageKey === key
+                        ? 'bg-[#040B16] text-white'
+                        : 'text-slate-600 hover:text-[#040B16]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {(() => {
+                const block = pagesDraft[activePageKey];
+                return (
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Kicker (rad över rubrik)
+                      </label>
+                      <input
+                        type="text"
+                        value={block.kicker}
+                        onChange={(e) =>
+                          setPagesDraft({
+                            ...pagesDraft,
+                            [activePageKey]: { ...block, kicker: e.target.value },
+                          })
+                        }
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Huvudrubrik (H1)
+                      </label>
+                      <input
+                        type="text"
+                        value={block.title}
+                        onChange={(e) =>
+                          setPagesDraft({
+                            ...pagesDraft,
+                            [activePageKey]: { ...block, title: e.target.value },
+                          })
+                        }
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Ingress / Beskrivning
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={block.subtitle}
+                        onChange={(e) =>
+                          setPagesDraft({
+                            ...pagesDraft,
+                            [activePageKey]: { ...block, subtitle: e.target.value },
+                          })
+                        }
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200"
+                      />
+                    </div>
+
+                    {activePageKey === 'marknad' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            KPI 1 Etikett
+                          </label>
+                          <input
+                            type="text"
+                            value={pagesDraft.marknad.kpi1Label || ''}
+                            onChange={(e) =>
+                              setPagesDraft({
+                                ...pagesDraft,
+                                marknad: { ...pagesDraft.marknad, kpi1Label: e.target.value },
+                              })
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            KPI 1 Värde
+                          </label>
+                          <input
+                            type="text"
+                            value={pagesDraft.marknad.kpi1Value || ''}
+                            onChange={(e) =>
+                              setPagesDraft({
+                                ...pagesDraft,
+                                marknad: { ...pagesDraft.marknad, kpi1Value: e.target.value },
+                              })
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            KPI 2 Etikett
+                          </label>
+                          <input
+                            type="text"
+                            value={pagesDraft.marknad.kpi2Label || ''}
+                            onChange={(e) =>
+                              setPagesDraft({
+                                ...pagesDraft,
+                                marknad: { ...pagesDraft.marknad, kpi2Label: e.target.value },
+                              })
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            KPI 2 Värde
+                          </label>
+                          <input
+                            type="text"
+                            value={pagesDraft.marknad.kpi2Value || ''}
+                            onChange={(e) =>
+                              setPagesDraft({
+                                ...pagesDraft,
+                                marknad: { ...pagesDraft.marknad, kpi2Value: e.target.value },
+                              })
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            KPI 3 Etikett
+                          </label>
+                          <input
+                            type="text"
+                            value={pagesDraft.marknad.kpi3Label || ''}
+                            onChange={(e) =>
+                              setPagesDraft({
+                                ...pagesDraft,
+                                marknad: { ...pagesDraft.marknad, kpi3Label: e.target.value },
+                              })
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            KPI 3 Värde
+                          </label>
+                          <input
+                            type="text"
+                            value={pagesDraft.marknad.kpi3Value || ''}
+                            onChange={(e) =>
+                              setPagesDraft({
+                                ...pagesDraft,
+                                marknad: { ...pagesDraft.marknad, kpi3Value: e.target.value },
+                              })
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            KPI 4 Etikett
+                          </label>
+                          <input
+                            type="text"
+                            value={pagesDraft.marknad.kpi4Label || ''}
+                            onChange={(e) =>
+                              setPagesDraft({
+                                ...pagesDraft,
+                                marknad: { ...pagesDraft.marknad, kpi4Label: e.target.value },
+                              })
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                            KPI 4 Värde
+                          </label>
+                          <input
+                            type="text"
+                            value={pagesDraft.marknad.kpi4Value || ''}
+                            onChange={(e) =>
+                              setPagesDraft({
+                                ...pagesDraft,
+                                marknad: { ...pagesDraft.marknad, kpi4Value: e.target.value },
+                              })
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 font-mono"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {activePageKey === 'kontakt' && (
+                      <div className="pt-3 border-t border-slate-100">
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                          Redaktionens kontaktmejl
+                        </label>
+                        <input
+                          type="email"
+                          value={pagesDraft.kontakt.contactEmail || ''}
+                          onChange={(e) =>
+                            setPagesDraft({
+                              ...pagesDraft,
+                              kontakt: { ...pagesDraft.kontakt, contactEmail: e.target.value },
+                            })
+                          }
+                          placeholder="hej@sverigesehandel.se"
+                          className="w-full sm:max-w-sm px-3.5 py-2 rounded-xl border border-slate-200 font-mono"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </form>
           )}
 
           {/* SECTION: OVERVIEW & BACKUP */}
