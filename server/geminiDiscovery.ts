@@ -1,3 +1,4 @@
+import { articleUrl } from '../shared/editorial.ts';
 import { GoogleGenAI } from '@google/genai';
 import type {
   DiscoveredJobCandidate,
@@ -318,7 +319,8 @@ Returnera ENDAST en giltig JSON-array där varje objekt har exakt dessa nycklar:
 - "applyUrl": string (verifierad aktiv https://-URL till jobbannons eller karriärsida)
 - "expiresAt": string (sista ansökningsdag eller giltighetstid i formatet YYYY-MM-DD, minst ${todayIso})
 - "skills": string[] (3–4 relevanta kompetenser)
-- "desc": string (koncis svensk beskrivning på 1–2 meningar)`;
+- "summary": string (kort svensk ingress, högst 240 tecken)
+- "desc": string (saklig svensk rollbeskrivning utifrån källan, med stycken separerade av \n\n; hitta inte på saknade detaljer)`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-4-hydrogen',
@@ -364,6 +366,7 @@ Returnera ENDAST en giltig JSON-array där varje objekt har exakt dessa nycklar:
           ? item.expiresAt
           : defaultExpiry,
       skills: Array.isArray(item.skills) ? item.skills.slice(0, 5) : [],
+      summary: typeof item.summary === 'string' ? item.summary.slice(0, 240) : undefined,
       desc: item.desc || `Roll inom svensk e-handel hos ${item.company}.`,
       alreadyExists: existingSet.has(`${item.title} @ ${item.company}`.toLowerCase().trim()),
     }));
@@ -473,7 +476,7 @@ Returnera ENDAST en giltig JSON-array där varje objekt har EXAKT dessa nycklar:
 - "category": string (en av: "Temu & Marknadsplatser", "Nya Butiker (SE & EU)", "SaaS & System", "Logistik & Regler")
 - "region": string ("Sverige" | "Europa" | "Norden" | "Globalt")
 - "sourceName": string (namn på nyhetskälla, t.ex. "Ehandel.se", "Dagens Handel", "Breakit", "Ecommerce News Europe")
-- "sourceUrl": string (giltig https://-URL till nyheten eller källan)
+- "sourceUrl": string (direkt https://-URL till exakt den enskilda originalartikeln, aldrig startsida, kategori eller annan artikel; tom sträng om den inte kan beläggas)
 - "publishedDate": string (YYYY-MM-DD)
 - "impactNote": string (1 kort mening om vad nyheten innebär för svenska e-handlare)
 - "tags": string[] (2–4 korta nyckelord)`;
@@ -495,13 +498,12 @@ Returnera ENDAST en giltig JSON-array där varje objekt har EXAKT dessa nycklar:
 
   const candidates = rawList
     .filter((item) => item && typeof item.title === 'string' && item.title.trim().length > 0)
-    .map((item, idx) => {
+    .map((item) => {
       const cat = VALID_NEWS_CATEGORIES.includes(item.category as NewsCategory)
         ? (item.category as NewsCategory)
         : 'SaaS & System';
-      const fallbackUrl = sources[idx % Math.max(sources.length, 1)]?.uri || 'https://www.ehandel.se';
       const rawUrl = typeof item.sourceUrl === 'string' ? item.sourceUrl.trim() : '';
-      const validUrl = rawUrl.startsWith('http') ? rawUrl : fallbackUrl;
+      const validUrl = articleUrl(rawUrl) || ''; // Never assign a different search result to this story.
       return {
         title: item.title.trim(),
         summary: item.summary?.trim() || 'Aktuell branschnyhet inom svensk och europeisk e-handel.',

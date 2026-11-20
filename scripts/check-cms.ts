@@ -1,3 +1,5 @@
+import { articleUrl, jobSummary } from '../shared/editorial.ts';
+import { JobDescription, PlainTextDescription } from '../src/components/JobDescription.tsx';
 import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -64,6 +66,83 @@ async function request(path: string, method = 'GET', body?: unknown, identity?: 
   }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
 }
 try {
+  // Editorial regression checks: real API routes + transactional readback, no external fetches.
+  const editorialSnapshot = structuredClone(snapshot);
+  const validArticle = 'https://publisher.invalid/news/one-story';
+  for (const value of ['', 'https://publisher.invalid', 'https://publisher.invalid/news',
+    'https://publisher.invalid/category/retail', 'javascript:alert(1)',
+    'https://user:password@publisher.invalid/news/story', 'http://127.0.0.1/article',
+    'https://publisher.invalid/%zz']) assert.equal(articleUrl(value), null, value);
+  assert.equal(articleUrl(validArticle + '#section'), validArticle);
+  const newsInput = { title: 'Editorial fixture', summary: 'One actual story', sourceName: 'Publisher',
+    sourceUrl: validArticle, publishedDate: '2026-01-01' };
+  assert.equal((await request('/api/news', 'POST', { ...newsInput, status: 'published',
+    linkReviewedAt: 'forged' }, 'admin-fixture')).status, 400, 'Client cannot forge approval metadata');
+  assert.equal((await request('/api/news', 'POST', { ...newsInput, sourceUrl: 'https://publisher.invalid',
+    status: 'published', confirmArticleLink: true }, 'admin-fixture')).status, 400);
+  const approvedResponse = await request('/api/news', 'POST', { ...newsInput,
+    status: 'published', confirmArticleLink: true }, 'admin-fixture');
+  assert.equal(approvedResponse.status, 201);
+  const approved = (await approvedResponse.json()).item;
+  assert.ok(approved.linkReviewedAt);
+  assert.equal(approved.sourceUrl, validArticle);
+  assert.equal('confirmArticleLink' in approved, false);
+  const publicNews = await (await request('/api/news')).json();
+  assert.ok(publicNews.some((item: { id: string }) => item.id === approved.id));
+  for (const patch of [{ title: 'Different story' }, { summary: 'Different content' },
+    { sourceUrl: 'https://publisher.invalid/news/other-story' }, { publishedDate: '2026-02-01' }]) {
+    assert.equal((await request(`/api/news/${approved.id}`, 'PUT', { ...newsInput,
+      ...patch, status: 'published' }, 'admin-fixture')).status, 400, 'Changed story needs a new review');
+  }
+  const draftResponse = await request(`/api/news/${approved.id}`, 'PUT', { ...newsInput,
+    sourceUrl: '', status: 'draft' }, 'admin-fixture');
+  assert.equal(draftResponse.status, 200);
+  assert.equal((await draftResponse.json()).item.linkReviewedAt, undefined);
+  const batchResponse = await request('/api/news/batch', 'POST', { items: [
+    { ...newsInput, title: 'No URL', sourceUrl: '', status: 'published', confirmArticleLink: true, linkReviewedAt: 'forged' },
+    { ...newsInput, title: 'Has URL', status: 'published', confirmArticleLink: true },
+  ] }, 'admin-fixture');
+  assert.equal(batchResponse.status, 201);
+  const importedNews = (await batchResponse.json()).added;
+  assert.equal(importedNews.length, 2);
+  assert.ok(importedNews.every((item: { status: string; linkReviewedAt?: string }) => item.status === 'draft' && !item.linkReviewedAt));
+  assert.equal(importedNews[0].sourceUrl, '', 'Missing URL is not replaced by another story or homepage');
+  assert.ok(!(await (await request('/api/news')).json()).some((item: { title: string }) => item.title === 'No URL'));
+  const renderNews = (item: typeof approved) => renderToString(createElement(NewsView, {
+    news: [item], adBanners: [], onNavigate: () => {}, onBookAdSlot: () => {},
+    onRefresh: async () => {}, onNotify: () => {},
+  }));
+  const approvedHtml = renderNews(approved);
+  assert.equal(approvedHtml.split(`href="${validArticle}"`).length - 1, 2, 'Title and read-link share one approved URL');
+  assert.ok(!renderNews({ ...approved, linkReviewedAt: undefined }).includes(`href="${validArticle}"`));
+  assert.ok(!renderNews({ ...approved, sourceUrl: 'javascript:alert(1)' }).includes('href="javascript:'));
+
+  const fullText = 'Första stycket.\n\nAndra stycket.\n- Analys\n- Samarbete\n\n<script>alert(1)</script>';
+  const jobResponse = await request('/api/jobs', 'POST', { title: 'Job text fixture', company: 'Fixture',
+    desc: fullText, summary: 'Kort ingress', applyUrl: 'https://publisher.invalid/jobs/one',
+    expiresAt: '2099-01-01' }, 'admin-fixture');
+  assert.equal(jobResponse.status, 201);
+  const savedJob = await jobResponse.json();
+  assert.equal(savedJob.desc, fullText);
+  assert.equal(savedJob.summary, 'Kort ingress');
+  const updatedJob = await request(`/api/jobs/${savedJob.id}`, 'PUT', { title: savedJob.title,
+    company: savedJob.company, summary: 'Ny ingress', desc: fullText + '\nSista raden.' }, 'admin-fixture');
+  assert.equal(updatedJob.status, 200);
+  assert.equal((await updatedJob.json()).summary, 'Ny ingress');
+  assert.equal((await request('/api/jobs', 'POST', { title: 'Too long', company: 'Fixture',
+    summary: 'x'.repeat(241) }, 'admin-fixture')).status, 400);
+  const jobHtml = renderToString(createElement(JobDescription, { job: savedJob }));
+  assert.ok(jobHtml.includes('<details') && jobHtml.includes('<summary'));
+  assert.ok(jobHtml.includes('Kort ingress') && jobHtml.includes('Läs hela tjänsten'));
+  const descriptionHtml = renderToString(createElement(PlainTextDescription, { text: fullText }));
+  assert.ok(descriptionHtml.includes('<li>Analys</li>') && descriptionHtml.includes('<li>Samarbete</li>'));
+  assert.ok(descriptionHtml.includes('<p') && descriptionHtml.includes('&lt;script&gt;'));
+  assert.ok(!descriptionHtml.includes('<script>'));
+  assert.ok(jobSummary({ desc: 'ord '.repeat(100) }).length <= 240);
+  assert.equal(jobSummary({ desc: 'Legacy text without summary' }), 'Legacy text without summary');
+  assert.equal((await service.getStore()).jobs.find((item) => item.id === savedJob.id)?.desc, fullText + '\nSista raden.');
+  snapshot = editorialSnapshot;
+
   const currentSnapshot = structuredClone(snapshot);
   const legacy = structuredClone(snapshot) as Partial<typeof snapshot>;
   delete legacy.logisticsProviders;

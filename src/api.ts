@@ -385,7 +385,7 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  upsertNews: (item: Partial<EcommerceNewsItem> & { title: string }) =>
+  upsertNews: (item: Partial<EcommerceNewsItem> & { title: string; confirmArticleLink?: boolean }) =>
     request<{ item: EcommerceNewsItem; created: boolean }>(
       item.id ? `/api/news/${item.id}` : '/api/news',
       {

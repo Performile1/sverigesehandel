@@ -1,3 +1,5 @@
+import { articleUrl } from '../../shared/editorial';
+import { NewsReviewPanel } from './EditorialPanels';
 import { useMemo, useState } from 'react';
 import {
   Check,
@@ -179,12 +181,12 @@ export function NewsView({
     try {
       const items = aiSelected.map((idx) => ({
         ...aiCandidates[idx],
-        status: 'published' as const,
+        status: 'draft' as const,
       }));
       const res = await api.batchAddNews(items);
       await onRefresh();
       onNotify(
-        `${res.added.length} nyheter publicerade${
+        `${res.added.length} nyhetsutkast sparade för länkgranskning${
           res.skipped.length ? ` (${res.skipped.length} hoppades över som dubbletter)` : ''
         }.`
       );
@@ -213,14 +215,14 @@ export function NewsView({
         category: newCategory,
         region: newRegion,
         sourceName: newSourceName.trim() || 'sverigesehandel.se Redaktion',
-        sourceUrl: newSourceUrl.trim() || 'https://sverigesehandel.se',
+        sourceUrl: newSourceUrl.trim(),
         publishedDate: new Date().toISOString().slice(0, 10),
         impactNote: newImpactNote.trim() || undefined,
         tags: newTags
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean),
-        status: 'published',
+        status: 'draft',
       });
       setNewTitle('');
       setNewSummary('');
@@ -229,7 +231,7 @@ export function NewsView({
       setNewImpactNote('');
       setShowAddForm(false);
       await onRefresh();
-      onNotify('Nyhetsartikel publicerad.');
+      onNotify('Nyheten sparad som utkast. Granska direktlänken före publicering.');
     } catch (err) {
       onNotify((err as Error).message);
     } finally {
@@ -431,7 +433,7 @@ export function NewsView({
                   ) : (
                     <Check className="w-3.5 h-3.5" />
                   )}
-                  Publicera {aiSelected.length} valda i Nyheter
+                  Spara {aiSelected.length} valda som utkast
                 </button>
               </div>
             </div>
@@ -473,9 +475,7 @@ export function NewsView({
                         {item.title}
                       </div>
                       <p className="text-xs text-slate-600 leading-relaxed">{item.summary}</p>
-                      <div className="text-[11px] font-mono text-slate-500">
-                        Källa: {item.sourceName}
-                      </div>
+                      <div className="text-[11px] text-slate-500 break-all">Källa: {item.sourceName} · Föreslagen direktlänk: {item.sourceUrl || 'Saknas – behöver granskas'}</div>
                     </div>
                   </label>
                 );
@@ -503,6 +503,8 @@ export function NewsView({
         )}
       </div>
 
+      {isAdmin && <NewsReviewPanel news={news} onRefresh={onRefresh} onNotify={onNotify} />}
+
       {/* Admin Quick-Add Form */}
       {isAdmin && showAddForm && (
         <form
@@ -511,7 +513,7 @@ export function NewsView({
         >
           <div className="flex items-center justify-between gap-2">
             <h2 className="font-display text-lg font-extrabold text-[#040B16]">
-              Publicera nyhetsartikel i CMS
+              Skapa nyhetsutkast i CMS
             </h2>
           </div>
 
@@ -604,7 +606,7 @@ export function NewsView({
               disabled={savingManual}
               className="px-5 py-2 rounded-xl bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer disabled:opacity-50"
             >
-              {savingManual ? 'Sparar...' : 'Publicera artikel'}
+              {savingManual ? 'Sparar...' : 'Spara utkast'}
             </button>
           </div>
         </form>
@@ -649,7 +651,9 @@ export function NewsView({
                 </div>
 
                 <h2 className="font-display text-xl font-extrabold text-[#040B16] leading-snug">
-                  {item.title}
+                  {item.linkReviewedAt && articleUrl(item.sourceUrl)
+                    ? <a href={articleUrl(item.sourceUrl)!} target="_blank" rel="noopener noreferrer" className="hover:underline">{item.title}</a>
+                    : item.title}
                 </h2>
 
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{item.summary}</p>
@@ -671,15 +675,15 @@ export function NewsView({
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-                <a
-                  href={item.sourceUrl || 'https://sverigesehandel.se'}
+                {item.linkReviewedAt && articleUrl(item.sourceUrl) ? <a
+                  href={articleUrl(item.sourceUrl)!}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs font-bold text-[#040B16] hover:text-[#006AA7] inline-flex items-center gap-1.5 transition-colors"
                 >
-                  <span>Källa: {item.sourceName}</span>
+                  <span>Läs originalartikeln · {item.sourceName}</span>
                   <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                </a> : <span className="text-xs text-amber-800">Källa: {item.sourceName} · Direktlänk behöver granskas</span>}
 
                 {isAdmin && (
                   <button

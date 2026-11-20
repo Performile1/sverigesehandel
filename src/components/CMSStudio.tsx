@@ -1,3 +1,4 @@
+import { JobTextPanel, NewsReviewPanel } from './EditorialPanels';
 import { useEffect, useMemo, useState } from 'react';
 import {
   BarChart3,
@@ -238,6 +239,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
   const [newJobUrl, setNewJobUrl] = useState('');
   const [newJobSkills, setNewJobSkills] = useState('Centra, Voyado, Tillväxt');
   const [newJobDesc, setNewJobDesc] = useState('');
+  const [newJobSummary, setNewJobSummary] = useState('');
   const [newJobExpiresAt, setNewJobExpiresAt] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 45);
@@ -684,6 +686,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean),
+      summary: newJobSummary.trim(),
       desc: newJobDesc.trim() || `${newJobTitle.trim()} hos ${newJobCompany.trim()}.`,
       postedAt: 'Ny idag',
       expiresAt: newJobExpiresAt || undefined,
@@ -695,6 +698,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
     setNewJobSalary('');
     setNewJobUrl('');
     setNewJobDesc('');
+    setNewJobSummary('');
     await onRefresh();
     onNotify('Jobbannons publicerad i Sveriges E-handel.');
   }
@@ -1944,6 +1948,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
 
               {jobsTab === 'jobs' ? (
                 <>
+                  <JobTextPanel jobs={store.jobs} onRefresh={onRefresh} onNotify={onNotify} />
                   <form
                     onSubmit={handleAddJob}
                     className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4"
@@ -2025,11 +2030,13 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                         placeholder="Kompetenser (komma-separerat)"
                         className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
                       />
-                      <input
-                        type="text"
-                        value={newJobDesc}
-                        onChange={(e) => setNewJobDesc(e.target.value)}
-                        placeholder="Kort rollbeskrivning"
+                      <textarea
+                        aria-label="Kort ingress"
+                        maxLength={240}
+                        rows={2}
+                        value={newJobSummary}
+                        onChange={(e) => setNewJobSummary(e.target.value)}
+                        placeholder="Kort ingress (högst 240 tecken)"
                         className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs"
                       />
                       <input
@@ -2040,6 +2047,9 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                         className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono"
                       />
                     </div>
+                    <label className="block text-sm">Fullständig beskrivning
+                      <textarea rows={8} value={newJobDesc} onChange={(e) => setNewJobDesc(e.target.value)} placeholder="Tom rad skapar stycke; börja punktlistor med -." className="w-full px-3 py-2 rounded-xl border border-slate-300" />
+                    </label>
                     <div className="flex justify-end">
                       <button
                         type="submit"
@@ -3071,6 +3081,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
           {/* SECTION: NEWS */}
           {section === 'news' && (
             <div className="space-y-6">
+              <NewsReviewPanel news={store.news || []} onRefresh={onRefresh} onNotify={onNotify} />
               <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -3103,7 +3114,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                         });
                         await onRefresh();
                         onNotify(
-                          `Hämtade ${res.candidates.length} artiklar och sparade ${res.saved?.added.length ?? 0} nya nyheter.`
+                          `Hämtade ${res.candidates.length} artiklar och sparade ${res.saved?.added.length ?? 0} nya utkast för länkgranskning.`
                         );
                       } catch (err) {
                         onNotify((err as Error).message);
@@ -3118,7 +3129,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                     ) : (
                       <Sparkles className="w-3.5 h-3.5" />
                     )}
-                    {cmsNewsAiLoading ? 'Hämtar...' : 'Hämta & spara 5 nyheter'}
+                    {cmsNewsAiLoading ? 'Hämtar...' : 'Hämta & spara 5 utkast'}
                   </button>
                 </div>
               </div>
@@ -3133,21 +3144,21 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                     category: cmsNewsCategory,
                     region: cmsNewsRegion,
                     sourceName: cmsNewsSourceName.trim() || 'sverigesehandel.se Redaktion',
-                    sourceUrl: cmsNewsSourceUrl.trim() || 'https://sverigesehandel.se',
+                    sourceUrl: cmsNewsSourceUrl.trim(),
                     publishedDate: new Date().toISOString().slice(0, 10),
-                    status: 'published',
+                    status: 'draft',
                   });
                   setCmsNewsTitle('');
                   setCmsNewsSummary('');
                   setCmsNewsSourceName('');
                   setCmsNewsSourceUrl('');
                   await onRefresh();
-                  onNotify('Nyhetsartikel publicerad.');
+                  onNotify('Nyheten sparad som utkast. Granska direktlänken ovan före publicering.');
                 }}
                 className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4"
               >
                 <h2 className="font-display text-lg font-bold text-[#040B16]">
-                  Publicera nyhetsartikel manuellt
+                  Skapa nyhetsutkast manuellt
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <input
@@ -3212,7 +3223,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                     type="submit"
                     className="px-4 py-2 rounded-xl bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer"
                   >
-                    + Publicera nyhet
+                    + Spara nyhetsutkast
                   </button>
                 </div>
               </form>
@@ -3245,10 +3256,12 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                           <td className="py-3 px-4">
                             <button
                               type="button"
+                              disabled={item.status === 'draft'}
+                              title="Publicera via länkgranskningen ovan"
                               onClick={async () => {
                                 await api.upsertNews({
                                   ...item,
-                                  status: item.status === 'published' ? 'draft' : 'published',
+                                  status: 'draft',
                                 });
                                 await onRefresh();
                               }}
@@ -3256,7 +3269,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                                 item.status === 'published' ? 'text-[#059669]' : 'text-amber-700'
                               }`}
                             >
-                              {item.status === 'published' ? 'Publicerad' : 'Utkast'}
+                              {item.status === 'published' ? 'Avpublicera' : 'Utkast – granska ovan'}
                             </button>
                           </td>
                           <td className="py-3 px-4 text-right">
@@ -3290,10 +3303,12 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           type="button"
+                          disabled={item.status === 'draft'}
+                          title="Publicera via länkgranskningen ovan"
                           onClick={async () => {
                             await api.upsertNews({
                               ...item,
-                              status: item.status === 'published' ? 'draft' : 'published',
+                              status: 'draft',
                             });
                             await onRefresh();
                           }}
@@ -3301,7 +3316,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                             item.status === 'published' ? 'text-[#059669]' : 'text-amber-700'
                           }`}
                         >
-                          {item.status === 'published' ? 'Publicerad' : 'Utkast'}
+                          {item.status === 'published' ? 'Avpublicera' : 'Utkast – granska ovan'}
                         </button>
                         <button
                           type="button"

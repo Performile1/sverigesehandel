@@ -11,6 +11,38 @@ Paketindex history, analytics, job descriptions, salary estimates, regional maps
 and direct links to the correct news articles. The plan does not implement or
 activate these features.
 
+## Editorial links and job descriptions
+
+News created manually or imported in batches/with AI is saved as draft. In the
+CMS news view (also available to admins on the public news tab), select a story
+in the link-review panel, correct its headline/summary/source/date/URL, open the
+original article, then explicitly confirm it matches before publishing. The
+server records the review time; changing those fields requires another review.
+Structural URL checks reject homepages, known category/search paths, unsafe
+schemes and embedded credentials. They cannot determine whether two stories are
+the same: editorial review is required. No external URL is fetched by the API.
+Unreachable pages, redirects and paywalls must be assessed by the editor in their
+browser; they are not automatically classified or bypassed.
+
+Legacy published news remains in storage and visible, but its unreviewed links
+are not clickable until an editor checks them. The review selector inventories
+all legacy items and drafts. This is intentional: existing links have not been
+claimed as correct or silently replaced. A trusted admin snapshot restore can
+restore review metadata, so review backups before importing them.
+
+Jobs retain `desc` as the full original text, with optional `summary` (max 240
+characters). Old records without a summary get a short display excerpt without a
+startup write. A normal job edit persists a summary. Both create forms and the
+CMS text editor support the new fields; AI/batch import retains them. Native
+`details` expands the full description, with blank lines as paragraphs and
+`-`, `*` or `•` bullet lines as lists. Content is escaped plain text, not HTML.
+Editing only the text does not reopen closed jobs or reset expiry verification.
+
+The remaining roadmap stages are not implemented by this change: media storage,
+Paketindex archives/import, analytics/IP/heatmaps, salary data and new map areas
+still need their respective provider/data/privacy/geography decisions. No new
+service, tracking or paid resource is enabled.
+
 ## Firebase integration
 
 This branch preserves the Firebase setup from `main`:
