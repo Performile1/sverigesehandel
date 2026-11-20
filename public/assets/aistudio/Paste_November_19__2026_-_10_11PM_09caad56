@@ -219,7 +219,7 @@ _aistudio-iframe.js?v=29045eb3:413 [vite] failed to connect to websocket (Error:
 error @ _aistudio-iframe.js?v=29045eb3:413
 client:234 Uncaught (in promise) Error: WebSocket closed without opened.
     at WebSocket.<anonymous> (client:234:30)
-_aistudio-iframe.js?v=29045eb3:413 Firestore Error:  {"error":"Missing or insufficient permissions.","authInfo":{"userId":"VJO4oUUOylSec0RvmNLHaDU266h2","email":"wigrund81@gmail.com","emailVerified":true,"isAnonymous":false,"tenantId":null,"providerInfo":[{"providerId":"google.com","email":"wigrund81@gmail.com"}]},"operationType":"write","path":"users/VJO4oUUOylSec0RvmNLHaDU266h2"}
+_aistudio-iframe.js?v=29045eb3:413 Firestore Error:  {"error":"Missing or insufficient permissions.","authInfo":{"userId":"VJO4oUUOylSec0RvmNLHaDU266h2","email":"[redacted-email]","emailVerified":true,"isAnonymous":false,"tenantId":null,"providerInfo":[{"providerId":"google.com","email":"[redacted-email]"}]},"operationType":"write","path":"users/VJO4oUUOylSec0RvmNLHaDU266h2"}
 error @ _aistudio-iframe.js?v=29045eb3:413
 m=_b:1495 No ID or name found in config.
 updateJsLog @ m=_b:1495

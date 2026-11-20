@@ -1,3 +1,4 @@
+import { matchesJob } from '../../shared/portalContent';
 import { JobDescription } from './JobDescription';
 import { useMemo, useState } from 'react';
 import { Briefcase, ExternalLink, MapPin, Plus, Search, Sparkles, Users } from 'lucide-react';
@@ -55,6 +56,7 @@ export function JobsView({
 }: JobsViewProps) {
   const [subTab, setSubTab] = useState<'jobs' | 'recruiters'>('jobs');
   const [search, setSearch] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [workModelFilter, setWorkModelFilter] = useState<string>('all');
   const [recruiterTypeFilter, setRecruiterTypeFilter] = useState<string>('all');
@@ -84,22 +86,12 @@ export function JobsView({
     [recruitmentSites]
   );
 
-  const filteredJobs = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return publishedJobs.filter((j) => {
-      const matchQ =
-        !q ||
-        j.title.toLowerCase().includes(q) ||
-        j.company.toLowerCase().includes(q) ||
-        j.city.toLowerCase().includes(q) ||
-        j.skills.some((s) => s.toLowerCase().includes(q)) ||
-        j.desc.toLowerCase().includes(q) ||
-        (j.summary || '').toLowerCase().includes(q);
-      const matchRole = roleFilter === 'all' || j.roleCategory === roleFilter;
-      const matchModel = workModelFilter === 'all' || j.workModel === workModelFilter;
-      return matchQ && matchRole && matchModel;
-    });
-  }, [publishedJobs, search, roleFilter, workModelFilter]);
+  const filteredJobs = useMemo(() => publishedJobs.filter((job) => matchesJob(job, {
+    search, city: cityFilter, role: roleFilter, workModel: workModelFilter,
+  })), [publishedJobs, search, cityFilter, roleFilter, workModelFilter]);
+
+  const cities = useMemo(() => [...new Set(publishedJobs.map((job) => job.city.trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'sv')), [publishedJobs]);
 
   const filteredRecruiters = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -189,7 +181,8 @@ export function JobsView({
             <div className="relative w-full sm:w-72">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
               <input
-                type="text"
+                type="search"
+                aria-label={subTab === 'jobs' ? 'Sök jobb, roll, företag eller kompetens' : 'Sök rekryterare'}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={
@@ -202,6 +195,18 @@ export function JobsView({
             </div>
           </div>
 
+          {subTab === 'jobs' && <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+            <label className="block text-xs text-slate-200 flex-1 max-w-md">Ort
+              <input type="search" aria-label="Ort" list="job-cities" value={cityFilter}
+                onChange={(event) => setCityFilter(event.target.value)} placeholder="Sök ort, t.ex. Göteborg"
+                className="block mt-1 w-full bg-[#0A1628] border border-white/15 rounded-xl px-3 py-2 text-sm text-white" />
+            </label>
+            <datalist id="job-cities">{cities.map((city) => <option key={city} value={city} />)}</datalist>
+            <button type="button" className="text-sm text-white underline cursor-pointer py-2"
+              onClick={() => { setSearch(''); setCityFilter(''); setRoleFilter('all'); setWorkModelFilter('all'); }}>Rensa jobbfilter</button>
+            <p role="status" className="text-sm text-slate-200 py-2">Visar {filteredJobs.length} av {publishedJobs.length} aktuella jobb</p>
+          </div>}
+
           {/* Role Filter Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-1.5">
@@ -209,6 +214,7 @@ export function JobsView({
                 <button
                   key={role}
                   type="button"
+                  aria-pressed={roleFilter === role}
                   onClick={() => setRoleFilter(role)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                     roleFilter === role
@@ -223,6 +229,7 @@ export function JobsView({
 
             {subTab === 'jobs' ? (
               <select
+                aria-label="Arbetsmodell"
                 value={workModelFilter}
                 onChange={(e) => setWorkModelFilter(e.target.value)}
                 className="bg-[#0A1628] border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white"
@@ -230,7 +237,7 @@ export function JobsView({
                 <option value="all">Alla arbetsmodeller</option>
                 <option value="Hybrid">Hybrid</option>
                 <option value="På plats">På plats</option>
-                <option value="Remote">Remote</option>
+                <option value="Remote">Distans / Remote</option>
               </select>
             ) : (
               <select

@@ -1,3 +1,5 @@
+import { MARKET_TITLE } from '../../shared/portalContent';
+import type { MapPoint } from '../types';
 import { useMemo, useState } from 'react';
 import {
   ArrowRight,
@@ -56,6 +58,7 @@ import { ResilientImage } from './ResilientImage';
 import { SwedenLogisticsMap } from './SwedenLogisticsMap';
 
 interface MarknadViewProps {
+  mapPoints?: MapPoint[];
   regions: Record<string, RegionMetric>;
   orderBenchmarks: CategoryOrderBenchmark[];
   shippingTiers: ShippingCostTier[];
@@ -147,6 +150,7 @@ function TrendChartTooltip({
 }
 
 export function MarknadView({
+  mapPoints = [],
   regions = {},
   orderBenchmarks = [],
   shippingTiers = [],
@@ -341,11 +345,7 @@ export function MarknadView({
                 {pageCopy?.kicker || 'Svensk e-handelsdata · Index 2026–2027'} · {merchantCount} e-handlare &amp; {partnerCount} tech-partners i CMS
               </div>
               <h1 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.08] max-w-2xl text-balance">
-                {pageCopy?.title || (
-                  <>
-                    Hela Sveriges <span className="text-[#FECC02]">e-handelsdata</span> och ekosystem på ett ställe.
-                  </>
-                )}
+                {pageCopy?.title || MARKET_TITLE}
               </h1>
               <p className="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed">
                 {pageCopy?.subtitle ||
@@ -461,6 +461,7 @@ export function MarknadView({
         {/* Interactive Sweden Map + Cross-Border */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <SwedenLogisticsMap
+            mapPoints={mapPoints}
             regions={regions}
             selectedRegion={selectedRegion}
             onSelectRegion={setSelectedRegion}

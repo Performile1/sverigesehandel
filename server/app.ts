@@ -454,6 +454,14 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.json({ deleted: true });
   }));
 
+  app.put('/api/map-points/:id', route(async (req, res) => {
+    res.json(await store.upsertMapPoint({ ...req.body, id: req.params.id }));
+  }));
+  app.delete('/api/map-points/:id', route(async (req, res) => {
+    if (!await store.deleteMapPoint(req.params.id)) { res.status(404).json({ error: 'Kartpunkten hittades inte.' }); return; }
+    res.json({ deleted: true });
+  }));
+
   // --- REGIONS ---
   app.put('/api/regions/:key', route(async (req, res) => {
     const updated = await store.updateRegion(req.params.key, req.body);

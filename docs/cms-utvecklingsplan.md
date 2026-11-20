@@ -1,8 +1,21 @@
 # Utvecklingsplan för CMS och publik portal
 
-Status: förslag för granskning. Denna PR dokumenterar planen; den implementerar,
-aktiverar eller publicerar inte funktionerna nedan. Varje etapp får en separat
-implementation och verifiering innan produktionssättning.
+Status: genomförande i etapper. Ursprunglig plan togs fram i PR #4. Senare
+preciseringar nedan gäller framför tidigare förslag. Varje etapp behöver separat
+verifiering innan produktionssättning.
+
+## Preciserat av beställaren
+
+- Kartans utseende och regiongränser ska inte ändras. Endast nya punkter ska kunna
+  läggas till och hanteras i CMS. Förslaget om länskarta utgår.
+- Råa IP-adresser och heatmaps ska förbli avstängda. Se
+  [integritets- och driftförslaget](integritet-och-drift.md) före eventuell aktivering.
+- Fem Paketindexrapporter har mottagits. Se [versionsseparerat underlag](underlag/README.md).
+  Rapporterna har olika historiska värden; import behöver period **och rapportversion**.
+- Jobbsidan ska ha kombinerbar fritext, ort, roll och hybrid/distans/på plats.
+- Ny huvudrubrik: ”Sveriges e-handel – insikter, partners och möjligheter.”
+- Personliga placeholders neutraliseras, även från sparade CMS-formulär.
+  Administratörsidentitet och säkerhetsregler är inte placeholders och ändras inte.
 
 ## Pågående implementation
 
@@ -13,7 +26,8 @@ bevarar äldre jobbtexter med en kort visningsingress. Nyhetsgranskningen är ma
 automatisk hämtning av externa artiklar, omdirigerings- eller betalväggskontroll
 ingår inte. Befintliga nyhetslänkar behöver fortfarande granskas av redaktionen.
 
-Övriga etapper är inte implementerade eller aktiverade. Besluten under
+Jobbfilter och hantering av tillagda kartpunkter ingår nu också i implementations-PR:n.
+Bildlagring, analys och Paketindexarkiv är inte implementerade eller aktiverade. Besluten under
 ”Beslut och underlag” nedan kvarstår. Produktionsdata har inte migrerats eller
 ändrats genom kodarbetet; verifiering sker mot isolerade testdata och preview.
 
@@ -48,7 +62,7 @@ Detta är en kodgranskning, inte verifiering av inloggade produktionsflöden.
 | 3 | Paketindexarkiv, jämförelser och import. | Exempelfil och bekräftad datakälla. |
 | 4 | Grundstatistik i CMS. | Mätdefinitioner, leverantör, åtkomst och integritetsbeslut. |
 | 5 | Källbelagda lönespann. | Datakälla, användningsrätt och metod. |
-| 6 | Fler regionvärden och datastyrd karta. | Val av områdesindelning och datakällor. |
+| 6 | Nya kartpunkter på oförändrad karta. | Koordinater och innehåll till nya punkter; befintlig kartindelning behålls. |
 | 7 | Aktiv tid och heatmaps som separat tillval. | Etapp 4, integritetsgranskning och godkänt samtyckesflöde. |
 
 Etapper kan utvecklas parallellt där beroendena tillåter det. Inga nya betaltjänster,
@@ -131,7 +145,7 @@ produktionsändringar eller personuppgiftsinsamlingar aktiveras genom denna plan
 
 ## 4. Paketindex: historik, nya perioder och import
 
-- Inför poster med stabil periodnyckel (år + kvartal), käll-URL, publiceringsdatum,
+- Inför poster med stabil periodnyckel (år + kvartal) och separat rapportversionsnyckel, käll-URL, publiceringsdatum,
   enheter och utkast/publicerad-status. Tillåt historiska och nya perioder utan
   överskrivning. Ej utgivna framtidsperioder ska kunna förberedas som utkast.
 - Migrera dagens objekt till en arkivpost och bevara befintliga jämförelsedata.
@@ -218,31 +232,29 @@ produktionsändringar eller personuppgiftsinsamlingar aktiveras genom denna plan
 - [ ] Saknat lokalt underlag ger tydlig reservnivå eller inget belopp.
 - [ ] Min/max, valuta och löneperiod valideras; äldre jobb fungerar efter migrering.
 
-## 8. Regiondata och utbyggbar karta
+## 8. Nya punkter på befintlig karta
 
-- Välj län, kommuner eller egna e-handelsregioner. Rekommendation att börja med
-  län och behålla dagens fem områden som en separat gruppering, inte byta deras
-  betydelse under samma nycklar. Detta kräver beställarens beslut.
-- Inför stabila områdes-ID:n, geografisk nivå, namn, relation till överordnat område
-  och versionshanterade kartgränser. Konvertera lämpliga öppna gränser till ett
-  webbanpassat format, exempelvis GeoJSON, och ange koordinatsystem/version.
-- Flytta polygoner och listor ur komponentens fasta femområdeslogik till data.
-  Tillåt nya områden i CMS med import/val av gräns och förhandsgranskning på karta.
-- Utöka redigeringen av befolkning, befolkningstäthet, paketskåp och leveranstäckning.
-  Lägg till exempelvis e-handelsföretag och tillväxt först när användbara källor finns.
-- Varje datapunkt får enhet, referensår, källa, geografisk avgränsning och markering
-  av faktisk/uppskattad uppgift. Stöd historik utan att skriva över tidigare år.
-- Visa källa, legend och saknade värden. Erbjud sökbar/tangentbordstillgänglig lista
-  parallellt med kartan. En statisk kartbild kan vara ett komplement, inte ersätta
-  geometrin för klickbara områden.
+Detta ersätter tidigare förslag om nya geografiska områden/länskarta.
+
+- Behåll befintliga fem områden, polygoner, projektion, färger och ursprungliga orter.
+- CMS-admin ska kunna skapa, redigera, publicera/avpublicera och ta bort egna punkter.
+- Varje punkt har stabilt ID, namn, beskrivning, WGS84-koordinater och koppling till
+  en befintlig region. Förhandsgranskning sker i isolerad previewdata.
+- Publicerade punkter visas med befintlig pin-stil och detaljpanel. Utkast filtreras
+  på servern. Tangentbord och en lista ger alternativ till pekarklick på kartan.
+- Gamla snapshots utan nya punkter fortsätter fungera; import/backup validerar
+  koordinater, fält och unika ID:n. Befintliga hårdkodade orter raderas inte via CMS.
+- Fler regionala nyckeltal är en separat innehållsetapp med källa, enhet och år;
+  de ska inte användas som skäl att bygga om kartan.
 
 ### Acceptanskriterier
 
-- [ ] Ett nytt område kan skapas och kopplas till karta utan ny komponentkod.
-- [ ] Befintliga länkar mellan regioner, företag och logistiknav bevaras/migreras.
-- [ ] Kartklick, lista och nyckeltal visar samma område och tidsperiod.
-- [ ] Felaktig geometri nekas och saknade data visas inte som noll.
-- [ ] Gränsversion och statistikår blandas inte tyst vid historiska jämförelser.
+- [ ] En ny punkt kan skapas, redigeras och tas bort utan komponentändringar.
+- [ ] Admin krävs för skrivning; utkast syns inte i offentliga API-svar.
+- [ ] Koordinater utanför kartans område eller ogiltiga punktfält nekas.
+- [ ] Publicerad punkt kan väljas med mus, tangentbord och lista.
+- [ ] Ingen ändring av regionpolygoner eller befintlig kartindelning.
+- [ ] Sparning/readback och import av äldre snapshot verifieras med isolerade data.
 
 ## Gemensam teknik, migrering och kvalitet
 
@@ -271,7 +283,10 @@ produktionsändringar eller personuppgiftsinsamlingar aktiveras genom denna plan
 - [ ] Välj statistikleverantör, definition av unika mått och eventuell separat IP-insyn.
 - [ ] Besluta om heatmaps/aktiv tid ska aktiveras och godkänn integritetsupplägget.
 - [ ] Välj lönekälla/metod och lämplig geografisk precision.
-- [ ] Välj områdesindelning och prioritera nya regionnyckeltal.
+- [x] Behåll befintlig kartindelning; tillåt endast nya kartpunkter.
+- [x] Låt råa IP-adresser och heatmaps förbli avstängda.
+- [x] Paketindexexempel mottagna; avstämning mot original och rapportversion återstår.
+- [ ] Prioritera nya regionnyckeltal och lämna koordinater för de första nya punkterna.
 
 ## Referenser för kommande implementation
 

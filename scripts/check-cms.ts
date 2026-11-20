@@ -1,3 +1,5 @@
+import { MARKET_TITLE, LEGACY_MARKET_TITLE, matchesJob, neutralPlaceholder } from '../shared/portalContent.ts';
+import { JobsView } from '../src/components/JobsView.tsx';
 import { articleUrl, jobSummary } from '../shared/editorial.ts';
 import { JobDescription, PlainTextDescription } from '../src/components/JobDescription.tsx';
 import assert from 'node:assert/strict';
@@ -141,6 +143,57 @@ try {
   assert.ok(jobSummary({ desc: 'ord '.repeat(100) }).length <= 240);
   assert.equal(jobSummary({ desc: 'Legacy text without summary' }), 'Legacy text without summary');
   assert.equal((await service.getStore()).jobs.find((item) => item.id === savedJob.id)?.desc, fullText + '\nSista raden.');
+  const filterJob = { ...savedJob, city: 'Göteborg', workModel: 'Hybrid', roleCategory: 'Tech & Utveckling' };
+  const filters = { search: '', city: '', role: 'all', workModel: 'all' };
+  assert.ok(matchesJob(filterJob, { ...filters, city: '  göte ', workModel: 'Hybrid', role: 'Tech & Utveckling' }));
+  assert.ok(!matchesJob(filterJob, { ...filters, city: 'Malmö' }));
+  assert.ok(!matchesJob(filterJob, { ...filters, workModel: 'Remote' }));
+  assert.ok(!matchesJob(filterJob, { ...filters, role: 'Growth & MarTech' }));
+  assert.ok(matchesJob(filterJob, { ...filters, search: 'kort ingress' }));
+  assert.ok(matchesJob({ ...filterJob, workModel: 'Remote' }, { ...filters, workModel: 'Remote' }));
+  const jobsHtml = renderToString(createElement(JobsView, {
+    jobs: [filterJob], recruitmentSites: [], adBanners: [], onNavigate: () => {}, onBookAdSlot: () => {},
+    onOpenDiscoverJobs: () => {}, onOpenDiscoverRecruiters: () => {}, onOpenJobModal: () => {}, onApplyJob: () => {},
+  }));
+  assert.ok(jobsHtml.includes('aria-label="Ort"') && jobsHtml.includes('aria-label="Arbetsmodell"'));
+  assert.ok(jobsHtml.includes('Distans / Remote') && jobsHtml.includes('Rensa jobbfilter'));
+  const point = { id: 'point-test', label: 'Testpunkt', latitude: 59.2, longitude: 18.1,
+    regionKey: 'svealand', description: 'Nytt logistiknav', status: 'draft' };
+  assert.equal((await request('/api/map-points/point-test', 'PUT', point)).status, 401);
+  assert.equal((await request('/api/map-points/point-test', 'PUT', point, 'member-fixture')).status, 403);
+  assert.equal((await request('/api/map-points/point-test', 'PUT', { ...point, latitude: 500 }, 'admin-fixture')).status, 400);
+  assert.equal((await request('/api/map-points/point-test', 'PUT', point, 'admin-fixture')).status, 200);
+  assert.equal((await service.getStore()).mapPoints?.length, 1);
+  assert.equal(publicStore(await service.getStore()).mapPoints?.length, 0);
+  assert.equal((await request('/api/map-points/point-test', 'PUT', { ...point, status: 'published' }, 'admin-fixture')).status, 200);
+  const pointStore = await service.getStore();
+  assert.equal(publicStore(pointStore).mapPoints?.[0].label, 'Testpunkt');
+  const mapPointHtml = renderToString(createElement(MarknadView, {
+    ...publicStore(pointStore), merchantCount: 1, partnerCount: 1, onNavigate: () => {}, onBookAdSlot: () => {},
+  }));
+  assert.ok(mapPointHtml.includes('Visa kartpunkt: Testpunkt'));
+  assert.ok(mapPointHtml.includes('Tillagda kartpunkter'));
+  assert.equal((await request('/api/map-points/point-test', 'DELETE', undefined, 'admin-fixture')).status, 200);
+  assert.equal((await service.getStore()).mapPoints?.length, 0);
+  assert.equal((await request('/api/map-points/point-test', 'DELETE', undefined, 'admin-fixture')).status, 404);
+  assert.ok(validateSnapshot({ ...editorialSnapshot, mapPoints: [] }));
+  assert.ok(!validateSnapshot({ ...editorialSnapshot, mapPoints: [{ ...point, latitude: null }] }));
+  assert.ok(!validateSnapshot({ ...editorialSnapshot, mapPoints: [point, point] }));
+  const oldCopy = { ...editorialSnapshot, pageContent: { ...editorialSnapshot.pageContent,
+    marknad: { ...editorialSnapshot.pageContent.marknad, title: LEGACY_MARKET_TITLE } } };
+  const migratedCopy = upgradeSnapshot(oldCopy) as typeof editorialSnapshot;
+  assert.equal(migratedCopy.pageContent.marknad.title, MARKET_TITLE);
+  assert.equal(oldCopy.pageContent.marknad.title, LEGACY_MARKET_TITLE, 'Read migration does not mutate input');
+  const customCopy = { ...oldCopy, pageContent: { ...oldCopy.pageContent, marknad: { ...oldCopy.pageContent.marknad, title: 'Egen rubrik' } } };
+  assert.equal((upgradeSnapshot(customCopy) as typeof editorialSnapshot).pageContent.marknad.title, 'Egen rubrik');
+  assert.equal(neutralPlaceholder('Rickard Wigrund'), 'Ditt namn');
+  assert.equal(neutralPlaceholder('wigrund81@gmail.com'), 'namn@foretag.se');
+  assert.equal(neutralPlaceholder('Ditt företagsnamn'), 'Ditt företagsnamn');
+  const personalForm = structuredClone(editorialSnapshot.contactForms[0]);
+  personalForm.fields[0].placeholder = 'Rickard Wigrund';
+  const neutralized = upgradeSnapshot({ ...editorialSnapshot, contactForms: [personalForm] }) as typeof editorialSnapshot;
+  assert.equal(neutralized.contactForms[0].fields[0].placeholder, 'Ditt namn');
+  assert.equal(personalForm.fields[0].placeholder, 'Rickard Wigrund');
   snapshot = editorialSnapshot;
 
   const currentSnapshot = structuredClone(snapshot);

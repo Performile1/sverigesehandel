@@ -3145,8 +3145,8 @@ export const INITIAL_CMS_DATA: CMSStore = {
     marknad: {
       badgeLabel: 'Sveriges ledande branschplattform',
       kicker: 'Marknadsanalys · Sverige 2026–2027',
-      title: 'Sveriges e-handelsekosystem i ett enda kontrollrum.',
-      heroHighlight: 'ekosystem i ett enda kontrollrum.',
+      title: 'Sveriges e-handel – insikter, partners och möjligheter.',
+      heroHighlight: 'insikter, partners och möjligheter.',
       subtitle:
         'Utforska regional omsättning, marknadsdata från ECDB, BuiltWith, Wappalyzer och Paketindex Q1 2026 – komplett med transportörstäckning, 3PL/4PL, lagstiftning och svensk e-handelshistoria.',
       kpi1Label: 'Total B2C-ehandel (SE)',
