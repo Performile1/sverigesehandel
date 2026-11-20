@@ -1,13 +1,25 @@
 import { useState } from 'react';
 import { Star } from 'lucide-react';
-import type { PageCopyBlock, TimelineMilestone } from '../types';
+import type { AdBanner, ContactFormConfig, PageCopyBlock, TimelineMilestone } from '../types';
+import { PageFormSlot } from './DynamicFormWidget';
 
 interface HistoriaViewProps {
   timeline: TimelineMilestone[];
   pageCopy?: PageCopyBlock;
+  contactForms?: ContactFormConfig[];
+  adBanners?: AdBanner[];
+  onFormSubmitted?: () => Promise<void> | void;
+  onNotify?: (msg: string) => void;
 }
 
-export function HistoriaView({ timeline, pageCopy }: HistoriaViewProps) {
+export function HistoriaView({
+  timeline,
+  pageCopy,
+  contactForms = [],
+  adBanners = [],
+  onFormSubmitted,
+  onNotify,
+}: HistoriaViewProps) {
   const [tmEra, setTmEra] = useState<'1998' | '2027'>('1998');
   const [eraFilter, setEraFilter] = useState<'all' | '90s' | '00s' | '10s' | '20s'>('all');
 
@@ -109,6 +121,15 @@ export function HistoriaView({ timeline, pageCopy }: HistoriaViewProps) {
       </section>
 
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        <PageFormSlot
+          forms={contactForms}
+          page="historia"
+          position="top"
+          adBanners={adBanners}
+          onSubmitted={onFormSubmitted}
+          onNotify={onNotify}
+        />
+
         <div className="inline-flex flex-wrap gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200">
           {(
             [
@@ -134,6 +155,15 @@ export function HistoriaView({ timeline, pageCopy }: HistoriaViewProps) {
           ))}
         </div>
 
+        <PageFormSlot
+          forms={contactForms}
+          page="historia"
+          position="mid"
+          adBanners={adBanners}
+          onSubmitted={onFormSubmitted}
+          onNotify={onNotify}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((item) => (
             <div
@@ -154,6 +184,15 @@ export function HistoriaView({ timeline, pageCopy }: HistoriaViewProps) {
             </div>
           ))}
         </div>
+
+        <PageFormSlot
+          forms={contactForms}
+          page="historia"
+          position="bottom"
+          adBanners={adBanners}
+          onSubmitted={onFormSubmitted}
+          onNotify={onNotify}
+        />
       </div>
     </div>
   );

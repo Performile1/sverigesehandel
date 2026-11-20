@@ -13,6 +13,7 @@ import {
 import { api } from '../api';
 import type {
   AdBanner,
+  ContactFormConfig,
   LogisticsProvider,
   LogisticsRoleType,
   PageCopyBlock,
@@ -20,10 +21,12 @@ import type {
   PublishStatus,
 } from '../types';
 import { AdBannerSlot } from './AdBannerSlot';
+import { PageFormSlot } from './DynamicFormWidget';
 
 interface ThreePlViewProps {
   logisticsProviders: LogisticsProvider[];
   adBanners: AdBanner[];
+  contactForms?: ContactFormConfig[];
   pageCopy?: PageCopyBlock;
   initialSearch?: string;
   isAdmin?: boolean;
@@ -32,7 +35,7 @@ interface ThreePlViewProps {
   onBookAdSlot: (slotName: string) => void;
   onRefresh: () => Promise<void>;
   onNotify: (message: string) => void;
-  onRequestIntro: (providerName: string) => void;
+  onRequestIntro: (provider: LogisticsProvider) => void;
 }
 
 const REGION_OPTIONS: Array<{ value: string; label: string }> = [
@@ -55,6 +58,7 @@ const REGION_LABEL_MAP: Record<string, string> = {
 export function ThreePlView({
   logisticsProviders = [],
   adBanners = [],
+  contactForms = [],
   pageCopy,
   initialSearch = '',
   isAdmin = false,
@@ -90,6 +94,8 @@ export function ThreePlView({
   const [formSpecialties, setFormSpecialties] = useState('Mode & D2C, Returhantering');
   const [formClients, setFormClients] = useState('');
   const [formDesc, setFormDesc] = useState('');
+  const [formIntroEmail, setFormIntroEmail] = useState('');
+  const [formIntroRoutingMode, setFormIntroRoutingMode] = useState<'default' | 'self' | 'direct'>('default');
 
   useEffect(() => {
     setSearch(initialSearch);
@@ -163,6 +169,8 @@ export function ThreePlView({
       setFormSpecialties(provider.specialties.join(', '));
       setFormClients(provider.notableClients.join(', '));
       setFormDesc(provider.desc);
+      setFormIntroEmail(provider.introEmail ?? '');
+      setFormIntroRoutingMode(provider.introRoutingMode ?? 'default');
     } else {
       setEditingId(undefined);
       setFormName('');
@@ -181,6 +189,8 @@ export function ThreePlView({
       setFormSpecialties('E-handel D2C, Returhantering');
       setFormClients('');
       setFormDesc('');
+      setFormIntroEmail('');
+      setFormIntroRoutingMode('default');
     }
     setModalOpen(true);
   }
@@ -216,6 +226,8 @@ export function ThreePlView({
         desc:
           formDesc.trim() ||
           `${formName.trim()} erbjuder ${formType}-tjänster för nordiska e-handlare.`,
+        introEmail: formIntroEmail.trim() || undefined,
+        introRoutingMode: formIntroRoutingMode,
         status: 'published' as PublishStatus,
       });
 
@@ -416,6 +428,15 @@ export function ThreePlView({
         onBookSlot={onBookAdSlot}
       />
 
+      <PageFormSlot
+        forms={contactForms}
+        page="3pl"
+        position="top"
+        adBanners={adBanners}
+        onSubmitted={onRefresh}
+        onNotify={onNotify}
+      />
+
       {/* Empty State */}
       {filtered.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-4">
@@ -532,7 +553,7 @@ export function ThreePlView({
                         <div className="inline-flex items-center justify-end gap-1">
                           <button
                             type="button"
-                            onClick={() => onRequestIntro(lp.name)}
+                            onClick={() => onRequestIntro(lp)}
                             className="px-2 py-1 rounded-md bg-[#040B16] hover:bg-[#006AA7] text-white text-[11px] font-bold cursor-pointer"
                           >
                             Intro
@@ -596,7 +617,7 @@ export function ThreePlView({
                     <div className="inline-flex items-center gap-1 shrink-0">
                       <button
                         type="button"
-                        onClick={() => onRequestIntro(lp.name)}
+                        onClick={() => onRequestIntro(lp)}
                         className="px-2.5 py-1 rounded-lg bg-[#040B16] hover:bg-[#006AA7] text-white text-[11px] font-bold cursor-pointer"
                       >
                         Intro
@@ -720,7 +741,7 @@ export function ThreePlView({
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  onClick={() => onRequestIntro(lp.name)}
+                  onClick={() => onRequestIntro(lp)}
                   className="text-xs font-bold text-[#040B16] hover:text-[#006AA7] transition-colors cursor-pointer"
                 >
                   Begär offert / intro &rarr;
@@ -752,6 +773,15 @@ export function ThreePlView({
         </div>
       )}
 
+      <PageFormSlot
+        forms={contactForms}
+        page="3pl"
+        position="mid"
+        adBanners={adBanners}
+        onSubmitted={onRefresh}
+        onNotify={onNotify}
+      />
+
       {/* Cross-links footer box */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -779,6 +809,15 @@ export function ThreePlView({
           </button>
         </div>
       </div>
+
+      <PageFormSlot
+        forms={contactForms}
+        page="3pl"
+        position="bottom"
+        adBanners={adBanners}
+        onSubmitted={onRefresh}
+        onNotify={onNotify}
+      />
 
       {/* Add / Edit Modal */}
       {modalOpen && (
@@ -921,6 +960,26 @@ export function ThreePlView({
                 placeholder="Beskrivning av logistikerbjudande och styrkor..."
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs"
               />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <input
+                  type="email"
+                  value={formIntroEmail}
+                  onChange={(e) => setFormIntroEmail(e.target.value)}
+                  placeholder="Intro-mottagarmejl (t.ex. sales@3pl.se)"
+                  className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs"
+                />
+                <select
+                  value={formIntroRoutingMode}
+                  onChange={(e) =>
+                    setFormIntroRoutingMode(e.target.value as 'default' | 'self' | 'direct')
+                  }
+                  className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs"
+                >
+                  <option value="default">Routing: Följ Intro-formulärets standard</option>
+                  <option value="self">Routing: Ta hand om själv först</option>
+                  <option value="direct">Routing: Skicka direkt till partner</option>
+                </select>
+              </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button

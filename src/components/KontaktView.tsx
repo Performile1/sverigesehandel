@@ -1,50 +1,124 @@
 import { useEffect, useState } from 'react';
-import { Check, Copy, ExternalLink, Loader2, Mail, Megaphone, Send } from 'lucide-react';
-import type { AdBanner, PageCopyBlock } from '../types';
+import { Check, Copy, ExternalLink, Mail, Megaphone } from 'lucide-react';
+import type { AdBanner, ContactFormConfig, PageCopyBlock } from '../types';
+import { DynamicFormWidget, PageFormSlot } from './DynamicFormWidget';
 
 interface KontaktViewProps {
   adBanners: AdBanner[];
+  contactForms?: ContactFormConfig[];
   pageCopy?: PageCopyBlock & { contactEmail?: string };
   initialAdSlot?: string;
-  onSubmitContact: (payload: {
-    name: string;
-    email: string;
-    company?: string;
-    topic: string;
-    adSlot?: string;
-    message: string;
-  }) => Promise<void>;
+  onFormSubmitted?: () => Promise<void> | void;
   onNotify: (msg: string) => void;
 }
 
 const DEFAULT_CONTACT_EMAIL = 'hej@sverigesehandel.se';
 
+const FALLBACK_KONTAKT_FORM: ContactFormConfig = {
+  id: 'form-kontakt-main',
+  name: 'Huvudformulär (Kontakt & Annons)',
+  purpose: 'contact',
+  page: 'kontakt',
+  position: 'top',
+  active: true,
+  theme: 'light',
+  kicker: 'Kontaktformulär',
+  title: 'Skicka meddelande till redaktionen',
+  subtitle:
+    'Vi svarar normalt inom 1 arbetsdag på förfrågningar om data, partnerskap och annonsering.',
+  submitLabel: 'Skicka meddelande',
+  successMessage: 'Tack! Ditt meddelande har tagits emot av redaktionen.',
+  routingMode: 'self',
+  recipientEmail: DEFAULT_CONTACT_EMAIL,
+  allowRequesterChoice: false,
+  updatedAt: new Date().toISOString(),
+  fields: [
+    {
+      id: 'kf-name',
+      key: 'name',
+      label: 'Namn',
+      type: 'text',
+      placeholder: 'För- och efternamn',
+      required: true,
+      enabled: true,
+      width: 'half',
+    },
+    {
+      id: 'kf-email',
+      key: 'email',
+      label: 'E-post',
+      type: 'email',
+      placeholder: 'namn@foretag.se',
+      required: true,
+      enabled: true,
+      width: 'half',
+    },
+    {
+      id: 'kf-company',
+      key: 'company',
+      label: 'Företag / Organisation',
+      type: 'text',
+      placeholder: 'T.ex. Svensk E-handel AB',
+      required: false,
+      enabled: true,
+      width: 'half',
+    },
+    {
+      id: 'kf-topic',
+      key: 'topic',
+      label: 'Ärende',
+      type: 'select',
+      required: true,
+      enabled: true,
+      width: 'half',
+      options: [
+        'Allmän fråga / Tipsa redaktionen',
+        'Annonsbanner & Partnerskap',
+        'Lägg till e-handlare eller tech-partner',
+        'Event, D-Congress & Mässa',
+        'Checkoutstrategi.se & Rådgivning',
+        'Jobbannons & Rekrytering',
+      ],
+    },
+    {
+      id: 'kf-message',
+      key: 'message',
+      label: 'Meddelande',
+      type: 'textarea',
+      placeholder: 'Berätta om ert företag, önskad bannerplacering eller datatips...',
+      required: true,
+      enabled: true,
+      width: 'full',
+    },
+  ],
+};
+
 export function KontaktView({
   adBanners,
+  contactForms = [],
   pageCopy,
   initialAdSlot = '',
-  onSubmitContact,
+  onFormSubmitted,
   onNotify,
 }: KontaktViewProps) {
   const contactEmail = pageCopy?.contactEmail?.trim() || DEFAULT_CONTACT_EMAIL;
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [company, setCompany] = useState('');
-  const [topic, setTopic] = useState(
-    initialAdSlot ? 'Annonsbanner & Partnerskap' : 'Allmän fråga / Tipsa redaktionen'
-  );
-  const [adSlot, setAdSlot] = useState(initialAdSlot);
-  const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [selectedAdSlot, setSelectedAdSlot] = useState(initialAdSlot);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (initialAdSlot) {
-      setTopic('Annonsbanner & Partnerskap');
-      setAdSlot(initialAdSlot);
-    }
+    setSelectedAdSlot(initialAdSlot);
   }, [initialAdSlot]);
+
+  const primaryForm =
+    contactForms.find(
+      (f) => f.active && f.page === 'kontakt' && f.position === 'top'
+    ) ||
+    contactForms.find((f) => f.active && f.page === 'kontakt') ||
+    FALLBACK_KONTAKT_FORM;
+
+  const extraTopForms = contactForms.filter(
+    (f) => f.active && (f.page === 'kontakt' || f.page === 'all') && f.position === 'top' && f.id !== primaryForm.id
+  );
 
   async function handleCopyEmail() {
     try {
@@ -54,30 +128,6 @@ export function KontaktView({
       window.setTimeout(() => setCopied(false), 2200);
     } catch {
       onNotify(`E-postadress: ${contactEmail}`);
-    }
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim() || !email.trim() || !message.trim() || sending) return;
-    setSending(true);
-    try {
-      await onSubmitContact({
-        name: name.trim(),
-        email: email.trim(),
-        company: company.trim() || undefined,
-        topic,
-        adSlot: adSlot || undefined,
-        message: message.trim(),
-      });
-      setSent(true);
-      setName('');
-      setEmail('');
-      setCompany('');
-      setMessage('');
-      onNotify('Tack! Ditt meddelande har tagits emot av redaktionen.');
-    } finally {
-      setSending(false);
     }
   }
 
@@ -129,143 +179,26 @@ export function KontaktView({
         </div>
       </div>
 
+      {extraTopForms.map((f) => (
+        <DynamicFormWidget
+          key={f.id}
+          form={f}
+          adBanners={adBanners}
+          onSubmitted={onFormSubmitted}
+          onNotify={onNotify}
+        />
+      ))}
+
       {/* Contact Form + Ad Slots Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-5">
-          <div>
-            <div className="text-xs font-mono font-semibold text-[#006AA7]">Kontaktformulär</div>
-            <h2 className="font-display text-2xl font-extrabold text-[#040B16] mt-0.5">
-              Skicka meddelande till {contactEmail}
-            </h2>
-            <p className="text-xs text-slate-600 mt-1">
-              Vi svarar normalt inom 1 arbetsdag på förfrågningar om data, partnerskap och annonsering.
-            </p>
-          </div>
-
-          {sent && (
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium">
-              Ditt meddelande har sparats och skickats till redaktionen ({contactEmail}). Vill du komplettera med bilagor kan du även mejla direkt till{' '}
-              <a href={`mailto:${contactEmail}`} className="underline font-bold">
-                {contactEmail}
-              </a>
-              .
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Namn *</label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="För- och efternamn"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#006AA7]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">E-post *</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="namn@foretag.se"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#006AA7]"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Företag / Organisation
-                </label>
-                <input
-                  type="text"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  placeholder="T.ex. Svensk E-handel AB"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#006AA7]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Ärende</label>
-                <select
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#006AA7]"
-                >
-                  <option value="Allmän fråga / Tipsa redaktionen">
-                    Allmän fråga / Tipsa redaktionen
-                  </option>
-                  <option value="Annonsbanner & Partnerskap">Annonsbanner & Partnerskap</option>
-                  <option value="Lägg till e-handlare eller tech-partner">
-                    Lägg till e-handlare eller tech-partner
-                  </option>
-                  <option value="Event, D-Congress & Mässa">Event, D-Congress & Mässa</option>
-                  <option value="Checkoutstrategi.se & Rådgivning">
-                    Checkoutstrategi.se & Rådgivning
-                  </option>
-                  <option value="Jobbannons & Rekrytering">Jobbannons & Rekrytering</option>
-                </select>
-              </div>
-            </div>
-
-            {topic === 'Annonsbanner & Partnerskap' && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Önskad annonsplats / format
-                </label>
-                <select
-                  value={adSlot}
-                  onChange={(e) => setAdSlot(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white"
-                >
-                  <option value="">Välj placering (valfritt)</option>
-                  {adBanners.map((b) => (
-                    <option key={b.id} value={b.placementLabel}>
-                      {b.placementLabel} ({b.dimensions}) –{' '}
-                      {b.mode === 'placeholder' ? 'Ledig' : `Idag: ${b.sponsorName}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Meddelande *
-              </label>
-              <textarea
-                rows={5}
-                required
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Berätta om ert företag, önskad bannerplacering eller datatips..."
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#006AA7]"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-              <span className="text-xs text-slate-500">
-                Eller mejla direkt:{' '}
-                <a href={`mailto:${contactEmail}`} className="font-semibold text-[#006AA7] hover:underline">
-                  {contactEmail}
-                </a>
-              </span>
-              <button
-                type="submit"
-                disabled={sending}
-                className="px-5 py-2.5 rounded-xl bg-[#040B16] hover:bg-[#006AA7] disabled:opacity-50 text-white text-xs font-bold inline-flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Skicka meddelande
-              </button>
-            </div>
-          </form>
+        <div className="lg:col-span-7">
+          <DynamicFormWidget
+            form={primaryForm}
+            adBanners={adBanners}
+            initialAdSlot={selectedAdSlot}
+            onSubmitted={onFormSubmitted}
+            onNotify={onNotify}
+          />
         </div>
 
         {/* Ad Slots & Partnerships */}
@@ -301,8 +234,8 @@ export function KontaktView({
                     <button
                       type="button"
                       onClick={() => {
-                        setTopic('Annonsbanner & Partnerskap');
-                        setAdSlot(b.placementLabel);
+                        setSelectedAdSlot(b.placementLabel);
+                        onNotify(`Valde annonsplats: ${b.placementLabel}`);
                       }}
                       className={`px-3 py-1.5 rounded-lg text-[11px] font-bold shrink-0 cursor-pointer ${
                         isOpen
@@ -340,6 +273,25 @@ export function KontaktView({
           </div>
         </div>
       </div>
+
+      <PageFormSlot
+        forms={contactForms}
+        page="kontakt"
+        position="mid"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
+
+      <PageFormSlot
+        forms={contactForms}
+        page="kontakt"
+        position="bottom"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
     </div>
   );
 }
+

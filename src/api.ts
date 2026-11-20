@@ -5,7 +5,9 @@ import type {
   CMSStore,
   CommunityMember,
   CommunityThread,
+  ContactFormConfig,
   ContactMessage,
+  ContactMessageStatus,
   DCSession,
   DeliveryStatsData,
   DiscoveredJobCandidate,
@@ -16,6 +18,7 @@ import type {
   EcommerceJob,
   EcommerceLaw,
   EcommerceNewsItem,
+  FormRoutingMode,
   GroundingSource,
   LogisticsProvider,
   MarketIntelligenceSource,
@@ -249,17 +252,46 @@ export const api = {
   deleteAdBanner: (id: string) =>
     request<{ deleted: boolean }>(`/api/ads/${id}`, { method: 'DELETE' }),
 
+  upsertContactForm: (form: Partial<ContactFormConfig> & { name: string }) =>
+    request<ContactFormConfig>(form.id ? `/api/forms/${form.id}` : '/api/forms', {
+      method: form.id ? 'PUT' : 'POST',
+      body: JSON.stringify(form),
+    }),
+  deleteContactForm: (id: string) =>
+    request<{ deleted: boolean }>(`/api/forms/${id}`, { method: 'DELETE' }),
+
   submitContactMessage: (payload: {
     name: string;
     email: string;
     company?: string;
+    phone?: string;
     topic: string;
     adSlot?: string;
     message: string;
+    formId?: string;
+    submissionType?: 'contact' | 'intro' | 'ad-booking' | 'job-apply' | 'other';
+    targetEntityType?: 'partner' | 'logistics' | 'job' | 'event';
+    targetEntityId?: string;
+    targetEntityName?: string;
+    preferredRouting?: FormRoutingMode;
+    needSummary?: string;
+    monthlyVolume?: string;
+    currentPlatform?: string;
+    timeline?: string;
+    customAnswers?: Record<string, string>;
   }) =>
     request<ContactMessage>('/api/contact', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+  updateContactMessageStatus: (
+    id: string,
+    status: ContactMessageStatus,
+    emailDispatched?: boolean
+  ) =>
+    request<ContactMessage>(`/api/contact/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, ...(typeof emailDispatched === 'boolean' ? { emailDispatched } : {}) }),
     }),
   deleteContactMessage: (id: string) =>
     request<{ deleted: boolean }>(`/api/contact/${id}`, { method: 'DELETE' }),

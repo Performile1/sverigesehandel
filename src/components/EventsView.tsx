@@ -1,17 +1,20 @@
 import { useMemo, useState } from 'react';
 import { CalendarCheck, Check, ExternalLink, MapPin, Plus, Ticket, X } from 'lucide-react';
 import { useFirebase } from '../contexts/FirebaseContext';
-import type { AdBanner, DCSession, EcommerceEvent, PageCopyBlock, PortalTab } from '../types';
+import type { AdBanner, ContactFormConfig, DCSession, EcommerceEvent, PageCopyBlock, PortalTab } from '../types';
 import { AdBannerSlot } from './AdBannerSlot';
+import { PageFormSlot } from './DynamicFormWidget';
 import { ResilientImage } from './ResilientImage';
 
 interface EventsViewProps {
   events: EcommerceEvent[];
   sessions: DCSession[];
   adBanners: AdBanner[];
+  contactForms?: ContactFormConfig[];
   pageCopy?: PageCopyBlock;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
+  onFormSubmitted?: () => Promise<void> | void;
   onNotify: (msg: string) => void;
   onOpenModal: (title: string, body: string) => void;
 }
@@ -20,9 +23,11 @@ export function EventsView({
   events,
   sessions,
   adBanners,
+  contactForms = [],
   pageCopy,
   onNavigate,
   onBookAdSlot,
+  onFormSubmitted,
   onNotify,
   onOpenModal,
 }: EventsViewProps) {
@@ -168,6 +173,15 @@ export function EventsView({
           placement="event-top"
           onNavigate={onNavigate}
           onBookSlot={onBookAdSlot}
+        />
+
+        <PageFormSlot
+          forms={contactForms}
+          page="event"
+          position="top"
+          adBanners={adBanners}
+          onSubmitted={onFormSubmitted}
+          onNotify={onNotify}
         />
 
         {/* ALL EVENTS & EXPOS DIRECTORY */}
@@ -319,6 +333,15 @@ export function EventsView({
           </div>
         </section>
 
+        <PageFormSlot
+          forms={contactForms}
+          page="event"
+          position="mid"
+          adBanners={adBanners}
+          onSubmitted={onFormSubmitted}
+          onNotify={onNotify}
+        />
+
         {/* D-CONGRESS 2027 SCENPROGRAM & AGENDA BUILDER */}
         <section id="dc-program" className="space-y-6 pt-4 border-t border-slate-200">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -466,6 +489,15 @@ export function EventsView({
             </div>
           </div>
         </section>
+
+        <PageFormSlot
+          forms={contactForms}
+          page="event"
+          position="bottom"
+          adBanners={adBanners}
+          onSubmitted={onFormSubmitted}
+          onNotify={onNotify}
+        />
       </div>
     </div>
   );

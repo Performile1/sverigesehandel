@@ -1,12 +1,22 @@
 import { useMemo, useState } from 'react';
 import { Briefcase, ExternalLink, MapPin, Plus, Search, Sparkles, Users } from 'lucide-react';
-import type { AdBanner, EcommerceJob, JobRoleCategory, PageCopyBlock, PortalTab, RecruitmentSite } from '../types';
+import type {
+  AdBanner,
+  ContactFormConfig,
+  EcommerceJob,
+  JobRoleCategory,
+  PageCopyBlock,
+  PortalTab,
+  RecruitmentSite,
+} from '../types';
 import { AdBannerSlot } from './AdBannerSlot';
+import { PageFormSlot } from './DynamicFormWidget';
 
 interface JobsViewProps {
   jobs: EcommerceJob[];
   recruitmentSites: RecruitmentSite[];
   adBanners: AdBanner[];
+  contactForms?: ContactFormConfig[];
   pageCopy?: PageCopyBlock;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
@@ -14,6 +24,8 @@ interface JobsViewProps {
   onOpenDiscoverRecruiters: () => void;
   onOpenJobModal: () => void;
   onApplyJob: (job: EcommerceJob) => void;
+  onFormSubmitted?: () => Promise<void> | void;
+  onNotify?: (msg: string) => void;
 }
 
 const ROLE_CATEGORIES: Array<'all' | JobRoleCategory> = [
@@ -29,6 +41,7 @@ export function JobsView({
   jobs,
   recruitmentSites,
   adBanners,
+  contactForms = [],
   pageCopy,
   onNavigate,
   onBookAdSlot,
@@ -36,6 +49,8 @@ export function JobsView({
   onOpenDiscoverRecruiters,
   onOpenJobModal,
   onApplyJob,
+  onFormSubmitted,
+  onNotify,
 }: JobsViewProps) {
   const [subTab, setSubTab] = useState<'jobs' | 'recruiters'>('jobs');
   const [search, setSearch] = useState('');
@@ -238,6 +253,24 @@ export function JobsView({
         onBookSlot={onBookAdSlot}
       />
 
+      <PageFormSlot
+        forms={contactForms}
+        page="jobb"
+        position="top"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
+
+      <PageFormSlot
+        forms={contactForms}
+        page="jobb"
+        position="mid"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
+
       {/* JOBS TAB */}
       {subTab === 'jobs' && (
         <>
@@ -390,6 +423,15 @@ export function JobsView({
           )}
         </>
       )}
+
+      <PageFormSlot
+        forms={contactForms}
+        page="jobb"
+        position="bottom"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
     </div>
   );
 }

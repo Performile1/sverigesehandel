@@ -1,19 +1,23 @@
 import { useMemo, useState } from 'react';
 import { Columns3, ExternalLink, LayoutGrid, Pencil, Plus, Search, Sparkles, Users } from 'lucide-react';
-import type { AdBanner, PageCopyBlock, PortalTab, TechPartner } from '../types';
+import type { AdBanner, ContactFormConfig, PageCopyBlock, PortalTab, TechPartner } from '../types';
 import { AdBannerSlot } from './AdBannerSlot';
 import { CheckoutStrategyCTA } from './CheckoutStrategyCTA';
+import { PageFormSlot } from './DynamicFormWidget';
 
 interface PartnersViewProps {
   partners: TechPartner[];
   adBanners: AdBanner[];
+  contactForms?: ContactFormConfig[];
   pageCopy?: PageCopyBlock;
   initialSearch?: string;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
   onOpenDiscover: () => void;
   onOpenEditor: (partner?: TechPartner) => void;
-  onRequestIntro: (partnerName: string) => void;
+  onRequestIntro: (partner: TechPartner) => void;
+  onFormSubmitted?: () => Promise<void> | void;
+  onNotify?: (msg: string) => void;
 }
 
 type CompareDomainId =
@@ -83,6 +87,7 @@ function getWebsiteHref(p: TechPartner): string {
 export function PartnersView({
   partners,
   adBanners,
+  contactForms = [],
   pageCopy,
   initialSearch = '',
   onNavigate,
@@ -90,6 +95,8 @@ export function PartnersView({
   onOpenDiscover,
   onOpenEditor,
   onRequestIntro,
+  onFormSubmitted,
+  onNotify,
 }: PartnersViewProps) {
   const [viewMode, setViewMode] = useState<'catalog' | 'compare'>('catalog');
   const [compareDomain, setCompareDomain] = useState<CompareDomainId>('carriers');
@@ -288,6 +295,15 @@ export function PartnersView({
         placement="partners-top"
         onNavigate={onNavigate}
         onBookSlot={onBookAdSlot}
+      />
+
+      <PageFormSlot
+        forms={contactForms}
+        page="partners"
+        position="top"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
       />
 
       {/* COMPARISON MODE */}
@@ -588,7 +604,7 @@ export function PartnersView({
                             </div>
                             <button
                               type="button"
-                              onClick={() => onRequestIntro(actor.name)}
+                              onClick={() => onRequestIntro(actor)}
                               className="px-3 py-1.5 rounded-lg bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer"
                             >
                               Begär intro
@@ -624,7 +640,7 @@ export function PartnersView({
                         </div>
                         <button
                           type="button"
-                          onClick={() => onRequestIntro(actor.name)}
+                          onClick={() => onRequestIntro(actor)}
                           className="px-3 py-1.5 rounded-lg bg-[#040B16] text-white text-xs font-bold shrink-0 cursor-pointer"
                         >
                           Intro
@@ -808,7 +824,7 @@ export function PartnersView({
                         <td className="py-3.5 px-3 text-right">
                           <button
                             type="button"
-                            onClick={() => onRequestIntro(p.name)}
+                            onClick={() => onRequestIntro(p)}
                             className="px-3 py-1.5 rounded-lg bg-[#040B16] hover:bg-[#006AA7] text-white text-xs font-bold cursor-pointer whitespace-nowrap"
                           >
                             Intro
@@ -844,7 +860,7 @@ export function PartnersView({
                       </div>
                       <button
                         type="button"
-                        onClick={() => onRequestIntro(p.name)}
+                        onClick={() => onRequestIntro(p)}
                         className="px-3 py-1.5 rounded-lg bg-[#040B16] text-white text-xs font-bold shrink-0 cursor-pointer"
                       >
                         Intro
@@ -1027,7 +1043,7 @@ export function PartnersView({
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                       <button
                         type="button"
-                        onClick={() => onRequestIntro(p.name)}
+                        onClick={() => onRequestIntro(p)}
                         className="text-xs font-bold text-[#040B16] hover:text-[#006AA7] transition-colors cursor-pointer"
                       >
                         Begär partnerintro &rarr;
@@ -1061,6 +1077,24 @@ export function PartnersView({
           )}
         </>
       )}
+
+      <PageFormSlot
+        forms={contactForms}
+        page="partners"
+        position="mid"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
+
+      <PageFormSlot
+        forms={contactForms}
+        page="partners"
+        position="bottom"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
     </div>
   );
 }

@@ -1,35 +1,49 @@
 import { useMemo, useState } from 'react';
 import { ExternalLink, Package, Pencil, Plus, Search, ShieldCheck, Sparkles, Star, TrendingUp } from 'lucide-react';
-import type { AdBanner, CategoryOrderBenchmark, Merchant, PageCopyBlock, PortalTab } from '../types';
+import type {
+  AdBanner,
+  CategoryOrderBenchmark,
+  ContactFormConfig,
+  Merchant,
+  PageCopyBlock,
+  PortalTab,
+} from '../types';
 import {
   estimateMerchantParcels,
   formatParcelCountCompact,
   formatSekCompact,
 } from '../utils/shippingEconomics';
 import { AdBannerSlot } from './AdBannerSlot';
+import { PageFormSlot } from './DynamicFormWidget';
 
 interface MerchantsViewProps {
   merchants: Merchant[];
   orderBenchmarks: CategoryOrderBenchmark[];
   adBanners: AdBanner[];
+  contactForms?: ContactFormConfig[];
   pageCopy?: PageCopyBlock;
   initialSearch?: string;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
   onOpenDiscover: () => void;
   onOpenEditor: (merchant?: Merchant) => void;
+  onFormSubmitted?: () => Promise<void> | void;
+  onNotify?: (msg: string) => void;
 }
 
 export function MerchantsView({
   merchants = [],
   orderBenchmarks = [],
   adBanners = [],
+  contactForms = [],
   pageCopy,
   initialSearch = '',
   onNavigate,
   onBookAdSlot,
   onOpenDiscover,
   onOpenEditor,
+  onFormSubmitted,
+  onNotify,
 }: MerchantsViewProps) {
   const [search, setSearch] = useState(initialSearch);
   const [catFilter, setCatFilter] = useState('all');
@@ -184,6 +198,24 @@ export function MerchantsView({
         onBookSlot={onBookAdSlot}
       />
 
+      <PageFormSlot
+        forms={contactForms}
+        page="ehandlare"
+        position="top"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
+
+      <PageFormSlot
+        forms={contactForms}
+        page="ehandlare"
+        position="mid"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
+
       {filtered.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-4">
           <p className="text-slate-600 text-sm">
@@ -323,6 +355,15 @@ export function MerchantsView({
           })}
         </div>
       )}
+
+      <PageFormSlot
+        forms={contactForms}
+        page="ehandlare"
+        position="bottom"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
     </div>
   );
 }

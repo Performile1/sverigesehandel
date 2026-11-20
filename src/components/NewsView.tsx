@@ -13,6 +13,7 @@ import {
 import { api } from '../api';
 import type {
   AdBanner,
+  ContactFormConfig,
   EcommerceNewsItem,
   GroundingSource,
   NewsCategory,
@@ -21,15 +22,18 @@ import type {
 } from '../types';
 import { AdBannerSlot } from './AdBannerSlot';
 import { CheckoutStrategyCTA } from './CheckoutStrategyCTA';
+import { PageFormSlot } from './DynamicFormWidget';
 
 interface NewsViewProps {
   news: EcommerceNewsItem[];
   adBanners: AdBanner[];
+  contactForms?: ContactFormConfig[];
   pageCopy?: PageCopyBlock;
   isAdmin?: boolean;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
   onRefresh: () => Promise<void>;
+  onFormSubmitted?: () => Promise<void> | void;
   onNotify: (msg: string) => void;
   onRequireAdmin?: () => void;
 }
@@ -72,11 +76,13 @@ type NewsCandidate = Omit<EcommerceNewsItem, 'id' | 'status'> & { alreadyExists?
 export function NewsView({
   news = [],
   adBanners = [],
+  contactForms = [],
   pageCopy,
   isAdmin = false,
   onNavigate,
   onBookAdSlot,
   onRefresh,
+  onFormSubmitted,
   onNotify,
   onRequireAdmin,
 }: NewsViewProps) {
@@ -611,6 +617,15 @@ export function NewsView({
         onBookSlot={onBookAdSlot}
       />
 
+      <PageFormSlot
+        forms={contactForms}
+        page="nyheter"
+        position="top"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted || onRefresh}
+        onNotify={onNotify}
+      />
+
       {/* News Grid */}
       {filtered.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-3">
@@ -687,7 +702,25 @@ export function NewsView({
         </div>
       )}
 
+      <PageFormSlot
+        forms={contactForms}
+        page="nyheter"
+        position="mid"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted || onRefresh}
+        onNotify={onNotify}
+      />
+
       <CheckoutStrategyCTA compact />
+
+      <PageFormSlot
+        forms={contactForms}
+        page="nyheter"
+        position="bottom"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted || onRefresh}
+        onNotify={onNotify}
+      />
     </div>
   );
 }

@@ -74,6 +74,8 @@ export function EntityEditorModal({
   const [pCoreServices, setPCoreServices] = useState('');
   const [pSameDay, setPSameDay] = useState(false);
   const [pWeekend, setPWeekend] = useState(false);
+  const [pIntroEmail, setPIntroEmail] = useState('');
+  const [pIntroRoutingMode, setPIntroRoutingMode] = useState<'default' | 'self' | 'direct'>('default');
 
   useEffect(() => {
     if (!open) return;
@@ -142,6 +144,8 @@ export function EntityEditorModal({
       setPCoreServices(partner?.carrierMetrics?.coreServices?.join(', ') ?? '');
       setPSameDay(Boolean(partner?.carrierMetrics?.sameDayAvailable));
       setPWeekend(Boolean(partner?.carrierMetrics?.weekendDelivery));
+      setPIntroEmail(partner?.introEmail ?? '');
+      setPIntroRoutingMode(partner?.introRoutingMode ?? 'default');
     }
   }, [open, mode, merchant, partner]);
 
@@ -294,6 +298,8 @@ export function EntityEditorModal({
             .map((s) => s.trim())
             .filter(Boolean),
           desc: pDesc.trim(),
+          introEmail: pIntroEmail.trim() || undefined,
+          introRoutingMode: pIntroRoutingMode,
           status: pStatus,
         });
         onNotify(partner ? `${pName} uppdaterad i CMS.` : `${pName} tillagd i CMS.`);
@@ -959,6 +965,37 @@ export function EntityEditorModal({
                   onChange={(e) => setPDesc(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm"
                 />
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    Intro-mottagarmejl hos partner (valfritt)
+                  </label>
+                  <input
+                    type="email"
+                    value={pIntroEmail}
+                    onChange={(e) => setPIntroEmail(e.target.value)}
+                    placeholder="partnerships@foretag.se"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    Intro-routing för denna partner
+                  </label>
+                  <select
+                    value={pIntroRoutingMode}
+                    onChange={(e) =>
+                      setPIntroRoutingMode(e.target.value as 'default' | 'self' | 'direct')
+                    }
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs"
+                  >
+                    <option value="default">Följ Intro-formulärets standard</option>
+                    <option value="self">Ta hand om själv först (redaktionen)</option>
+                    <option value="direct">Skicka direkt till partnerns mejl</option>
+                  </select>
+                </div>
               </div>
             </>
           )}

@@ -68,15 +68,47 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     const path = req.originalUrl.split('?')[0].replace(/\/$/, '');
     if (!isMemberSubmission(req.method, path)) { next(); return; }
     const fields: Record<string, [number, number]> = path === '/api/contact'
-      ? { name: [1, 100], email: [3, 160], topic: [1, 100], message: [2, 2000] }
+      ? { name: [1, 100], email: [3, 160], topic: [1, 140], message: [2, 2000] }
       : path === '/api/community/members'
       ? { name: [1, 80], email: [3, 160], role: [1, 80], city: [1, 60] }
       : path === '/api/community/threads'
       ? { channel: [2, 40], author: [1, 80], title: [3, 220] } : {};
-    if (Object.entries(fields).some(([key, [min, max]]) => typeof req.body?.[key] !== 'string' ||
-      req.body[key].trim().length < min || req.body[key].length > max) ||
-      Object.entries({ company: 120, adSlot: 100 }).some(([key, max]) => req.body?.[key] !== undefined &&
-        (typeof req.body[key] !== 'string' || req.body[key].length > max))) {
+    const optionalStringLimits: Record<string, number> = path === '/api/contact'
+      ? {
+          company: 120,
+          adSlot: 100,
+          phone: 60,
+          formId: 80,
+          submissionType: 40,
+          targetEntityType: 30,
+          targetEntityId: 80,
+          targetEntityName: 120,
+          preferredRouting: 30,
+          needSummary: 240,
+          monthlyVolume: 120,
+          currentPlatform: 160,
+          timeline: 120,
+        }
+      : { company: 120, adSlot: 100 };
+
+    const invalidCustomAnswers =
+      path === '/api/contact' &&
+      req.body?.customAnswers !== undefined &&
+      (typeof req.body.customAnswers !== 'object' ||
+        req.body.customAnswers === null ||
+        Array.isArray(req.body.customAnswers) ||
+        Object.keys(req.body.customAnswers).length > 20 ||
+        Object.entries(req.body.customAnswers).some(
+          ([k, v]) => typeof k !== 'string' || k.length > 80 || typeof v !== 'string' || v.length > 500
+        ));
+
+    if (
+      Object.entries(fields).some(([key, [min, max]]) => typeof req.body?.[key] !== 'string' ||
+        req.body[key].trim().length < min || req.body[key].length > max) ||
+      Object.entries(optionalStringLimits).some(([key, max]) => req.body?.[key] !== undefined &&
+        (typeof req.body[key] !== 'string' || req.body[key].length > max)) ||
+      invalidCustomAnswers
+    ) {
       res.status(400).json({ error: 'Fyll i formulärets obligatoriska fält med giltig text.' });
       return;
     }
@@ -686,14 +718,112 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.json({ deleted: true });
   }));
 
-  // --- CONTACT MESSAGES (hej@sverigesehandel.se) ---
+  // --- CONTACT FORMS (CMS CONFIGURABLE FORMS & INTRO ROUTING) ---
+  app.post('/api/forms', route(async (req, res) => {
+    if (!req.body?.name || typeof req.body.name !== 'string') {
+      res.status(400).json({ error: 'Formulärnamn krävs.' });
+      return;
+    }
+    const created = await store.upsertContactForm(req.body);
+    res.status(201).json(created);
+  }));
+
+  app.put('/api/forms/:id', route(async (req, res) => {
+    if (!req.body?.name || typeof req.body.name !== 'string') {
+      res.status(400).json({ error: 'Formulärnamn krävs.' });
+      return;
+    }
+    const updated = await store.upsertContactForm({ ...req.body, id: req.params.id });
+    res.json(updated);
+  }));
+
+  app.delete('/api/forms/:id', route(async (req, res) => {
+    const ok = await store.deleteContactForm(req.params.id);
+    if (!ok) {
+      res.status(404).json({ error: 'Formulär hittades inte.' });
+      return;
+    }
+    res.json({ deleted: true });
+  }));
+
+  // --- CONTACT MESSAGES (hej@sverigesehandel.se & INTRO ROUTING) ---
   app.post('/api/contact', route(async (req, res) => {
     if (!req.body?.name || !req.body?.email || !req.body?.message) {
       res.status(400).json({ error: 'Namn, e-post och meddelande krävs.' });
       return;
     }
-    const created = await store.addContactMessage({ ...req.body, authorUid: res.locals.cmsIdentity.uid });
+    let created = await store.addContactMessage({ ...req.body, authorUid: res.locals.cmsIdentity.uid });
+
+    const resendKey = process.env.RESEND_API_KEY?.trim();
+    if (resendKey && created.routedToEmail && created.routedToEmail.includes('@')) {
+      try {
+        const fromAddress = process.env.RESEND_FROM_EMAIL?.trim() || 'sverigesehandel.se <onboarding@resend.dev>';
+        const subjectParts = [
+          created.submissionType === 'intro' ? 'Intro-förfrågan' : 'Kontakt',
+          created.targetEntityName || created.topic,
+          created.company || created.name,
+        ].filter(Boolean);
+        const lines = [
+          `Ämne: ${created.topic}`,
+          created.targetEntityName ? `Målaktör: ${created.targetEntityName}` : null,
+          `Avsändare: ${created.name} (${created.email})`,
+          created.company ? `Företag: ${created.company}` : null,
+          created.phone ? `Telefon: ${created.phone}` : null,
+          created.needSummary ? `Behov: ${created.needSummary}` : null,
+          created.monthlyVolume ? `Volym: ${created.monthlyVolume}` : null,
+          created.currentPlatform ? `Plattform: ${created.currentPlatform}` : null,
+          created.timeline ? `Tidsplan: ${created.timeline}` : null,
+          created.adSlot ? `Annonsplats: ${created.adSlot}` : null,
+          '',
+          created.message,
+        ].filter((line) => line !== null);
+
+        const mailResp = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: fromAddress,
+            to: [created.routedToEmail],
+            reply_to: created.email,
+            subject: subjectParts.join(' · '),
+            text: lines.join('\n'),
+          }),
+        });
+        if (mailResp.ok) {
+          const updated = await store.updateContactMessageStatus(
+            created.id,
+            created.routingMode === 'direct-partner' ? 'forwarded' : (created.status || 'handled-self'),
+            true
+          );
+          if (updated) created = updated;
+        }
+      } catch (err) {
+        console.error('Resend dispatch skipped:', err instanceof Error ? err.message : err);
+      }
+    }
+
     res.status(201).json(created);
+  }));
+
+  app.put('/api/contact/:id/status', route(async (req, res) => {
+    const status = req.body?.status;
+    if (!['new', 'handled-self', 'forwarded', 'resolved'].includes(status)) {
+      res.status(400).json({ error: 'Ogiltig status.' });
+      return;
+    }
+    const updated = await store.updateContactMessageStatus(
+      req.params.id,
+      status,
+      typeof req.body?.emailDispatched === 'boolean' ? req.body.emailDispatched : undefined
+    );
+    if (!updated) {
+      res.status(404).json({ error: 'Meddelande hittades inte.' });
+      return;
+    }
+    res.json(updated);
   }));
 
   app.delete('/api/contact/:id', route(async (req, res) => {

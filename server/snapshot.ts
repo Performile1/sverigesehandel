@@ -29,6 +29,10 @@ export function upgradeSnapshot(value: unknown): unknown {
     ensureClone().pageContent = structuredClone(INITIAL_CMS_DATA.pageContent);
   }
 
+  if (!hasOwn(obj, 'contactForms')) {
+    ensureClone().contactForms = structuredClone(INITIAL_CMS_DATA.contactForms);
+  }
+
   const version = typeof obj.schemaVersion === 'number' ? obj.schemaVersion : 1;
   const seedPartnersById = new Map(INITIAL_CMS_DATA.partners.map((p) => [p.id, p]));
 
@@ -135,6 +139,14 @@ export function upgradeSnapshot(value: unknown): unknown {
     draft.schemaVersion = 3;
   }
 
+  if (version < 4) {
+    const draft = ensureClone();
+    if (!Array.isArray(draft.contactForms) || draft.contactForms.length === 0) {
+      draft.contactForms = structuredClone(INITIAL_CMS_DATA.contactForms);
+    }
+    draft.schemaVersion = 4;
+  }
+
   return next;
 }
 
@@ -143,7 +155,7 @@ export function validateSnapshot(value: unknown): value is CMSStore {
   const store = value as Record<string, unknown>;
   const arrays = ['merchants', 'partners', 'logisticsProviders', 'news', 'events', 'sessions', 'jobs', 'recruitmentSites',
     'orderBenchmarks', 'shippingTiers', 'laws', 'intelligenceSources', 'techStackShares',
-    'adBanners', 'contactMessages', 'timeline', 'communityThreads', 'communityMembers'];
+    'adBanners', 'contactForms', 'contactMessages', 'timeline', 'communityThreads', 'communityMembers'];
   return arrays.every((key) => Array.isArray(store[key])) &&
     ['regions', 'deliveryStats', 'paketindex', 'pageContent'].every((key) => store[key] !== null &&
       typeof store[key] === 'object' && !Array.isArray(store[key])) &&

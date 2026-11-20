@@ -9,6 +9,7 @@ import { DiscoveryModal, type DiscoveryTargetType } from './components/Discovery
 import { EntityEditorModal } from './components/EntityEditorModal';
 import { EventsView } from './components/EventsView';
 import { HistoriaView } from './components/HistoriaView';
+import { IntroRequestModal, type IntroModalTarget } from './components/IntroRequestModal';
 import { JobsView } from './components/JobsView';
 import { KontaktView } from './components/KontaktView';
 import { MarknadView } from './components/MarknadView';
@@ -80,12 +81,7 @@ export default function App() {
     return d.toISOString().slice(0, 10);
   });
 
-  const [infoModal, setInfoModal] = useState<{
-    open: boolean;
-    title: string;
-    body: string;
-    email: string;
-  }>({ open: false, title: '', body: '', email: '' });
+  const [introModalTarget, setIntroModalTarget] = useState<IntroModalTarget | null>(null);
 
   const [toast, setToast] = useState<string | null>(null);
 
@@ -105,6 +101,7 @@ export default function App() {
         ...data,
         logisticsProviders: Array.isArray(data.logisticsProviders) ? data.logisticsProviders : [],
         news: Array.isArray(data.news) ? data.news : [],
+        contactForms: Array.isArray(data.contactForms) ? data.contactForms : [],
       });
       setLoadError(null);
     } catch (err) {
@@ -275,22 +272,27 @@ export default function App() {
                 intelligenceSources={store.intelligenceSources}
                 techStackShares={store.techStackShares}
                 adBanners={store.adBanners}
+                contactForms={store.contactForms}
                 pageCopy={store.pageContent?.marknad}
                 merchantCount={store.merchants.filter((m) => m.status === 'published').length}
                 partnerCount={store.partners.filter((p) => p.status === 'published').length}
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
+                onFormSubmitted={fetchStore}
+                onNotify={notify}
               />
             )}
             {activeTab === 'nyheter' && (
               <NewsView
                 news={store.news || []}
                 adBanners={store.adBanners}
+                contactForms={store.contactForms}
                 pageCopy={store.pageContent?.nyheter}
                 isAdmin={isAdmin}
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
                 onRefresh={fetchStore}
+                onFormSubmitted={fetchStore}
                 onNotify={notify}
                 onRequireAdmin={() => setMode('cms')}
               />
@@ -300,23 +302,40 @@ export default function App() {
                 events={store.events}
                 sessions={store.sessions}
                 adBanners={store.adBanners}
+                contactForms={store.contactForms}
                 pageCopy={store.pageContent?.event}
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
+                onFormSubmitted={fetchStore}
                 onNotify={notify}
                 onOpenModal={(title, body) =>
-                  setInfoModal({ open: true, title, body, email: '' })
+                  setIntroModalTarget({
+                    title,
+                    subtitle: body,
+                    submissionType: 'other',
+                    entityType: 'event',
+                    entityName: title,
+                    defaultTopic: title,
+                  })
                 }
               />
             )}
             {activeTab === 'historia' && (
-              <HistoriaView timeline={store.timeline} pageCopy={store.pageContent?.historia} />
+              <HistoriaView
+                timeline={store.timeline}
+                pageCopy={store.pageContent?.historia}
+                contactForms={store.contactForms}
+                adBanners={store.adBanners}
+                onFormSubmitted={fetchStore}
+                onNotify={notify}
+              />
             )}
             {activeTab === 'ehandlare' && (
               <MerchantsView
                 orderBenchmarks={store.orderBenchmarks}
                 merchants={store.merchants}
                 adBanners={store.adBanners}
+                contactForms={store.contactForms}
                 pageCopy={store.pageContent?.ehandlare}
                 initialSearch={initialSearch}
                 onNavigate={handleNavigate}
@@ -331,12 +350,15 @@ export default function App() {
                     merchant: merchant || null,
                   }) : setMode('cms')
                 }
+                onFormSubmitted={fetchStore}
+                onNotify={notify}
               />
             )}
             {activeTab === 'partners' && (
               <PartnersView
                 partners={store.partners}
                 adBanners={store.adBanners}
+                contactForms={store.contactForms}
                 pageCopy={store.pageContent?.partners}
                 initialSearch={initialSearch}
                 onNavigate={handleNavigate}
@@ -351,20 +373,28 @@ export default function App() {
                     partner: partner || null,
                   }) : setMode('cms')
                 }
-                onRequestIntro={(partnerName) =>
-                  setInfoModal({
-                    open: true,
-                    title: `Kontakta ${partnerName}`,
-                    body: `Ange din e-post så kopplar vi ihop dig med rätt partneransvarig hos ${partnerName}.`,
-                    email: '',
+                onRequestIntro={(partner) =>
+                  setIntroModalTarget({
+                    title: `Intro-förfrågan: ${partner.name}`,
+                    subtitle: `Berätta vad ni söker inom ${(partner.subType || partner.cat || 'partner').toLowerCase()} så matchar vi rätt kontakt och förutsättningar hos ${partner.name}.`,
+                    submissionType: 'intro',
+                    entityType: 'partner',
+                    entityId: partner.id,
+                    entityName: partner.name,
+                    entityRoutingMode: partner.introRoutingMode,
+                    hasDirectIntroEmail: partner.hasDirectIntroEmail,
+                    defaultTopic: `Partnerintro: ${partner.name}`,
                   })
                 }
+                onFormSubmitted={fetchStore}
+                onNotify={notify}
               />
             )}
             {activeTab === '3pl' && (
               <ThreePlView
                 logisticsProviders={store.logisticsProviders}
                 adBanners={store.adBanners}
+                contactForms={store.contactForms}
                 pageCopy={store.pageContent?.logistics}
                 initialSearch={initialSearch}
                 isAdmin={isAdmin}
@@ -373,12 +403,17 @@ export default function App() {
                 onBookAdSlot={handleBookAdSlot}
                 onRefresh={fetchStore}
                 onNotify={notify}
-                onRequestIntro={(providerName) =>
-                  setInfoModal({
-                    open: true,
-                    title: `Kontakta ${providerName}`,
-                    body: `Ange din e-post så kopplar vi ihop dig med rätt logistikansvarig hos ${providerName}.`,
-                    email: '',
+                onRequestIntro={(lp) =>
+                  setIntroModalTarget({
+                    title: `3PL/4PL-intro: ${lp.name}`,
+                    subtitle: `Beskriv ert lager-, order- och logistikbehov så förmedlar vi rätt kontakt och underlag mot ${lp.name}.`,
+                    submissionType: 'intro',
+                    entityType: 'logistics',
+                    entityId: lp.id,
+                    entityName: lp.name,
+                    entityRoutingMode: lp.introRoutingMode,
+                    hasDirectIntroEmail: lp.hasDirectIntroEmail,
+                    defaultTopic: `3PL/4PL-intro: ${lp.name}`,
                   })
                 }
               />
@@ -388,6 +423,7 @@ export default function App() {
                 jobs={store.jobs}
                 recruitmentSites={store.recruitmentSites}
                 adBanners={store.adBanners}
+                contactForms={store.contactForms}
                 pageCopy={store.pageContent?.jobb}
                 onNavigate={handleNavigate}
                 onBookAdSlot={handleBookAdSlot}
@@ -399,19 +435,26 @@ export default function App() {
                 }
                 onOpenJobModal={() => isAdmin ? setJobModalOpen(true) : setMode('cms')}
                 onApplyJob={(job) =>
-                  setInfoModal({
-                    open: true,
+                  setIntroModalTarget({
                     title: `Intresseanmälan: ${job.title}`,
-                    body: `${job.company} (${job.city} · ${job.workModel}). Ange din e-post eller LinkedIn-adress så förmedlar vi din intresseanmälan.`,
-                    email: '',
+                    subtitle: `${job.company} (${job.city} · ${job.workModel}). Berätta kort om din bakgrund så förmedlar vi din intresseanmälan.`,
+                    submissionType: 'job-apply',
+                    entityType: 'job',
+                    entityId: job.id,
+                    entityName: `${job.title} (${job.company})`,
+                    defaultTopic: `Jobbansökan: ${job.title} @ ${job.company}`,
                   })
                 }
+                onFormSubmitted={fetchStore}
+                onNotify={notify}
               />
             )}
             {activeTab === 'community' && (
               <CommunityView
                 threads={store.communityThreads}
                 pageCopy={store.pageContent?.community}
+                contactForms={store.contactForms}
+                adBanners={store.adBanners}
                 memberCount={store.communityMemberCount ?? store.communityMembers.length}
                 memberCities={
                   store.communityMemberCities ??
@@ -439,17 +482,17 @@ export default function App() {
                   await fetchStore();
                   notify(`Tack ${payload.name}! Din ansökan till nätverket (${payload.city}) är mottagen.`);
                 }}
+                onFormSubmitted={fetchStore}
+                onNotify={notify}
               />
             )}
             {activeTab === 'kontakt' && (
               <KontaktView
                 adBanners={store.adBanners}
+                contactForms={store.contactForms}
                 pageCopy={store.pageContent?.kontakt}
                 initialAdSlot={selectedAdSlot}
-                onSubmitContact={async (payload) => {
-                  await api.submitContactMessage(payload);
-                  await fetchStore();
-                }}
+                onFormSubmitted={fetchStore}
                 onNotify={notify}
               />
             )}
@@ -841,54 +884,16 @@ export default function App() {
         </div>
       )}
 
-      {/* Info / Ticket Confirmation Modal */}
-      {infoModal.open && (
-        <div className="fixed inset-0 z-50 bg-[#040B16]/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs font-bold text-[#006AA7]">sverigesehandel.se</span>
-              <button
-                type="button"
-                onClick={() => setInfoModal((prev) => ({ ...prev, open: false }))}
-                className="text-slate-400 hover:text-slate-800 p-1"
-                aria-label="Stäng"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <h3 className="font-display text-xl font-extrabold text-[#040B16]">
-              {infoModal.title}
-            </h3>
-            <p className="text-sm text-slate-600 leading-relaxed">{infoModal.body}</p>
-            <input
-              type="email"
-              value={infoModal.email}
-              onChange={(e) => setInfoModal((prev) => ({ ...prev, email: e.target.value }))}
-              placeholder="din@epost.se"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#006AA7]"
-            />
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setInfoModal((prev) => ({ ...prev, open: false }))}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
-              >
-                Avbryt
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setInfoModal((prev) => ({ ...prev, open: false }));
-                  notify('Bekräftat! Information har skickats till din e-post.');
-                }}
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#040B16] text-white hover:bg-[#006AA7] cursor-pointer"
-              >
-                Bekräfta
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Structured Intro & Inquiry Modal (CMS-editable fields & routing) */}
+      <IntroRequestModal
+        open={Boolean(introModalTarget)}
+        target={introModalTarget}
+        introForm={(store.contactForms || []).find((f) => f.active && f.position === 'intro-modal')}
+        editorialEmail={store.pageContent?.kontakt?.contactEmail || 'hej@sverigesehandel.se'}
+        onClose={() => setIntroModalTarget(null)}
+        onSubmitted={fetchStore}
+        onNotify={notify}
+      />
 
       {/* Toast Notification */}
       {toast && (

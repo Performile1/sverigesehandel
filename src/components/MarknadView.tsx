@@ -27,6 +27,7 @@ import {
 import type {
   AdBanner,
   CategoryOrderBenchmark,
+  ContactFormConfig,
   DeliveryStatsData,
   EcommerceLaw,
   LogisticsProvider,
@@ -50,6 +51,7 @@ import {
 } from '../utils/shippingEconomics';
 import { AdBannerSlot } from './AdBannerSlot';
 import { CheckoutStrategyCTA } from './CheckoutStrategyCTA';
+import { PageFormSlot } from './DynamicFormWidget';
 import { ResilientImage } from './ResilientImage';
 import { SwedenLogisticsMap } from './SwedenLogisticsMap';
 
@@ -64,12 +66,15 @@ interface MarknadViewProps {
   intelligenceSources: MarketIntelligenceSource[];
   techStackShares: TechStackShare[];
   adBanners: AdBanner[];
+  contactForms?: ContactFormConfig[];
   merchants: Merchant[];
   logisticsProviders: LogisticsProvider[];
   merchantCount: number;
   partnerCount: number;
   onNavigate: (tab: PortalTab, searchQuery?: string) => void;
   onBookAdSlot: (slotName: string) => void;
+  onFormSubmitted?: () => Promise<void> | void;
+  onNotify?: (msg: string) => void;
 }
 
 const SWEDISH_ECOMMERCE_TREND = [
@@ -152,12 +157,15 @@ export function MarknadView({
   intelligenceSources = [],
   techStackShares = [],
   adBanners = [],
+  contactForms = [],
   merchants = [],
   logisticsProviders = [],
   merchantCount,
   partnerCount,
   onNavigate,
   onBookAdSlot,
+  onFormSubmitted,
+  onNotify,
 }: MarknadViewProps) {
   const [selectedRegion, setSelectedRegion] = useState<string>('vast');
   const [tradeMode, setTradeMode] = useState<'export' | 'import'>('export');
@@ -439,6 +447,15 @@ export function MarknadView({
           placement="marknad-top"
           onNavigate={onNavigate}
           onBookSlot={onBookAdSlot}
+        />
+
+        <PageFormSlot
+          forms={contactForms}
+          page="marknad"
+          position="top"
+          adBanners={adBanners}
+          onSubmitted={onFormSubmitted}
+          onNotify={onNotify}
         />
 
         {/* Interactive Sweden Map + Cross-Border */}
@@ -2266,6 +2283,15 @@ export function MarknadView({
           </div>
         </div>
 
+        <PageFormSlot
+          forms={contactForms}
+          page="marknad"
+          position="mid"
+          adBanners={adBanners}
+          onSubmitted={onFormSubmitted}
+          onNotify={onNotify}
+        />
+
         {/* Market & Tech Intelligence (ECDB, Statista, BuiltWith, Wappalyzer, Tembi, HUI Research, Paketindex) */}
         {intelligenceSources.length > 0 && (() => {
           const activeSource =
@@ -2744,6 +2770,15 @@ export function MarknadView({
             </button>
           </div>
         </div>
+
+        <PageFormSlot
+          forms={contactForms}
+          page="marknad"
+          position="bottom"
+          adBanners={adBanners}
+          onSubmitted={onFormSubmitted}
+          onNotify={onNotify}
+        />
       </div>
     </div>
   );

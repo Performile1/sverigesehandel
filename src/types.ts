@@ -91,6 +91,9 @@ export interface TechPartner {
   carrierMetrics?: CarrierMetrics;
   notableClients: string[];
   desc: string;
+  introEmail?: string;
+  introRoutingMode?: 'default' | 'self' | 'direct';
+  hasDirectIntroEmail?: boolean;
   status: PublishStatus;
   sourceUrl?: string;
   updatedAt: string;
@@ -116,6 +119,9 @@ export interface LogisticsProvider {
   notableClients: string[];
   pricingModel: string;
   desc: string;
+  introEmail?: string;
+  introRoutingMode?: 'default' | 'self' | 'direct';
+  hasDirectIntroEmail?: boolean;
   status: PublishStatus;
   updatedAt: string;
 }
@@ -393,14 +399,68 @@ export interface AdBanner {
   active: boolean;
 }
 
+export type FormPosition = 'top' | 'mid' | 'bottom' | 'intro-modal';
+export type FormPurpose = 'contact' | 'intro' | 'ad-booking' | 'tip' | 'recruitment';
+export type FormRoutingMode = 'self' | 'direct-partner' | 'custom-email';
+export type ContactFormFieldType = 'text' | 'email' | 'tel' | 'select' | 'textarea';
+export type ContactMessageStatus = 'new' | 'handled-self' | 'forwarded' | 'resolved';
+
+export interface ContactFormField {
+  id: string;
+  key: string;
+  label: string;
+  type: ContactFormFieldType;
+  placeholder?: string;
+  required?: boolean;
+  enabled: boolean;
+  options?: string[];
+  width?: 'half' | 'full';
+}
+
+export interface ContactFormConfig {
+  id: string;
+  name: string;
+  purpose: FormPurpose;
+  page: PortalTab | 'all';
+  position: FormPosition;
+  active: boolean;
+  theme: 'navy' | 'light' | 'gold';
+  kicker: string;
+  title: string;
+  subtitle: string;
+  submitLabel: string;
+  successMessage: string;
+  routingMode: FormRoutingMode;
+  recipientEmail: string;
+  allowRequesterChoice?: boolean;
+  fields: ContactFormField[];
+  updatedAt: string;
+}
+
 export interface ContactMessage {
   id: string;
   name: string;
   email: string;
   company?: string;
+  phone?: string;
   topic: string;
   adSlot?: string;
   message: string;
+  formId?: string;
+  formName?: string;
+  submissionType?: 'contact' | 'intro' | 'ad-booking' | 'job-apply' | 'other';
+  targetEntityType?: 'partner' | 'logistics' | 'job' | 'event';
+  targetEntityId?: string;
+  targetEntityName?: string;
+  routingMode?: FormRoutingMode;
+  routedToEmail?: string;
+  needSummary?: string;
+  monthlyVolume?: string;
+  currentPlatform?: string;
+  timeline?: string;
+  customAnswers?: Record<string, string>;
+  status?: ContactMessageStatus;
+  emailDispatched?: boolean;
   createdAt: string;
 }
 
@@ -517,6 +577,7 @@ export interface CMSStore {
   intelligenceSources: MarketIntelligenceSource[];
   techStackShares: TechStackShare[];
   adBanners: AdBanner[];
+  contactForms: ContactFormConfig[];
   contactMessages: ContactMessage[];
   timeline: TimelineMilestone[];
   communityThreads: CommunityThread[];
@@ -617,5 +678,6 @@ export type CMSSection =
   | 'events'
   | 'timeline'
   | 'jobs'
+  | 'forms'
   | 'pages'
   | 'content';

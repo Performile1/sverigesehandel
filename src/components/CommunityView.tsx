@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { ChevronUp, MessageSquare } from 'lucide-react';
-import type { CommunityThread, PageCopyBlock } from '../types';
+import type { AdBanner, CommunityThread, ContactFormConfig, PageCopyBlock } from '../types';
+import { PageFormSlot } from './DynamicFormWidget';
 
 interface CommunityViewProps {
   threads: CommunityThread[];
   pageCopy?: PageCopyBlock;
+  contactForms?: ContactFormConfig[];
+  adBanners?: AdBanner[];
   memberCount?: number;
   memberCities?: string[];
   userDisplayName?: string | null;
@@ -14,6 +17,8 @@ interface CommunityViewProps {
   onAddThread: (payload: { channel: string; author: string; title: string }) => Promise<void>;
   onUpvote: (id: string) => Promise<void>;
   onJoinMember: (payload: { name: string; email: string; role: string; city: string }) => Promise<void>;
+  onFormSubmitted?: () => Promise<void> | void;
+  onNotify?: (msg: string) => void;
 }
 
 const CHANNELS = [
@@ -27,6 +32,8 @@ const CHANNELS = [
 export function CommunityView({
   threads,
   pageCopy,
+  contactForms = [],
+  adBanners = [],
   memberCount = 0,
   memberCities = [],
   userDisplayName = null,
@@ -36,6 +43,8 @@ export function CommunityView({
   onAddThread,
   onUpvote,
   onJoinMember,
+  onFormSubmitted,
+  onNotify,
 }: CommunityViewProps) {
   const [activeChannel, setActiveChannel] = useState('all');
   const [newTitle, setNewTitle] = useState('');
@@ -216,6 +225,24 @@ export function CommunityView({
         </div>
       </div>
 
+      <PageFormSlot
+        forms={contactForms}
+        page="community"
+        position="top"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
+
+      <PageFormSlot
+        forms={contactForms}
+        page="community"
+        position="mid"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
@@ -363,6 +390,15 @@ export function CommunityView({
           </div>
         </div>
       </div>
+
+      <PageFormSlot
+        forms={contactForms}
+        page="community"
+        position="bottom"
+        adBanners={adBanners}
+        onSubmitted={onFormSubmitted}
+        onNotify={onNotify}
+      />
     </div>
   );
 }

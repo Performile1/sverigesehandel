@@ -7,13 +7,16 @@ import type {
   CMSStore,
   CommunityMember,
   CommunityThread,
+  ContactFormConfig,
   ContactMessage,
+  ContactMessageStatus,
   DCSession,
   DeliveryStatsData,
   EcommerceEvent,
   EcommerceJob,
   EcommerceLaw,
   EcommerceNewsItem,
+  FormRoutingMode,
   JobValidityStatus,
   LogisticsProvider,
   MarketIntelligenceSource,
@@ -425,6 +428,10 @@ function ensureStoreFile(): CMSStore {
         Array.isArray(upgradedRaw.adBanners) && upgradedRaw.adBanners.length > 0
           ? upgradedRaw.adBanners
           : INITIAL_CMS_DATA.adBanners,
+      contactForms:
+        Array.isArray(upgradedRaw.contactForms) && upgradedRaw.contactForms.length > 0
+          ? upgradedRaw.contactForms
+          : INITIAL_CMS_DATA.contactForms,
       contactMessages: Array.isArray(upgradedRaw.contactMessages) ? upgradedRaw.contactMessages : [],
       timeline: upgradedRaw.timeline ?? INITIAL_CMS_DATA.timeline,
       communityThreads: upgradedRaw.communityThreads ?? INITIAL_CMS_DATA.communityThreads,
@@ -448,9 +455,10 @@ function ensureStoreFile(): CMSStore {
       mergedJobs.changed ||
       regionsChanged ||
       deliveryChanged ||
-      (parsed.schemaVersion ?? 1) < 3 ||
+      (parsed.schemaVersion ?? 1) < 4 ||
       !parsed.paketindex ||
       !parsed.pageContent ||
+      !parsed.contactForms ||
       !parsed.news ||
       !parsed.events ||
       !parsed.jobs ||
@@ -668,8 +676,14 @@ export function upsertPartner(input: Partial<TechPartner> & { name: string }): {
       id: existing.id,
       name: cleanName || existing.name,
       domain: cleanDomain || existing.domain,
+      introEmail:
+        'introEmail' in input
+          ? input.introEmail?.trim() || undefined
+          : existing.introEmail,
+      introRoutingMode: input.introRoutingMode ?? existing.introRoutingMode,
       updatedAt: now,
     };
+    delete updated.hasDirectIntroEmail;
     if (isCarrier) {
       delete updated.customerCount;
     }
@@ -698,6 +712,8 @@ export function upsertPartner(input: Partial<TechPartner> & { name: string }): {
     ...(input.carrierMetrics ? { carrierMetrics: input.carrierMetrics } : {}),
     notableClients: Array.isArray(input.notableClients) ? input.notableClients : [],
     desc: input.desc?.trim() || 'Teknisk partner för nordisk e-handel.',
+    ...(input.introEmail?.trim() ? { introEmail: input.introEmail.trim() } : {}),
+    ...(input.introRoutingMode ? { introRoutingMode: input.introRoutingMode } : {}),
     status: input.status || 'published',
     sourceUrl: input.sourceUrl,
     updatedAt: now,
@@ -1210,30 +1226,203 @@ export function deleteAdBanner(id: string): boolean {
   return true;
 }
 
+export function upsertContactForm(
+  input: Partial<ContactFormConfig> & { name: string }
+): ContactFormConfig {
+  const store = ensureStoreFile();
+  const list = Array.isArray(store.contactForms) ? [...store.contactForms] : [];
+  const now = new Date().toISOString();
+  const idx = input.id ? list.findIndex((f) => f.id === input.id) : -1;
+
+  if (idx >= 0) {
+    const existing = list[idx];
+    const updated: ContactFormConfig = {
+      ...existing,
+      ...input,
+      id: existing.id,
+      name: input.name.trim() || existing.name,
+      recipientEmail: (input.recipientEmail ?? existing.recipientEmail ?? 'hej@sverigesehandel.se').trim(),
+      fields: Array.isArray(input.fields) && input.fields.length > 0 ? input.fields : existing.fields,
+      updatedAt: now,
+    };
+    list[idx] = updated;
+    store.contactForms = list;
+    saveStore(store);
+    return updated;
+  }
+
+  const created: ContactFormConfig = {
+    id: input.id || `form-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    name: input.name.trim(),
+    purpose: input.purpose || 'contact',
+    page: input.page || 'kontakt',
+    position: input.position || 'bottom',
+    active: input.active ?? true,
+    theme: input.theme || 'light',
+    kicker: input.kicker?.trim() || 'Kontakt & Rådgivning',
+    title: input.title?.trim() || input.name.trim(),
+    subtitle: input.subtitle?.trim() || 'Fyll i uppgifterna nedan så återkommer vi snabbt.',
+    submitLabel: input.submitLabel?.trim() || 'Skicka förfrågan',
+    successMessage: input.successMessage?.trim() || 'Tack! Din förfrågan har mottagits.',
+    routingMode: input.routingMode || 'self',
+    recipientEmail: input.recipientEmail?.trim() || store.pageContent?.kontakt?.contactEmail?.trim() || 'hej@sverigesehandel.se',
+    allowRequesterChoice: Boolean(input.allowRequesterChoice),
+    fields:
+      Array.isArray(input.fields) && input.fields.length > 0
+        ? input.fields
+        : structuredClone(INITIAL_CMS_DATA.contactForms[0].fields),
+    updatedAt: now,
+  };
+  list.push(created);
+  store.contactForms = list;
+  saveStore(store);
+  return created;
+}
+
+export function deleteContactForm(id: string): boolean {
+  const store = ensureStoreFile();
+  const list = Array.isArray(store.contactForms) ? store.contactForms : [];
+  const before = list.length;
+  store.contactForms = list.filter((f) => f.id !== id);
+  if (store.contactForms.length === before) return false;
+  saveStore(store);
+  return true;
+}
+
 export function addContactMessage(input: {
   authorUid?: string;
   name: string;
   email: string;
   company?: string;
+  phone?: string;
   topic: string;
   adSlot?: string;
   message: string;
+  formId?: string;
+  submissionType?: 'contact' | 'intro' | 'ad-booking' | 'job-apply' | 'other';
+  targetEntityType?: 'partner' | 'logistics' | 'job' | 'event';
+  targetEntityId?: string;
+  targetEntityName?: string;
+  preferredRouting?: FormRoutingMode;
+  needSummary?: string;
+  monthlyVolume?: string;
+  currentPlatform?: string;
+  timeline?: string;
+  customAnswers?: Record<string, string>;
 }): ContactMessage {
   const store = ensureStoreFile();
+  const form = input.formId
+    ? (store.contactForms || []).find((f) => f.id === input.formId)
+    : undefined;
+  const editorialDefault =
+    store.pageContent?.kontakt?.contactEmail?.trim() || 'hej@sverigesehandel.se';
+
+  const targetPartner =
+    input.targetEntityType === 'partner'
+      ? store.partners.find(
+          (p) =>
+            (input.targetEntityId && p.id === input.targetEntityId) ||
+            (input.targetEntityName &&
+              p.name.toLowerCase() === input.targetEntityName.trim().toLowerCase())
+        )
+      : undefined;
+  const targetLogistics =
+    input.targetEntityType === 'logistics'
+      ? (store.logisticsProviders || []).find(
+          (l) =>
+            (input.targetEntityId && l.id === input.targetEntityId) ||
+            (input.targetEntityName &&
+              l.name.toLowerCase() === input.targetEntityName.trim().toLowerCase())
+        )
+      : undefined;
+
+  const entity = targetPartner || targetLogistics;
+  const entityRouting = entity?.introRoutingMode;
+  const entityEmail = entity?.introEmail?.trim() || '';
+
+  let routingMode: FormRoutingMode = form?.routingMode || 'self';
+  if (entityRouting === 'self') {
+    routingMode = 'self';
+  } else if (entityRouting === 'direct') {
+    routingMode = 'direct-partner';
+  } else if (
+    form?.allowRequesterChoice &&
+    (input.preferredRouting === 'self' || input.preferredRouting === 'direct-partner')
+  ) {
+    routingMode = input.preferredRouting;
+  }
+
+  let routedToEmail = form?.recipientEmail?.trim() || editorialDefault;
+  if (routingMode === 'direct-partner') {
+    if (entityEmail) {
+      routedToEmail = entityEmail;
+    } else {
+      routingMode = 'self';
+      routedToEmail = form?.recipientEmail?.trim() || editorialDefault;
+    }
+  } else if (routingMode === 'custom-email') {
+    routedToEmail = form?.recipientEmail?.trim() || editorialDefault;
+  } else {
+    routedToEmail =
+      (form?.routingMode === 'self' && form?.recipientEmail?.trim()) || editorialDefault;
+  }
+
   const item: ContactMessage = {
     ...(input.authorUid ? { authorUid: input.authorUid } : {}),
-    id: `msg-${Date.now()}`,
+    id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     name: input.name.trim(),
     email: input.email.trim(),
     company: input.company?.trim() || undefined,
+    phone: input.phone?.trim() || undefined,
     topic: input.topic.trim() || 'Allmän fråga',
     adSlot: input.adSlot?.trim() || undefined,
     message: input.message.trim(),
+    formId: form?.id || input.formId?.trim() || undefined,
+    formName: form?.name || undefined,
+    submissionType:
+      input.submissionType ||
+      (form?.purpose === 'intro' ? 'intro' : input.adSlot ? 'ad-booking' : 'contact'),
+    targetEntityType: input.targetEntityType,
+    targetEntityId: entity?.id || input.targetEntityId?.trim() || undefined,
+    targetEntityName: entity?.name || input.targetEntityName?.trim() || undefined,
+    routingMode,
+    routedToEmail,
+    needSummary: input.needSummary?.trim() || undefined,
+    monthlyVolume: input.monthlyVolume?.trim() || undefined,
+    currentPlatform: input.currentPlatform?.trim() || undefined,
+    timeline: input.timeline?.trim() || undefined,
+    customAnswers:
+      input.customAnswers && Object.keys(input.customAnswers).length > 0
+        ? input.customAnswers
+        : undefined,
+    status: routingMode === 'self' ? 'handled-self' : 'new',
     createdAt: new Date().toISOString(),
   };
+
   store.contactMessages.unshift(item);
+  if (store.contactMessages.length > 300) {
+    store.contactMessages = store.contactMessages.slice(0, 300);
+  }
   saveStore(store);
   return item;
+}
+
+export function updateContactMessageStatus(
+  id: string,
+  status: ContactMessageStatus,
+  emailDispatched?: boolean
+): ContactMessage | null {
+  const store = ensureStoreFile();
+  const idx = store.contactMessages.findIndex((m) => m.id === id);
+  if (idx < 0) return null;
+  const updated: ContactMessage = {
+    ...store.contactMessages[idx],
+    status,
+    ...(typeof emailDispatched === 'boolean' ? { emailDispatched } : {}),
+  };
+  store.contactMessages[idx] = updated;
+  saveStore(store);
+  return updated;
 }
 
 export function deleteContactMessage(id: string): boolean {
@@ -1262,8 +1451,14 @@ export function upsertLogisticsProvider(
       ...input,
       id: existing.id,
       name: cleanName || existing.name,
+      introEmail:
+        'introEmail' in input
+          ? input.introEmail?.trim() || undefined
+          : existing.introEmail,
+      introRoutingMode: input.introRoutingMode ?? existing.introRoutingMode,
       updatedAt: now,
     };
+    delete updated.hasDirectIntroEmail;
     store.logisticsProviders[existingIdx] = updated;
     saveStore(store);
     return { provider: updated, created: false };
@@ -1293,6 +1488,8 @@ export function upsertLogisticsProvider(
     notableClients: Array.isArray(input.notableClients) ? input.notableClients : [],
     pricingModel: input.pricingModel?.trim() || 'Rörligt pris per order + pallplats',
     desc: input.desc?.trim() || `Svensk logistikpartner (${input.logisticsType || '3PL'}) för e-handel.`,
+    ...(input.introEmail?.trim() ? { introEmail: input.introEmail.trim() } : {}),
+    ...(input.introRoutingMode ? { introRoutingMode: input.introRoutingMode } : {}),
     status: input.status || 'published',
     updatedAt: now,
   };

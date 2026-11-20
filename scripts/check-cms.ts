@@ -77,7 +77,8 @@ try {
   const upgraded = await service.getStore();
   assert.deepEqual(upgraded.logisticsProviders, INITIAL_CMS_DATA.logisticsProviders);
   assert.deepEqual(upgraded.news, INITIAL_CMS_DATA.news);
-  assert.equal(upgraded.schemaVersion, 3);
+  assert.equal(upgraded.schemaVersion, 4);
+  assert.ok(Array.isArray(upgraded.contactForms) && upgraded.contactForms.length >= 4);
   assert.ok(upgraded.paketindex && upgraded.paketindex.totalParcelsMillions === 64.2);
   assert.ok(upgraded.pageContent && upgraded.pageContent.marknad.title.length > 5);
   assert.ok(upgraded.partners.some((p) => p.id === 'p-iboxen'), 'Legacy pre-v2 snapshot receives iBoxen');
@@ -160,7 +161,7 @@ try {
   assert.equal(transactions, writesBeforeUpgrade);
   await service.upsertMerchant({ name: 'Migration fixture' });
   assert.deepEqual(snapshot.logisticsProviders, INITIAL_CMS_DATA.logisticsProviders);
-  const empty = { ...currentSnapshot, logisticsProviders: [], schemaVersion: 3 };
+  const empty = { ...currentSnapshot, logisticsProviders: [], schemaVersion: 4 };
   assert.deepEqual(upgradeSnapshot(empty), empty, 'An intentionally empty list stays empty');
   const v3WithoutIboxen = {
     ...currentSnapshot,
@@ -168,6 +169,7 @@ try {
     partners: currentSnapshot.partners.filter((p) => p.id !== 'p-iboxen'),
   };
   const upgradedV3 = upgradeSnapshot(v3WithoutIboxen) as typeof currentSnapshot;
+  assert.equal(upgradedV3.schemaVersion, 4);
   assert.ok(
     !upgradedV3.partners.some((p) => p.id === 'p-iboxen'),
     'Do not restore deleted iBoxen once snapshot is at schemaVersion >= 3'
@@ -177,6 +179,7 @@ try {
   assert.ok(!validateSnapshot({ ...currentSnapshot, logisticsProviders: null }));
   assert.ok(!validateSnapshot({ ...currentSnapshot, logisticsProviders: {} }));
   assert.ok(!validateSnapshot({ ...currentSnapshot, news: null }));
+  assert.ok(!validateSnapshot({ ...currentSnapshot, contactForms: null }));
   snapshot = currentSnapshot;
   snapshot.logisticsProviders[0].status = 'draft';
   snapshot.news[0].status = 'draft';
@@ -208,6 +211,7 @@ try {
     ['/api/ai/enrich', 'POST'], ['/api/ai/news', 'POST'], ['/api/news', 'POST'],
     ['/api/news/item', 'DELETE'], ['/api/cms/status', 'GET'],
     ['/api/jobs/validate', 'POST'], ['/api/contact/item', 'DELETE'],
+    ['/api/contact/item/status', 'PUT'], ['/api/forms', 'POST'], ['/api/forms/item', 'DELETE'],
     ['/api/paketindex', 'PUT'], ['/api/pages', 'PUT'], ['/api/timeline', 'POST'],
   ]) {
     assert.equal((await request(path, method, method === 'GET' ? undefined : {})).status, 401, `${method} ${path}`);
@@ -255,13 +259,94 @@ try {
   const tlItem = await tlResp.json();
   assert.equal((await request(`/api/timeline/${tlItem.id}`, 'DELETE', undefined, 'admin-fixture')).status, 200);
 
+  const partnerDirectResp = await request(
+    '/api/partners',
+    'POST',
+    {
+      name: 'Direct Intro Partner',
+      subType: 'Betalning (PSP)',
+      introEmail: 'partner-secret@example.invalid',
+      introRoutingMode: 'direct',
+    },
+    'admin-fixture'
+  );
+  assert.equal(partnerDirectResp.status, 201);
+  const partnerDirectJson = await partnerDirectResp.json();
+  const publicAfterPartner = await (await request('/api/cms/store')).json();
+  const publicPartner = publicAfterPartner.partners.find(
+    (p: { id: string }) => p.id === partnerDirectJson.partner.id
+  );
+  assert.equal(publicPartner.hasDirectIntroEmail, true);
+  assert.equal(publicPartner.introEmail, undefined, 'introEmail must not leak in public store');
+
+  const formCreateResp = await request(
+    '/api/forms',
+    'POST',
+    {
+      name: 'Marknad Mid Form',
+      purpose: 'intro',
+      page: 'marknad',
+      position: 'mid',
+      active: true,
+      theme: 'navy',
+      kicker: 'Test',
+      title: 'Testformulär',
+      subtitle: 'Beskrivning',
+      submitLabel: 'Skicka',
+      successMessage: 'Klar',
+      routingMode: 'custom-email',
+      recipientEmail: 'secret-form-recipient@example.invalid',
+      fields: [],
+    },
+    'admin-fixture'
+  );
+  assert.equal(formCreateResp.status, 201);
+  const createdForm = await formCreateResp.json();
+  const publicFormsResp = await (await request('/api/cms/store')).json();
+  const publicForm = publicFormsResp.contactForms.find(
+    (f: { id: string }) => f.id === createdForm.id
+  );
+  assert.ok(publicForm);
+  assert.equal(publicForm.recipientEmail, '', 'recipientEmail must be stripped in public store');
+  assert.equal(
+    (await request(`/api/forms/${createdForm.id}`, 'PUT', { ...createdForm, active: false }, 'admin-fixture')).status,
+    200
+  );
+  const publicFormsAfterPause = await (await request('/api/cms/store')).json();
+  assert.ok(
+    !publicFormsAfterPause.contactForms.some((f: { id: string }) => f.id === createdForm.id),
+    'Paused forms must not be returned publicly'
+  );
+  assert.equal((await request(`/api/forms/${createdForm.id}`, 'DELETE', undefined, 'admin-fixture')).status, 200);
+
   assert.equal((await request('/api/contact', 'POST', {})).status, 401);
   assert.equal((await request('/api/contact', 'POST', {}, 'unverified-fixture')).status, 403);
   assert.equal((await request('/api/contact', 'POST', { name: {}, email: 'x', topic: 'x', message: 'x' }, 'member-fixture')).status, 400);
-  assert.equal((await request('/api/contact', 'POST', {
-    name: 'Visitor', email: 'visitor@example.invalid', topic: 'Test', message: 'Hello',
-  }, 'member-fixture')).status, 201);
+  const directContactResp = await request('/api/contact', 'POST', {
+    name: 'Visitor',
+    email: 'visitor@example.invalid',
+    topic: 'Test',
+    message: 'Hello',
+    formId: 'form-intro-default',
+    submissionType: 'intro',
+    targetEntityType: 'partner',
+    targetEntityId: partnerDirectJson.partner.id,
+    targetEntityName: 'Direct Intro Partner',
+    needSummary: 'Byta kassa',
+    monthlyVolume: '2 500 – 10 000 paket/mån',
+  }, 'member-fixture');
+  assert.equal(directContactResp.status, 201);
+  const savedDirectContact = await directContactResp.json();
+  assert.equal(savedDirectContact.routingMode, 'direct-partner');
+  assert.equal(savedDirectContact.routedToEmail, 'partner-secret@example.invalid');
+  assert.equal(savedDirectContact.status, 'new');
+  assert.equal(
+    (await request(`/api/contact/${savedDirectContact.id}/status`, 'PUT', { status: 'forwarded' }, 'admin-fixture')).status,
+    200
+  );
+  assert.equal(snapshot.contactMessages[0].status, 'forwarded');
   assert.equal((snapshot.contactMessages[0] as unknown as { authorUid: string }).authorUid, 'fixture-user');
+  assert.equal((await request(`/api/partners/${partnerDirectJson.partner.id}`, 'DELETE', undefined, 'admin-fixture')).status, 200);
   assert.deepEqual((await (await request('/api/cms/store')).json()).contactMessages, []);
   assert.equal((await request('/api/contact', 'POST', { name: 'Visitor', email: 'visitor@example.invalid', topic: 'Test', message: 'x'.repeat(2001) }, 'member-fixture')).status, 400);
   assert.equal((await request('/api/community/threads', 'POST', {
