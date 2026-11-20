@@ -1,3 +1,4 @@
+import { PaketindexArchiveEditor } from './PaketindexArchiveEditor';
 import { CmsFirebasePanel } from './CmsFirebasePanel';
 import { MapPointsEditor } from './MapPointsEditor';
 import { JobTextPanel, NewsReviewPanel } from './EditorialPanels';
@@ -3636,6 +3637,8 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
           {/* SECTION: PAKETINDEX & MARKNADSDATA */}
           {section === 'paketindex' && (
             <div className="space-y-6">
+              <PaketindexArchiveEditor rows={store.paketindexArchive || []} onRefresh={onRefresh} />
+              <h2 className="text-xl font-bold">Äldre Paketindexsammanfattning (separat från arkivet)</h2>
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();

@@ -58,9 +58,9 @@ utan att underlaget först stämts av. Ingen befintlig CMS-siffra ersätts av CS
 1. Bekräfta original-PDF:er eller rapportlänkar och rätt att återanvända uppgifterna.
 2. Redaktör stämmer av CSV mot originalens tabeller/diagram och dokumenterar
    skillnader mellan utgåvor. Inkludera övriga segment med samma källprecision.
-3. Bygg versionerat periodarkiv, förhandsgranskad import, dubbletthantering och
-   jämförelser med dessa CSV:er som test-/exempelunderlag. Ett enkelt period-ID
-   ensamt räcker inte för de mottagna rapporterna.
+3. Använd det nu implementerade periodarkivet i CMS för förhandsgranskning och
+   uttrycklig import som utkast. CSV:erna laddas inte in vid merge/start.
+   Version, period, mått och metod utgör nyckel; ingen historik blandas automatiskt.
 4. Publicera först efter granskning. Framtida rapporter ska kunna importeras som
    nya utgåvor utan att äldre utgåvor raderas.
 

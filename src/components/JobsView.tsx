@@ -1,3 +1,4 @@
+import { SalaryDisplay } from './SalaryEstimateEditor';
 import { matchesJob } from '../../shared/portalContent';
 import { JobDescription } from './JobDescription';
 import { useMemo, useState } from 'react';
@@ -340,9 +341,7 @@ export function JobsView({
                   </div>
 
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-                    <span className="font-mono text-xs font-semibold text-[#059669] tabular-nums">
-                      {job.salaryRange || 'Marknadsmässig lön'}
-                    </span>
+                    <SalaryDisplay job={job} />
                     <div className="flex items-center gap-2">
                       <button
                         type="button"

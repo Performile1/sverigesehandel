@@ -1,3 +1,5 @@
+import { validSalaryEstimate } from '../shared/salary.ts';
+import { legacyObservation, validArchive } from '../shared/paketindexArchive.ts';
 import { LEGACY_MARKET_TITLE, MARKET_TITLE, neutralPlaceholder, validMapPoint } from '../shared/portalContent.ts';
 import type { CMSStore, DeliveryStatsData, MarketIntelligenceSource, TechPartner } from '../src/types.ts';
 import { INITIAL_CMS_DATA } from './seedData.ts';
@@ -163,6 +165,10 @@ export function upgradeSnapshot(value: unknown): unknown {
     draft.schemaVersion = 4;
   }
 
+  if (!hasOwn(obj, 'paketindexArchive')) {
+    const legacy = next.paketindex as CMSStore['paketindex'];
+    ensureClone().paketindexArchive = legacyObservation(legacy);
+  }
   return next;
 }
 
@@ -172,7 +178,7 @@ export function validateSnapshot(value: unknown): value is CMSStore {
   const arrays = ['merchants', 'partners', 'logisticsProviders', 'news', 'events', 'sessions', 'jobs', 'recruitmentSites',
     'orderBenchmarks', 'shippingTiers', 'laws', 'intelligenceSources', 'techStackShares',
     'adBanners', 'contactForms', 'contactMessages', 'timeline', 'communityThreads', 'communityMembers', 'directMessages'];
-  return (store.mapPoints === undefined || (Array.isArray(store.mapPoints) &&
+  return (Array.isArray(store.jobs) && store.jobs.every((job) => job && (job.salaryEstimate == null || validSalaryEstimate(job.salaryEstimate)))) && (store.paketindexArchive === undefined || validArchive(store.paketindexArchive)) && (store.mapPoints === undefined || (Array.isArray(store.mapPoints) &&
     store.mapPoints.every(validMapPoint) && new Set(store.mapPoints.map((point) => point.id)).size === store.mapPoints.length)) && arrays.every((key) => Array.isArray(store[key])) &&
     ['regions', 'deliveryStats', 'paketindex', 'pageContent'].every((key) => store[key] !== null &&
       typeof store[key] === 'object' && !Array.isArray(store[key])) &&

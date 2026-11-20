@@ -1,3 +1,6 @@
+import { validSalaryEstimate } from '../shared/salary.ts';
+import { observationKey, parseArchiveCsv, validArchive, validObservation, legacyObservation } from '../shared/paketindexArchive.ts';
+import type { PaketindexObservation } from '../src/types.ts';
 import type { CmsImage } from '../src/types.ts';
 import { validMapPoint } from '../shared/portalContent.ts';
 import type { MapPoint } from '../src/types.ts';
@@ -404,6 +407,7 @@ function ensureStoreFile(): CMSStore {
           : INITIAL_CMS_DATA.recruitmentSites,
       regions: mergedRegions,
       mapPoints: Array.isArray(parsed.mapPoints) ? parsed.mapPoints : [],
+      paketindexArchive: upgradedRaw.paketindexArchive,
       orderBenchmarks:
         Array.isArray(upgradedRaw.orderBenchmarks) && upgradedRaw.orderBenchmarks.length > 0
           ? upgradedRaw.orderBenchmarks
@@ -871,6 +875,9 @@ export function deleteSession(id: string): boolean {
 }
 
 export function upsertJob(input: Partial<EcommerceJob> & { title: string; company: string }): EcommerceJob {
+  if (input.salaryEstimate != null && !validSalaryEstimate(input.salaryEstimate)) {
+    throw Object.assign(new Error('Ogiltigt lönespann: ange min/max, yrke, geografiskt underlag, källa, statistikår och metod.'), { status: 400 });
+  }
   const store = ensureStoreFile();
   const today = todayIso();
   if (input.summary !== undefined && (typeof input.summary !== 'string' || input.summary.length > 240)) {
@@ -904,6 +911,7 @@ export function upsertJob(input: Partial<EcommerceJob> & { title: string; compan
     roleCategory: input.roleCategory || 'E-commerce Management',
     seniority: input.seniority || 'Mid / Senior',
     salaryRange: input.salaryRange,
+    salaryEstimate: input.salaryEstimate,
     applyUrl: input.applyUrl || 'https://ehandel.se/jobb',
     skills: Array.isArray(input.skills) ? input.skills : [],
     desc: input.desc || '',
@@ -924,6 +932,9 @@ export function upsertJob(input: Partial<EcommerceJob> & { title: string; compan
 
 export function batchAddJobs(items: Array<Partial<EcommerceJob> & { title: string; company: string }>): { added: EcommerceJob[]; skipped: string[] } {
   for (const item of items) {
+    if (item.salaryEstimate != null && !validSalaryEstimate(item.salaryEstimate)) {
+      throw Object.assign(new Error('Ogiltigt källunderlag för lönespann.'), { status: 400 });
+    }
     if ((item.summary !== undefined && (typeof item.summary !== 'string' || item.summary.length > 240)) ||
         (item.desc !== undefined && typeof item.desc !== 'string')) {
       throw Object.assign(new Error('Ogiltig jobbtext eller ingress över 240 tecken.'), { status: 400 });
@@ -962,6 +973,7 @@ export function batchAddJobs(items: Array<Partial<EcommerceJob> & { title: strin
       roleCategory: input.roleCategory || 'E-commerce Management',
       seniority: input.seniority || 'Mid / Senior',
       salaryRange: input.salaryRange,
+      salaryEstimate: input.salaryEstimate,
       applyUrl: input.applyUrl || 'https://ehandel.se/jobb',
       skills: Array.isArray(input.skills) ? input.skills : [],
       desc: input.desc || `Roll inom svensk e-handel hos ${company}.`,
@@ -2038,4 +2050,54 @@ export function assignCmsImage(type: 'partner' | 'ad', id: string, image: CmsIma
   else delete item.image;
   saveStore(store);
   return true;
+}
+
+function currentArchive(store: CMSStore): PaketindexObservation[] {
+  return store.paketindexArchive ?? legacyObservation(store.paketindex);
+}
+
+export function upsertPaketindexObservation(input: PaketindexObservation): PaketindexObservation {
+  if (!validObservation(input)) throw Object.assign(new Error('Ogiltig Paketindexpost. Publicering kräver käll-URL och datum.'), { status: 400 });
+  const store = ensureStoreFile();
+  const rows = [...currentArchive(store)];
+  // Explicit fields only; reject/omit unknown input instead of storing arbitrary payload.
+  const row: PaketindexObservation = { edition: input.edition, period: input.period, metric: input.metric,
+    basis: input.basis, value: input.value, unit: input.unit, sourceName: input.sourceName, sourceUrl: input.sourceUrl,
+    publishedDate: input.publishedDate, precision: input.precision, note: input.note, status: input.status,
+    ...(input.sampleSize === undefined ? {} : { sampleSize: input.sampleSize }) };
+  const index = rows.findIndex((r) => observationKey(r) === observationKey(row));
+  if (index < 0) rows.push(row); else rows[index] = row;
+  if (!validArchive(rows)) throw Object.assign(new Error('Arkivet får innehålla högst 500 unika poster.'), { status: 400 });
+  store.paketindexArchive = rows; saveStore(store); return row;
+}
+
+export function deletePaketindexObservation(key: string): boolean {
+  const store = ensureStoreFile(); const rows = currentArchive(store);
+  if (!rows.some((r) => observationKey(r) === key)) return false;
+  store.paketindexArchive = rows.filter((r) => observationKey(r) !== key); saveStore(store); return true;
+}
+
+export function importPaketindexCsv(csv: string, policy: 'reject' | 'skip' | 'replace', commit: boolean) {
+  if (!['reject', 'skip', 'replace'].includes(policy) || typeof commit !== 'boolean' || typeof csv !== 'string') {
+    throw Object.assign(new Error('Välj dubblettpolicy och förhandsgranskning/import.'), { status: 400 });
+  }
+  let incoming: PaketindexObservation[];
+  try { incoming = parseArchiveCsv(csv); } catch (error) { throw Object.assign(error as Error, { status: 400 }); }
+  const store = ensureStoreFile(); const existing = currentArchive(store);
+  const rows = [...existing]; let added = 0; let skipped = 0; let replaced = 0;
+  for (const row of incoming) {
+    const index = rows.findIndex((r) => observationKey(r) === observationKey(row));
+    if (index >= 0) {
+      if (policy === 'reject') throw Object.assign(new Error('Dubblett i arkivet. Välj hoppa över eller ersätt som utkast.'), { status: 400 });
+      if (policy === 'skip') { skipped++; continue; }
+      rows[index] = row; replaced++;
+    } else { rows.push(row); added++; }
+  }
+  if (!validArchive(rows)) throw Object.assign(new Error('Arkivet överskrider 500 poster eller innehåller felaktiga poster.'), { status: 400 });
+  if (Buffer.byteLength(JSON.stringify({ ...store, paketindexArchive: rows }), 'utf8') > 890_000) {
+    throw Object.assign(new Error('Arkivet ryms inte säkert i CMS-lagringen. Dela upp lagringen före fortsatt import.'), { status: 413 });
+  }
+  // All validation occurs before a single snapshot write. Preview never writes.
+  if (commit) { store.paketindexArchive = rows; saveStore(store); }
+  return { incoming, added, skipped, replaced, totalAfter: rows.length, committed: commit };
 }

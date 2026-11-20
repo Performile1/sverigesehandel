@@ -799,6 +799,27 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.json(updated);
   }));
 
+  // Only controlled archive validation messages are exposed, not storage errors.
+  const archiveRoute = (handler: RequestHandler) => route(async (req, res, next) => {
+    try { await handler(req, res, next); }
+    catch (error) {
+      const failure = error as Error & { status?: number };
+      if (failure.status === 400 || failure.status === 413) { res.status(failure.status).json({ error: failure.message }); return; }
+      throw error;
+    }
+  });
+  app.post('/api/paketindex/archive', archiveRoute(async (req, res) => {
+    res.json(await store.upsertPaketindexObservation(req.body));
+  }));
+  app.post('/api/paketindex/archive/import', archiveRoute(async (req, res) => {
+    res.json(await store.importPaketindexCsv(req.body?.csv, req.body?.policy, req.body?.commit));
+  }));
+  app.delete('/api/paketindex/archive', archiveRoute(async (req, res) => {
+    if (typeof req.body?.key !== 'string') { res.status(400).json({ error: 'Nyckel krävs.' }); return; }
+    if (!await store.deletePaketindexObservation(req.body.key)) { res.status(404).json({ error: 'Posten hittades inte.' }); return; }
+    res.json({ deleted: true });
+  }));
+
   app.put('/api/paketindex', route(async (req, res) => {
     const updated = await store.updatePaketindex(req.body);
     res.json(updated);

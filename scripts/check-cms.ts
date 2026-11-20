@@ -1,3 +1,8 @@
+import fs from 'node:fs';
+import { parseArchiveCsv, comparison, observationKey, validArchive, csvCells, validObservation } from '../shared/paketindexArchive.ts';
+import { PaketindexArchive } from '../src/components/PaketindexArchive.tsx';
+import { SalaryDisplay } from '../src/components/SalaryEstimateEditor.tsx';
+import { validSalaryEstimate } from '../shared/salary.ts';
 import { AdBannerSlot } from '../src/components/AdBannerSlot.tsx';
 import sharp from 'sharp';
 import { prepareImage, reportDays, parseAnalyticsReport } from '../server/firebaseFeatures.ts';
@@ -313,7 +318,92 @@ try {
   providerFails = false;
   featureMedia = false; featureReports = false; snapshot = featuresSnapshot;
 
-  const currentSnapshot = structuredClone(snapshot);
+  const beforeArchiveTests = structuredClone(snapshot);
+  const qCsv = fs.readFileSync(new URL('../docs/underlag/paketindex-kvartal.csv', import.meta.url), 'utf8');
+  const aCsv = fs.readFileSync(new URL('../docs/underlag/paketindex-ar.csv', import.meta.url), 'utf8');
+  const qRows = parseArchiveCsv(qCsv); const aRows = parseArchiveCsv(aCsv);
+  assert.equal(qRows.length, 73); assert.equal(aRows.length, 19);
+  assert.equal(qRows.find((r) => r.edition === '2026-Q3' && r.period === '2026-Q3')?.value, 67554000);
+  assert.equal(aRows.find((r) => r.edition === '2026-Q3' && r.period === '2026-YTD-Q3')?.value, 201757120);
+  assert.ok(qRows.every((r) => r.status === 'draft'));
+  assert.throws(() => parseArchiveCsv(qCsv + qCsv.split('\n')[1] + '\n'));
+  assert.deepEqual(csvCells('a;b\n"one;two";"line1\nline2"\n'), [['a','b'], ['one;two','line1\nline2']]);
+  assert.throws(() => csvCells('a,b\n"unterminated'));
+  const genericCsv = 'edition;period;metric;basis;value;unit;sourceName;sourceUrl;publishedDate;precision;sampleSize;note\n2026-Q3;2026-Q3;lockerShare;survey;26,5;percent;Transportföretagen;;;exact;829;Undersökning september\n';
+  const decimalRows = parseArchiveCsv(genericCsv);
+  assert.equal(decimalRows[0].value, 26.5);
+  assert.equal(decimalRows[0].sampleSize, 829);
+  assert.throws(() => parseArchiveCsv(genericCsv.replace('26,5', '101')));
+  assert.throws(() => parseArchiveCsv(genericCsv.replace('829', '')));
+
+  const migratedArchive = upgradeSnapshot(beforeArchiveTests) as typeof snapshot;
+  assert.equal(migratedArchive.paketindexArchive?.[0].status, 'draft');
+  assert.deepEqual(migratedArchive.paketindex, beforeArchiveTests.paketindex);
+  assert.deepEqual((upgradeSnapshot({ ...beforeArchiveTests, paketindexArchive: [] }) as typeof snapshot).paketindexArchive, []);
+  for (const [path, method] of [['/api/paketindex/archive', 'POST'], ['/api/paketindex/archive', 'DELETE'], ['/api/paketindex/archive/import', 'POST']]) {
+    assert.equal((await request(path, method, {})).status, 401);
+    assert.equal((await request(path, method, {}, 'member-fixture')).status, 403);
+  }
+  const archivePreview = await request('/api/paketindex/archive/import', 'POST', { csv: qCsv, policy: 'reject', commit: false }, 'admin-fixture');
+  assert.equal(archivePreview.status, 200); assert.equal((await archivePreview.json()).added, 73);
+  assert.deepEqual(snapshot, beforeArchiveTests, 'Preview does not write');
+  assert.equal((await request('/api/paketindex/archive/import', 'POST', { csv: qCsv, policy: 'reject', commit: true }, 'admin-fixture')).status, 200);
+  const afterFirstImport = structuredClone(snapshot);
+  assert.equal((await request('/api/paketindex/archive/import', 'POST', { csv: qCsv, policy: 'reject', commit: true }, 'admin-fixture')).status, 400);
+  assert.deepEqual(snapshot, afterFirstImport, 'Rejected duplicate import is atomic');
+  const skipResult = await (await request('/api/paketindex/archive/import', 'POST', { csv: qCsv, policy: 'skip', commit: true }, 'admin-fixture')).json();
+  assert.equal(skipResult.skipped, 73);
+  assert.equal((await request('/api/paketindex/archive/import', 'POST', { csv: aCsv, policy: 'reject', commit: true }, 'admin-fixture')).status, 200);
+  const archived = await service.getStore();
+  assert.ok((archived.paketindexArchive?.length || 0) >= 92);
+  assert.equal(publicStore(archived).paketindexArchive?.length, 0);
+  const publishRow = { ...qRows[0], status: 'published', sourceUrl: 'https://reports.invalid/paketindex', publishedDate: '2026-01-01' };
+  assert.equal((await request('/api/paketindex/archive', 'POST', { ...publishRow, sourceUrl: '' }, 'admin-fixture')).status, 400);
+  assert.equal((await request('/api/paketindex/archive', 'POST', { ...publishRow, publishedDate: '2026-02-30' }, 'admin-fixture')).status, 400);
+  assert.equal((await request('/api/paketindex/archive', 'POST', publishRow, 'admin-fixture')).status, 200);
+  assert.equal(publicStore(await service.getStore()).paketindexArchive?.length, 1);
+  const beforeBadImport = structuredClone(snapshot);
+  assert.equal((await request('/api/paketindex/archive/import', 'POST', { csv: qCsv + 'bad,row\n', policy: 'replace', commit: true }, 'admin-fixture')).status, 400);
+  assert.deepEqual(snapshot, beforeBadImport);
+  const replaceResult = await (await request('/api/paketindex/archive/import', 'POST', { csv: qCsv, policy: 'replace', commit: true }, 'admin-fixture')).json();
+  assert.equal(replaceResult.replaced, 73);
+  assert.equal(publicStore(await service.getStore()).paketindexArchive?.length, 0, 'Replace imports revert published rows to draft');
+  assert.equal((await request('/api/paketindex/archive', 'DELETE', { key: observationKey(qRows[0]) }, 'admin-fixture')).status, 200);
+  assert.ok(!(await service.getStore()).paketindexArchive?.some((r) => observationKey(r) === observationKey(qRows[0])));
+  const current = { ...qRows[0], edition: 'test', period: '2026-Q1', value: 80 };
+  const previous = { ...current, period: '2025-Q1', value: 100 };
+  assert.equal(comparison(current, [previous])?.growthPct, -20);
+  assert.equal(comparison(current, [{ ...previous, edition: 'other' }]), null);
+  assert.equal(comparison(current, [{ ...previous, value: 0 }])?.growthPct, null);
+  assert.ok(!validObservation({ ...current, metric: 'lockerShare', unit: 'percent', value: 101 }));
+  assert.ok(!validObservation({ ...current, metric: 'homeShare', unit: 'percent', value: 30, basis: 'survey' }));
+  assert.ok(!validArchive([current, current]));
+  assert.ok(!validArchive(Array.from({ length: 501 }, (_, i) => ({ ...current, edition: `edition-${i}` }))));
+  assert.ok(!validObservation({ ...current, period: '2026-Q5' }));
+  assert.ok(!validObservation({ ...current, value: -1 }));
+
+  assert.ok(!validateSnapshot({ ...archived, paketindexArchive: [current, current] }));
+  const publishedArchiveHtml = renderToString(createElement(PaketindexArchive, { rows: [
+    { ...current, status: 'published' }, { ...previous, status: 'published' },
+  ] }));
+  assert.ok(publishedArchiveHtml.includes('periodarkiv') && publishedArchiveHtml.includes('-20'));
+  assert.ok(!renderToString(createElement(PaketindexArchive, { rows: qRows })).includes('67554000'));
+  const salary = { min: 40000, max: 55000, currency: 'SEK' as const, period: 'month' as const, fullTime: true as const,
+    occupation: 'Testyrke', geography: 'Sverige', geographicLevel: 'national' as const, sourceName: 'Testkälla',
+    sourceUrl: 'https://salary.invalid/report', year: 2025, method: 'Granskat intervall ur källunderlaget; inte ett min/max härlett ur ett medelvärde.' };
+  assert.ok(validSalaryEstimate(salary)); assert.ok(!validSalaryEstimate({ ...salary, max: 1 }));
+  assert.ok(!validateSnapshot({ ...archived, jobs: [{ ...archived.jobs[0], salaryEstimate: { ...salary, max: 1 } }] }));
+
+  const jobForSalary = snapshot.jobs[0];
+  assert.equal((await request(`/api/jobs/${jobForSalary.id}`, 'PUT', { title: jobForSalary.title, company: jobForSalary.company, salaryEstimate: { ...salary, sourceUrl: '' } }, 'admin-fixture')).status, 400);
+  assert.equal((await request(`/api/jobs/${jobForSalary.id}`, 'PUT', { title: jobForSalary.title, company: jobForSalary.company, salaryEstimate: salary }, 'admin-fixture')).status, 200);
+  assert.deepEqual((await service.getStore()).jobs.find((r) => r.id === jobForSalary.id)?.salaryEstimate, salary);
+  const salaryHtml = renderToString(createElement(SalaryDisplay, { job: { ...jobForSalary, salaryEstimate: salary } }));
+  assert.ok(salaryHtml.includes('Uppskattat lönespann') && salaryHtml.includes('riksunderlag') && salaryHtml.includes('2025'));
+  assert.ok(renderToString(createElement(SalaryDisplay, { job: { ...jobForSalary, salaryEstimate: null } })).includes('underlag saknas'));
+  snapshot = beforeArchiveTests;
+
+  const currentSnapshot = upgradeSnapshot(structuredClone(snapshot)) as typeof snapshot;
   const legacy = structuredClone(snapshot) as Partial<typeof snapshot>;
   delete legacy.logisticsProviders;
   delete legacy.news;
@@ -416,7 +506,7 @@ try {
   assert.equal(transactions, writesBeforeUpgrade);
   await service.upsertMerchant({ name: 'Migration fixture' });
   assert.deepEqual(snapshot.logisticsProviders, INITIAL_CMS_DATA.logisticsProviders);
-  const empty = { ...currentSnapshot, logisticsProviders: [], schemaVersion: 4 };
+  const empty = { ...currentSnapshot, logisticsProviders: [], paketindexArchive: [], schemaVersion: 4 };
   assert.deepEqual(upgradeSnapshot(empty), empty, 'An intentionally empty list stays empty');
   const v3WithoutIboxen = {
     ...currentSnapshot,

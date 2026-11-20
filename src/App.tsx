@@ -272,6 +272,7 @@ export default function App() {
                 shippingTiers={store.shippingTiers}
                 deliveryStats={store.deliveryStats}
                 paketindex={store.paketindex}
+                paketindexArchive={store.paketindexArchive}
                 laws={store.laws}
                 intelligenceSources={store.intelligenceSources}
                 techStackShares={store.techStackShares}

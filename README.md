@@ -11,6 +11,22 @@ Paketindex history, analytics, job descriptions, salary estimates, regional maps
 and direct links to the correct news articles. The plan does not implement or
 activate these features.
 
+## Versioned Paketindex archive and salary evidence
+
+The CMS **Paketindex & Marknad** view now has a period/report-edition archive,
+transactional CSV preview/import with explicit duplicate policy, and manual
+source-reviewed publication. Supplied quarterly/annual extracts can be loaded as
+**drafts**, never auto-published. Public Market shows only published observations,
+with edition/method-isolated year-on-year comparisons. The older summary is
+retained separately, not silently overwritten or made to follow archive selectors.
+
+CMS job text editing also supports optional source-backed salary estimates,
+separate from the legacy salary text. No salary amounts are invented or seeded.
+See [workflow, CSV schema, limits and outstanding gates](docs/paketindex-och-loner.md).
+The archive is capped at 500 observations inside the existing snapshot and must
+move to separate collections before larger growth. No production import occurs
+on merge; authenticated CMS and real-data verification remain required.
+
 ## Firebase media and report access (disabled by default)
 
 The CMS **Firebase: Bilder & Statistik** panel prepares Firebase Storage uploads
@@ -49,7 +65,7 @@ required before activation. Do not supply credentials in chat or commits.
   activated; raw IP analytics and heatmaps remain disabled by explicit decision.
 - [Paketindex source inventory and draft CSV extracts](docs/underlag/README.md):
   five supplied editions, preserved separately because historical figures differ.
-  These are **not imported into CMS**; the versioned archive/import UI remains to build.
+  These are **not automatically imported into CMS**; the new archive UI supports preview and explicit draft import.
 
 ## Editorial links and job descriptions
 
