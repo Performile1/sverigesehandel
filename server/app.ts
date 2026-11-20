@@ -88,12 +88,12 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   app.post('/api/media/image', route(async (req, res) => {
     if (!features.status().mediaEnabled) { res.status(409).json({ error: 'Firebase-bildlagring är avstängd i denna miljö.' }); return; }
     const { targetType, targetId, data, alt } = req.body || {};
-    if (!['partner', 'ad'].includes(targetType) || typeof targetId !== 'string') {
-      res.status(400).json({ error: 'Välj partner eller annons.' }); return;
+    if (!['partner', 'ad', 'insight'].includes(targetType) || typeof targetId !== 'string') {
+      res.status(400).json({ error: 'Välj partner, annons eller insiktsinlägg.' }); return;
     }
     const snapshot = await store.getStore();
-    if (!(targetType === 'partner' ? snapshot.partners : snapshot.adBanners).some((item) => item.id === targetId)) {
-      res.status(404).json({ error: 'Partnern eller annonsen finns inte längre.' }); return;
+    if (!(targetType === 'partner' ? snapshot.partners : targetType === 'ad' ? snapshot.adBanners : (snapshot.insightPosts || [])).some((item) => item.id === targetId)) {
+      res.status(404).json({ error: 'Posten finns inte längre.' }); return;
     }
     let prepared;
     try { prepared = await prepareImage(data, alt); }
@@ -111,8 +111,8 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   }));
   app.delete('/api/media/image', route(async (req, res) => {
     const { targetType, targetId } = req.body || {};
-    if (!['partner', 'ad'].includes(targetType) || typeof targetId !== 'string') {
-      res.status(400).json({ error: 'Välj partner eller annons.' }); return;
+    if (!['partner', 'ad', 'insight'].includes(targetType) || typeof targetId !== 'string') {
+      res.status(400).json({ error: 'Välj partner, annons eller insiktsinlägg.' }); return;
     }
     if (!await store.assignCmsImage(targetType, targetId, null)) {
       res.status(404).json({ error: 'Posten hittades inte.' }); return;
@@ -337,6 +337,14 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       res.status(404).json({ error: 'Logistikpartner hittades inte.' });
       return;
     }
+    res.json({ deleted: true });
+  }));
+
+  app.put('/api/insights/:id', route(async (req, res) => {
+    res.json(await store.upsertInsightPost({ ...req.body, id: req.params.id }));
+  }));
+  app.delete('/api/insights/:id', route(async (req, res) => {
+    if (!await store.deleteInsightPost(req.params.id)) { res.status(404).json({ error: 'Inlägget hittades inte.' }); return; }
     res.json({ deleted: true });
   }));
 

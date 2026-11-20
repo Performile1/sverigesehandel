@@ -4,7 +4,8 @@
 
 CMS har en ny vy **Firebase: Bilder & Statistik** bakom befintlig administratörs-
 kontroll. Där kan en administratör, efter separat aktivering, ladda upp en logga
-för en befintlig partner eller en bild för en befintlig annons. Bilden visas i
+för en befintlig partner, en bild för en befintlig annons eller en inläggsbild
+för ett sparat inlägg i Blogg & Insikter. Bilden visas i
 partnervyer respektive aktiva annonsplaceringar. Textnamn och textannonser fungerar
 som tidigare när bild saknas eller inte kan laddas.
 

@@ -17,7 +17,7 @@ export function CmsFirebasePanel({ store, onRefresh }: { store: CMSStore; onRefr
   return <div className="space-y-6">
     <section className="p-5 rounded-2xl border border-slate-200 bg-white space-y-3">
       <h2 className="text-xl font-bold">Firebase: bilder och statistik</h2>
-      <p className="text-sm text-slate-600">Publika partnerloggor och annonsbilder i Firebase Storage, aggregerade GA4-rapporter i CMS. Kostnad, konfiguration och integritetsupplägg måste godkännas före aktivering.</p>
+      <p className="text-sm text-slate-600">Publika loggor, annonsbilder och inläggsbilder i Firebase Storage, aggregerade GA4-rapporter i CMS. Kostnad, konfiguration och integritetsupplägg måste godkännas före aktivering.</p>
       <p className="text-sm">Statistikinsamling från denna app: <strong>avstängd</strong>. Råa IP-adresser och heatmaps: <strong>avstängda</strong>.</p>
       {error && <p role="alert" className="text-red-700">{error}</p>}
       {!status && !error && <p role="status">Läser konfigurationsstatus…</p>}
@@ -30,18 +30,19 @@ export function CmsFirebasePanel({ store, onRefresh }: { store: CMSStore; onRefr
 }
 
 function MediaPanel({ store, enabled, onRefresh }: { store: CMSStore; enabled: boolean; onRefresh: () => Promise<void> }) {
-  const [targetType, setTargetType] = useState<'partner' | 'ad'>('partner');
+  const [targetType, setTargetType] = useState<'partner' | 'ad' | 'insight'>('partner');
   const [targetId, setTargetId] = useState('');
   const items = targetType === 'partner'
     ? store.partners.map((item) => ({ ...item, label: item.name }))
-    : store.adBanners.map((item) => ({ ...item, label: item.placementLabel + ' · ' + item.headline }));
+    : targetType === 'ad' ? store.adBanners.map((item) => ({ ...item, label: item.placementLabel + ' · ' + item.headline }))
+    : (store.insightPosts || []).map((item) => ({ ...item, label: item.title + (item.status === 'draft' ? ' · Utkast' : '') }));
   const selected = items.find((item) => item.id === targetId) || items[0];
   return <section className="p-5 rounded-2xl border border-slate-200 bg-white space-y-4">
-    <h2 className="text-lg font-bold">Partnerloggor och annonsbilder</h2>
+    <h2 className="text-lg font-bold">Partnerloggor, annonsbilder och inläggsbilder</h2>
     <p className="text-sm">Bildlagring: <strong>{enabled ? 'Aktiverad på servern' : 'Avstängd – ingen uppladdning sker'}</strong></p>
     <p className="text-sm text-slate-600">Endast bilder avsedda för offentlig publicering. PNG/JPEG/WebP upp till 350 kB. Bilder kontrolleras och konverteras till WebP; EXIF/GPS tas bort. Uppladdning innebär att en publik bildlänk skapas, även för ett utkast.</p>
-    <label className="block text-sm">Bildtyp<select className={inputClass} value={targetType} onChange={(event) => { setTargetType(event.target.value as 'partner' | 'ad'); setTargetId(''); }}>
-      <option value="partner">Partnerlogga</option><option value="ad">Annonsbild</option>
+    <label className="block text-sm">Bildtyp<select className={inputClass} value={targetType} onChange={(event) => { setTargetType(event.target.value as 'partner' | 'ad' | 'insight'); setTargetId(''); }}>
+      <option value="partner">Partnerlogga</option><option value="ad">Annonsbild</option><option value="insight">Inläggsbild (Blogg & Insikter)</option>
     </select></label>
     <label className="block text-sm">Välj post<select className={inputClass} value={selected?.id || ''} onChange={(event) => setTargetId(event.target.value)}>
       {!items.length && <option value="">Inga poster ännu</option>}
@@ -53,7 +54,7 @@ function MediaPanel({ store, enabled, onRefresh }: { store: CMSStore; enabled: b
 }
 
 function ImageForm({ enabled, targetType, item, onRefresh }: {
-  enabled: boolean; targetType: 'partner' | 'ad'; item: { id: string; image?: CMSStore['partners'][number]['image'] }; onRefresh: () => Promise<void>;
+  enabled: boolean; targetType: 'partner' | 'ad' | 'insight'; item: { id: string; image?: CMSStore['partners'][number]['image'] }; onRefresh: () => Promise<void>;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [alt, setAlt] = useState(item.image?.alt || '');

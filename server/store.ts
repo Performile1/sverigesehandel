@@ -1,3 +1,5 @@
+import { INITIAL_INSIGHT_POSTS, validInsightPost, validInsightPosts } from '../shared/insightPosts.ts';
+import type { InsightPost } from '../src/types.ts';
 import { validSalaryEstimate } from '../shared/salary.ts';
 import { observationKey, parseArchiveCsv, validArchive, validObservation, legacyObservation } from '../shared/paketindexArchive.ts';
 import type { PaketindexObservation } from '../src/types.ts';
@@ -408,6 +410,7 @@ function ensureStoreFile(): CMSStore {
       regions: mergedRegions,
       mapPoints: Array.isArray(parsed.mapPoints) ? parsed.mapPoints : [],
       paketindexArchive: upgradedRaw.paketindexArchive,
+      insightPosts: upgradedRaw.insightPosts,
       orderBenchmarks:
         Array.isArray(upgradedRaw.orderBenchmarks) && upgradedRaw.orderBenchmarks.length > 0
           ? upgradedRaw.orderBenchmarks
@@ -2042,12 +2045,16 @@ export function updatePageContent(patch: Partial<PageContentMap>): PageContentMa
 }
 
 // Target lookup and assignment run in one snapshot transaction, preserving other edits.
-export function assignCmsImage(type: 'partner' | 'ad', id: string, image: CmsImage | null): boolean {
+export function assignCmsImage(type: 'partner' | 'ad' | 'insight', id: string, image: CmsImage | null): boolean {
   const store = ensureStoreFile();
-  const item = (type === 'partner' ? store.partners : store.adBanners).find((entry) => entry.id === id);
+  const item = (type === 'partner' ? store.partners : type === 'ad' ? store.adBanners : (store.insightPosts || [])).find((entry) => entry.id === id);
   if (!item) return false;
   if (image) item.image = image;
-  else delete item.image;
+  else {
+    // Preserve valid alternative text if the bundled image becomes visible again.
+    if ('imageAlt' in item && !item.imageAlt && item.image) item.imageAlt = item.image.alt;
+    delete item.image;
+  }
   saveStore(store);
   return true;
 }
@@ -2100,4 +2107,35 @@ export function importPaketindexCsv(csv: string, policy: 'reject' | 'skip' | 're
   // All validation occurs before a single snapshot write. Preview never writes.
   if (commit) { store.paketindexArchive = rows; saveStore(store); }
   return { incoming, added, skipped, replaced, totalAfter: rows.length, committed: commit };
+}
+
+export function upsertInsightPost(input: InsightPost): InsightPost {
+  if (!validInsightPost(input)) throw Object.assign(new Error('Kontrollera rubrik, texter, länk, bildtext, datum och sortering.'), { status: 400 });
+  const store = ensureStoreFile();
+  const posts = [...(store.insightPosts ?? structuredClone(INITIAL_INSIGHT_POSTS))];
+  const index = posts.findIndex((p) => p.id === input.id);
+  const post: InsightPost = { id: input.id, title: input.title, category: input.category, excerpt: input.excerpt,
+    body: input.body, imageKey: input.imageKey, imageAlt: input.imageAlt, ...(input.image ? { image: input.image } : {}),
+    ctaLabel: input.ctaLabel, targetTab: input.targetTab, targetUrl: input.targetUrl, sourceUrl: input.sourceUrl,
+    author: input.author, publishedDate: input.publishedDate, theme: input.theme, order: input.order, status: input.status };
+  // Image mutations use the dedicated media endpoint. Preserve the current image
+  // when an editor submits an older copy of the post after another admin uploads.
+  if (index >= 0) {
+    if (posts[index].image) post.image = posts[index].image;
+    else delete post.image;
+    posts[index] = post;
+  } else {
+    delete post.image;
+    posts.push(post);
+  }
+  if (!validInsightPosts(posts)) throw Object.assign(new Error('Högst 50 inlägg tillåts i denna CMS-version.'), { status: 400 });
+  if (Buffer.byteLength(JSON.stringify({ ...store, insightPosts: posts }), 'utf8') > 890_000) {
+    throw Object.assign(new Error('CMS är fullt. Dela upp innehållslagringen innan fler inlägg sparas.'), { status: 413 });
+  }
+  store.insightPosts = posts; saveStore(store); return post;
+}
+export function deleteInsightPost(id: string): boolean {
+  const store = ensureStoreFile(); const posts = store.insightPosts ?? structuredClone(INITIAL_INSIGHT_POSTS);
+  if (!posts.some((p) => p.id === id)) return false;
+  store.insightPosts = posts.filter((p) => p.id !== id); saveStore(store); return true;
 }
