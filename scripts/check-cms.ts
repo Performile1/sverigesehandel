@@ -2,6 +2,7 @@ import { AdBannerSlot } from '../src/components/AdBannerSlot.tsx';
 import sharp from 'sharp';
 import { prepareImage, reportDays, parseAnalyticsReport } from '../server/firebaseFeatures.ts';
 import { CmsPublicImage } from '../src/components/CmsPublicImage.tsx';
+import { NewsReviewPanel } from '../src/components/EditorialPanels.tsx';
 import { MARKET_TITLE, LEGACY_MARKET_TITLE, matchesJob, neutralPlaceholder } from '../shared/portalContent.ts';
 import { JobsView } from '../src/components/JobsView.tsx';
 import { articleUrl, jobSummary } from '../shared/editorial.ts';
@@ -132,6 +133,20 @@ try {
     news: [item], adBanners: [], onNavigate: () => {}, onBookAdSlot: () => {},
     onRefresh: async () => {}, onNotify: () => {},
   }));
+  for (const isAdmin of [false, true]) {
+    const portalHtml = renderToString(createElement(NewsView, {
+      news: [approved], adBanners: [], isAdmin, onNavigate: () => {}, onBookAdSlot: () => {},
+      onRefresh: async () => {}, onNotify: () => {},
+    }));
+    assert.ok(!portalHtml.includes('Granska nyhetens direktlänk'), 'Portal must never render CMS review panel, even for admin');
+    assert.ok(!portalHtml.includes('Godkänn direktlänk och publicera'));
+    assert.ok(!portalHtml.includes('Originalartikelns direktlänk'));
+  }
+  const cmsReviewHtml = renderToString(createElement(NewsReviewPanel, {
+    news: [approved], onRefresh: async () => {}, onNotify: () => {},
+  }));
+  assert.ok(cmsReviewHtml.includes('Granska nyhetens direktlänk'));
+  assert.ok(cmsReviewHtml.includes('Godkänn direktlänk och publicera'));
   const approvedHtml = renderNews(approved);
   assert.equal(approvedHtml.split(`href="${validArticle}"`).length - 1, 2, 'Title and read-link share one approved URL');
   assert.ok(!renderNews({ ...approved, linkReviewedAt: undefined }).includes(`href="${validArticle}"`));

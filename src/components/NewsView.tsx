@@ -1,5 +1,4 @@
 import { articleUrl } from '../../shared/editorial';
-import { NewsReviewPanel } from './EditorialPanels';
 import { useMemo, useState } from 'react';
 import {
   Check,
@@ -502,8 +501,6 @@ export function NewsView({
           </div>
         )}
       </div>
-
-      {isAdmin && <NewsReviewPanel news={news} onRefresh={onRefresh} onNotify={onNotify} />}
 
       {/* Admin Quick-Add Form */}
       {isAdmin && showAddForm && (
