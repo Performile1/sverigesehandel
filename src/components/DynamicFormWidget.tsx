@@ -1,3 +1,4 @@
+import { neutralPlaceholder } from '../../shared/portalContent';
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Loader2, LogIn, Mail, Send } from 'lucide-react';
 import { api } from '../api';
@@ -301,7 +302,7 @@ export function DynamicFormWidget({
                     required={Boolean(field.required)}
                     value={val}
                     onChange={(e) => setField(field.key, e.target.value)}
-                    placeholder={field.placeholder || ''}
+                    placeholder={neutralPlaceholder(field.placeholder)}
                     className={inputCls}
                   />
                 ) : field.type === 'select' ? (
@@ -323,7 +324,7 @@ export function DynamicFormWidget({
                     required={Boolean(field.required)}
                     value={val}
                     onChange={(e) => setField(field.key, e.target.value)}
-                    placeholder={field.placeholder || ''}
+                    placeholder={neutralPlaceholder(field.placeholder)}
                     className={inputCls}
                   />
                 )}

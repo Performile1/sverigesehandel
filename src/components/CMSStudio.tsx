@@ -1,3 +1,4 @@
+import { MapPointsEditor } from './MapPointsEditor';
 import { JobTextPanel, NewsReviewPanel } from './EditorialPanels';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -2326,6 +2327,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
           {/* SECTION: REGIONS & COMMUNITY */}
           {section === 'content' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <MapPointsEditor points={store.mapPoints || []} regions={store.regions} onRefresh={onRefresh} onNotify={onNotify} />
               {activeRegion && (
                 <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
                   <div className="flex items-center justify-between gap-2">

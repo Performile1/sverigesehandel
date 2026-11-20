@@ -1,3 +1,5 @@
+import { validMapPoint } from '../shared/portalContent.ts';
+import type { MapPoint } from '../src/types.ts';
 import { articleUrl, jobSummary } from '../shared/editorial.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import fs from 'fs';
@@ -400,6 +402,7 @@ function ensureStoreFile(): CMSStore {
           ? upgradedRaw.recruitmentSites
           : INITIAL_CMS_DATA.recruitmentSites,
       regions: mergedRegions,
+      mapPoints: Array.isArray(parsed.mapPoints) ? parsed.mapPoints : [],
       orderBenchmarks:
         Array.isArray(upgradedRaw.orderBenchmarks) && upgradedRaw.orderBenchmarks.length > 0
           ? upgradedRaw.orderBenchmarks
@@ -1087,6 +1090,31 @@ export function deleteRecruiter(id: string): boolean {
   const before = store.recruitmentSites.length;
   store.recruitmentSites = store.recruitmentSites.filter((r) => r.id !== id);
   if (store.recruitmentSites.length === before) return false;
+  saveStore(store);
+  return true;
+}
+
+export function upsertMapPoint(input: MapPoint): MapPoint {
+  if (!validMapPoint(input)) {
+    throw Object.assign(new Error('Ange namn, region, status och giltiga koordinater inom kartans område (latitud 55–69,5; longitud 10–25).'), { status: 400 });
+  }
+  const store = ensureStoreFile();
+  const point: MapPoint = { id: input.id, label: input.label.trim(), description: input.description.trim(),
+    regionKey: input.regionKey, longitude: input.longitude, latitude: input.latitude, status: input.status };
+  const points = store.mapPoints || [];
+  const index = points.findIndex((existing) => existing.id === point.id);
+  if (index < 0) points.push(point);
+  else points[index] = point;
+  store.mapPoints = points;
+  saveStore(store);
+  return point;
+}
+
+export function deleteMapPoint(id: string): boolean {
+  const store = ensureStoreFile();
+  const points = store.mapPoints || [];
+  if (!points.some((point) => point.id === id)) return false;
+  store.mapPoints = points.filter((point) => point.id !== id);
   saveStore(store);
   return true;
 }

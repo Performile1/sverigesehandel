@@ -1,3 +1,4 @@
+import { LEGACY_MARKET_TITLE, MARKET_TITLE, neutralPlaceholder, validMapPoint } from '../shared/portalContent.ts';
 import type { CMSStore, DeliveryStatsData, MarketIntelligenceSource, TechPartner } from '../src/types.ts';
 import { INITIAL_CMS_DATA } from './seedData.ts';
 
@@ -34,6 +35,18 @@ export function upgradeSnapshot(value: unknown): unknown {
   }
   if (!hasOwn(obj, 'directMessages')) {
     ensureClone().directMessages = [];
+  }
+
+  const pages = next.pageContent as CMSStore['pageContent'] | undefined;
+  if (pages?.marknad?.title === LEGACY_MARKET_TITLE) {
+    ensureClone().pageContent = { ...pages, marknad: { ...pages.marknad,
+      title: MARKET_TITLE, heroHighlight: 'insikter, partners och möjligheter.' } };
+  }
+  const forms = next.contactForms as CMSStore['contactForms'];
+  if (Array.isArray(forms) && forms.some((form) => Array.isArray(form.fields) && form.fields.some(
+    (field) => field.placeholder && neutralPlaceholder(field.placeholder) !== field.placeholder))) {
+    ensureClone().contactForms = forms.map((form) => ({ ...form, fields: form.fields.map(
+      (field) => field.placeholder ? { ...field, placeholder: neutralPlaceholder(field.placeholder) } : field) }));
   }
 
   const version = typeof obj.schemaVersion === 'number' ? obj.schemaVersion : 1;
@@ -159,7 +172,8 @@ export function validateSnapshot(value: unknown): value is CMSStore {
   const arrays = ['merchants', 'partners', 'logisticsProviders', 'news', 'events', 'sessions', 'jobs', 'recruitmentSites',
     'orderBenchmarks', 'shippingTiers', 'laws', 'intelligenceSources', 'techStackShares',
     'adBanners', 'contactForms', 'contactMessages', 'timeline', 'communityThreads', 'communityMembers', 'directMessages'];
-  return arrays.every((key) => Array.isArray(store[key])) &&
+  return (store.mapPoints === undefined || (Array.isArray(store.mapPoints) &&
+    store.mapPoints.every(validMapPoint) && new Set(store.mapPoints.map((point) => point.id)).size === store.mapPoints.length)) && arrays.every((key) => Array.isArray(store[key])) &&
     ['regions', 'deliveryStats', 'paketindex', 'pageContent'].every((key) => store[key] !== null &&
       typeof store[key] === 'object' && !Array.isArray(store[key])) &&
     typeof store.updatedAt === 'string';

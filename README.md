@@ -11,6 +11,25 @@ Paketindex history, analytics, job descriptions, salary estimates, regional maps
 and direct links to the correct news articles. The plan does not implement or
 activate these features.
 
+## Portal refinements and supporting material
+
+- Jobs combine free text, city autocomplete, role and work model (Hybrid,
+  Distans / Remote, På plats), with result count and reset.
+- In CMS content editing, **Kartpunkter** manages additional pins on the existing
+  map: name, WGS84 latitude/longitude, region, description and draft/publication.
+  Existing region polygons and built-in city pins are unchanged. Only published
+  added points reach public data. Point edits require admin; snapshot import
+  validates fields, viewport bounds and unique IDs. No production points are seeded.
+- The default market heading is ”Sveriges e-handel – insikter, partners och
+  möjligheter.” Only the exact old default is upgraded on read; custom headings
+  remain. Known personal form placeholders are neutralized on read and rendering,
+  without changing authentication identities, profile data or submitted messages.
+- [Privacy and storage/analytics proposal](docs/integritet-och-drift.md): nothing
+  activated; raw IP analytics and heatmaps remain disabled by explicit decision.
+- [Paketindex source inventory and draft CSV extracts](docs/underlag/README.md):
+  five supplied editions, preserved separately because historical figures differ.
+  These are **not imported into CMS**; the versioned archive/import UI remains to build.
+
 ## Editorial links and job descriptions
 
 News created manually or imported in batches/with AI is saved as draft. In the

@@ -628,7 +628,18 @@ export interface PageContentMap {
   };
 }
 
+export interface MapPoint {
+  id: string;
+  label: string;
+  longitude: number;
+  latitude: number;
+  regionKey: RegionMetric['key'];
+  description: string;
+  status: PublishStatus;
+}
+
 export interface CMSStore {
+  mapPoints?: MapPoint[];
   schemaVersion?: number;
   merchants: Merchant[];
   partners: TechPartner[];

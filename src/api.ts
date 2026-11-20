@@ -1,3 +1,4 @@
+import type { MapPoint } from './types';
 import { auth } from './firebase';
 import type {
   AdBanner,
@@ -74,6 +75,8 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  upsertMapPoint: (point: MapPoint) => request<MapPoint>(`/api/map-points/${point.id}`, { method: 'PUT', body: JSON.stringify(point) }),
+  deleteMapPoint: (id: string) => request<{ deleted: boolean }>(`/api/map-points/${id}`, { method: 'DELETE' }),
   getStore: () => request<CMSStore>('/api/cms/store'),
   getCmsStatus: () =>
     request<{

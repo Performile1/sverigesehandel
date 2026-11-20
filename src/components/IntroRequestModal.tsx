@@ -1,3 +1,4 @@
+import { neutralPlaceholder } from '../../shared/portalContent';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, CheckCircle2, Loader2, LogIn, ShieldCheck, X } from 'lucide-react';
 import { api } from '../api';
@@ -386,7 +387,7 @@ export function IntroRequestModal({
                         required={Boolean(field.required)}
                         value={val}
                         onChange={(e) => setField(field.key, e.target.value)}
-                        placeholder={field.placeholder || ''}
+                        placeholder={neutralPlaceholder(field.placeholder)}
                         className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006AA7]"
                       />
                     ) : field.type === 'select' ? (
@@ -408,7 +409,7 @@ export function IntroRequestModal({
                         required={Boolean(field.required)}
                         value={val}
                         onChange={(e) => setField(field.key, e.target.value)}
-                        placeholder={field.placeholder || ''}
+                        placeholder={neutralPlaceholder(field.placeholder)}
                         className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006AA7]"
                       />
                     )}

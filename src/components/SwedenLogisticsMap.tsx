@@ -1,8 +1,10 @@
+import type { MapPoint } from '../types';
 import { useMemo, useState } from 'react';
 import { BarChart3, Layers, MapPin, Warehouse } from 'lucide-react';
 import type { LogisticsProvider, PortalTab, RegionMetric } from '../types';
 
 interface SwedenLogisticsMapProps {
+  mapPoints?: MapPoint[];
   regions: Record<string, RegionMetric>;
   selectedRegion: string;
   onSelectRegion: (regionKey: string) => void;
@@ -604,6 +606,7 @@ function formatRegionMapBadge(metric: DensityMetricKey, reg?: RegionMetric): str
 }
 
 export function SwedenLogisticsMap({
+  mapPoints = [],
   regions,
   selectedRegion,
   onSelectRegion,
@@ -616,6 +619,12 @@ export function SwedenLogisticsMap({
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [selectedHubId, setSelectedHubId] = useState<string>('jonkoping');
 
+  const cityHubs: MapCityHub[] = useMemo(() => [...CITY_HUBS, ...mapPoints.filter((point) => point.status === 'published').map((point) => ({
+    id: point.id, label: point.label, searchTerm: point.label, regionKey: point.regionKey,
+    coords: [point.longitude, point.latitude] as LonLat, anchor: 'start' as const,
+    dx: 8, dy: -5, isPrimary3plHub: true, hubRole: point.description,
+  }))], [mapPoints]);
+
   const activeRegion = regions[selectedRegion] || Object.values(regions)[0];
 
   const publishedLogistics = useMemo(
@@ -624,8 +633,8 @@ export function SwedenLogisticsMap({
   );
 
   const activeHub = useMemo(
-    () => CITY_HUBS.find((h) => h.id === selectedHubId) || CITY_HUBS[6],
-    [selectedHubId]
+    () => cityHubs.find((h) => h.id === selectedHubId) || CITY_HUBS[6],
+    [selectedHubId, cityHubs]
   );
 
   const hubProviders = useMemo(() => {
@@ -787,7 +796,7 @@ export function SwedenLogisticsMap({
                     key={reg.key}
                     onClick={() => {
                       onSelectRegion(reg.key);
-                      const firstHubInRegion = CITY_HUBS.find((h) => h.regionKey === reg.key);
+                      const firstHubInRegion = cityHubs.find((h) => h.regionKey === reg.key);
                       if (firstHubInRegion) setSelectedHubId(firstHubInRegion.id);
                     }}
                     onMouseEnter={() => setHoveredRegion(reg.key)}
@@ -875,7 +884,7 @@ export function SwedenLogisticsMap({
             )}
 
             {/* Interactive City & 3PL Hub Pins */}
-            {CITY_HUBS.map((city) => {
+            {cityHubs.map((city) => {
               const [cx, cy] = project(city.coords);
               const isHubSelected = mapLayer === 'hubs' && selectedHubId === city.id;
               const isRegionSelected = selectedRegion === city.regionKey;
@@ -885,10 +894,19 @@ export function SwedenLogisticsMap({
               return (
                 <g
                   key={city.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Visa kartpunkt: ${city.label}`}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault(); onSelectRegion(city.regionKey); setSelectedHubId(city.id); setMapLayer('hubs');
+                    }
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelectRegion(city.regionKey);
                     setSelectedHubId(city.id);
+                    setMapLayer('hubs');
                   }}
                   className="cursor-pointer"
                 >
@@ -954,6 +972,15 @@ export function SwedenLogisticsMap({
               </text>
             </g>
           </svg>
+          {mapPoints.some((point) => point.status === 'published') && <label className="block text-xs text-white p-3">Tillagda kartpunkter
+            <select aria-label="Tillagda kartpunkter" value={mapPoints.some((point) => point.id === selectedHubId) ? selectedHubId : ''}
+              className="block w-full mt-1 p-2 bg-slate-900 border border-white/20 rounded-lg"
+              onChange={(event) => { const point = mapPoints.find((item) => item.id === event.target.value); if (point) { setSelectedHubId(point.id); onSelectRegion(point.regionKey); setMapLayer('hubs'); } }}>
+              <option value="">Välj kartpunkt</option>
+              {mapPoints.filter((point) => point.status === 'published').map((point) => <option key={point.id} value={point.id}>{point.label}</option>)}
+            </select>
+          </label>}
+
 
           {mapLayer === 'density' && (
             <div className="px-3 pb-2 pt-1 flex items-center justify-between text-[10px] font-mono text-slate-300 border-t border-white/10">
