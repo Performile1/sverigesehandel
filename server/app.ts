@@ -19,9 +19,17 @@ const route = (handler: RequestHandler): RequestHandler => (req, res, next) => {
 };
 
 // These member actions require verified login; all editorial writes and AI calls require admin.
-const isMemberSubmission = (method: string, path: string) => method === 'POST' && (
-  ['/api/contact', '/api/community/threads', '/api/community/members'].includes(path) ||
-  /^\/api\/community\/threads\/[^/]+\/upvote$/.test(path)
+const isMemberCommentRoute = (path: string) => /^\/api\/community\/threads\/[^/]+\/comments$/.test(path);
+const isMemberMessageReadRoute = (path: string) => /^\/api\/community\/messages\/[^/]+\/read$/.test(path);
+
+const isMemberSubmission = (method: string, path: string) => (
+  (method === 'POST' && (
+    ['/api/contact', '/api/community/threads', '/api/community/members', '/api/community/messages'].includes(path) ||
+    /^\/api\/community\/threads\/[^/]+\/upvote$/.test(path) ||
+    isMemberCommentRoute(path)
+  )) ||
+  (method === 'GET' && ['/api/community/directory', '/api/community/messages'].includes(path)) ||
+  (method === 'PUT' && isMemberMessageReadRoute(path))
 );
 
 export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) => Promise<CmsIdentity>) {
@@ -53,7 +61,7 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.locals.cmsIdentity = identity;
     res.locals.cmsAdmin = admin;
     if (isMemberSubmission(req.method, path) && !identity?.verified) {
-      res.status(identity ? 403 : 401).json({ error: 'Logga in med ett verifierat Google-konto för att skicka formuläret.' });
+      res.status(identity ? 403 : 401).json({ error: 'Logga in med ett verifierat Google-konto för att använda denna medlemsfunktion.' });
       return;
     }
     if (!publicRead && !isMemberSubmission(req.method, path) && !admin) {
@@ -66,13 +74,18 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
 
   app.use('/api', (req, res, next) => {
     const path = req.originalUrl.split('?')[0].replace(/\/$/, '');
-    if (!isMemberSubmission(req.method, path)) { next(); return; }
+    if (req.method !== 'POST' || !isMemberSubmission(req.method, path)) { next(); return; }
     const fields: Record<string, [number, number]> = path === '/api/contact'
       ? { name: [1, 100], email: [3, 160], topic: [1, 140], message: [2, 2000] }
       : path === '/api/community/members'
       ? { name: [1, 80], email: [3, 160], role: [1, 80], city: [1, 60] }
       : path === '/api/community/threads'
-      ? { channel: [2, 40], author: [1, 80], title: [3, 220] } : {};
+      ? { channel: [2, 40], author: [1, 80], title: [3, 220] }
+      : isMemberCommentRoute(path)
+      ? { author: [1, 80], body: [2, 800] }
+      : path === '/api/community/messages'
+      ? { recipientMemberId: [2, 80], subject: [1, 140], body: [2, 1200] }
+      : {};
     const optionalStringLimits: Record<string, number> = path === '/api/contact'
       ? {
           company: 120,
@@ -89,6 +102,21 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
           currentPlatform: 160,
           timeline: 120,
         }
+      : path === '/api/community/members'
+      ? {
+          memberType: 60,
+          company: 120,
+          website: 180,
+          linkedinUrl: 200,
+          annualOrders: 80,
+          platform: 80,
+          serviceFocus: 120,
+          motivation: 800,
+        }
+      : path === '/api/community/threads'
+      ? { body: 1500 }
+      : path === '/api/community/messages'
+      ? { senderName: 80 }
       : { company: 120, adSlot: 100 };
 
     const invalidCustomAnswers =
@@ -102,12 +130,20 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
           ([k, v]) => typeof k !== 'string' || k.length > 80 || typeof v !== 'string' || v.length > 500
         ));
 
+    const invalidInterests =
+      path === '/api/community/members' &&
+      req.body?.interests !== undefined &&
+      (!Array.isArray(req.body.interests) ||
+        req.body.interests.length > 10 ||
+        req.body.interests.some((item: unknown) => typeof item !== 'string' || item.length > 60));
+
     if (
       Object.entries(fields).some(([key, [min, max]]) => typeof req.body?.[key] !== 'string' ||
         req.body[key].trim().length < min || req.body[key].length > max) ||
       Object.entries(optionalStringLimits).some(([key, max]) => req.body?.[key] !== undefined &&
         (typeof req.body[key] !== 'string' || req.body[key].length > max)) ||
-      invalidCustomAnswers
+      invalidCustomAnswers ||
+      invalidInterests
     ) {
       res.status(400).json({ error: 'Fyll i formulärets obligatoriska fält med giltig text.' });
       return;
@@ -434,8 +470,26 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       res.status(400).json({ error: 'Titel krävs.' });
       return;
     }
-    const created = await store.addCommunityThread({ ...req.body, authorUid: res.locals.cmsIdentity.uid });
+    const created = await store.addCommunityThread({
+      ...req.body,
+      authorUid: res.locals.cmsIdentity?.uid,
+      authorEmail: res.locals.cmsIdentity?.email,
+    });
     res.status(201).json(created);
+  }));
+
+  app.post('/api/community/threads/:id/comments', route(async (req, res) => {
+    const updated = await store.addCommunityComment(req.params.id, {
+      author: req.body.author,
+      body: req.body.body,
+      authorUid: res.locals.cmsIdentity?.uid,
+      authorEmail: res.locals.cmsIdentity?.email,
+    });
+    if (!updated) {
+      res.status(404).json({ error: 'Tråd hittades inte.' });
+      return;
+    }
+    res.status(201).json(updated);
   }));
 
   app.post('/api/community/threads/:id/upvote', route(async (req, res) => {
@@ -456,13 +510,82 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.json({ deleted: true });
   }));
 
+  app.get('/api/community/directory', route(async (_req, res) => {
+    const identity = res.locals.cmsIdentity as CmsIdentity;
+    const members = await store.getMemberDirectory(identity.uid, identity.email);
+    res.json({ members });
+  }));
+
+  app.get('/api/community/messages', route(async (_req, res) => {
+    const identity = res.locals.cmsIdentity as CmsIdentity;
+    const result = await store.getDirectMessagesForUser(identity.uid, identity.email);
+    res.json(result);
+  }));
+
+  app.post('/api/community/messages', route(async (req, res) => {
+    const identity = res.locals.cmsIdentity as CmsIdentity;
+    const dm = await store.sendDirectMessage({
+      senderUid: identity.uid,
+      senderName: req.body.senderName || identity.email || 'Verifierad medlem',
+      senderEmail: identity.email,
+      recipientMemberId: req.body.recipientMemberId,
+      subject: req.body.subject,
+      body: req.body.body,
+    });
+    if (!dm) {
+      res.status(404).json({ error: 'Mottagaren hittades inte i medlemskatalogen.' });
+      return;
+    }
+    res.status(201).json(dm);
+  }));
+
+  app.put('/api/community/messages/:id/read', route(async (req, res) => {
+    const identity = res.locals.cmsIdentity as CmsIdentity;
+    const result = await store.markDirectMessageRead(req.params.id, identity.uid, identity.email);
+    if (result.status === 'not_found') {
+      res.status(404).json({ error: 'Meddelandet hittades inte.' });
+      return;
+    }
+    if (result.status === 'forbidden') {
+      res.status(403).json({ error: 'Du kan endast klarmarkera dina egna mottagna meddelanden.' });
+      return;
+    }
+    res.json(result.message);
+  }));
+
   app.post('/api/community/members', route(async (req, res) => {
     if (!req.body?.name || !req.body?.email) {
       res.status(400).json({ error: 'Namn och e-post krävs.' });
       return;
     }
-    const created = await store.addCommunityMember(req.body);
+    const created = await store.addCommunityMember({
+      ...req.body,
+      authorUid: res.locals.cmsIdentity?.uid,
+    });
     res.status(201).json(created);
+  }));
+
+  app.put('/api/community/members/:id/status', route(async (req, res) => {
+    const status = req.body?.verificationStatus;
+    if (status !== 'pending' && status !== 'verified' && status !== 'rejected') {
+      res.status(400).json({ error: 'Ogiltig verifieringsstatus.' });
+      return;
+    }
+    const updated = await store.updateCommunityMemberStatus(req.params.id, status);
+    if (!updated) {
+      res.status(404).json({ error: 'Medlemsansökan hittades inte.' });
+      return;
+    }
+    res.json(updated);
+  }));
+
+  app.delete('/api/community/members/:id', route(async (req, res) => {
+    const ok = await store.deleteCommunityMember(req.params.id);
+    if (!ok) {
+      res.status(404).json({ error: 'Medlemsansökan hittades inte.' });
+      return;
+    }
+    res.json({ deleted: true });
   }));
 
   // --- GEMINI AI DISCOVERY & ENRICHMENT ---

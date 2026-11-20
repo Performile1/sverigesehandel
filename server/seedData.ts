@@ -3312,6 +3312,7 @@ export const INITIAL_CMS_DATA: CMSStore = {
   ],
   contactMessages: [],
   communityMembers: [],
+  directMessages: [],
   logisticsProviders: [
     {
       id: 'lp-postnord-tpl',

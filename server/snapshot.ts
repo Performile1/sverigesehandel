@@ -32,6 +32,9 @@ export function upgradeSnapshot(value: unknown): unknown {
   if (!hasOwn(obj, 'contactForms')) {
     ensureClone().contactForms = structuredClone(INITIAL_CMS_DATA.contactForms);
   }
+  if (!hasOwn(obj, 'directMessages')) {
+    ensureClone().directMessages = [];
+  }
 
   const version = typeof obj.schemaVersion === 'number' ? obj.schemaVersion : 1;
   const seedPartnersById = new Map(INITIAL_CMS_DATA.partners.map((p) => [p.id, p]));
@@ -155,7 +158,7 @@ export function validateSnapshot(value: unknown): value is CMSStore {
   const store = value as Record<string, unknown>;
   const arrays = ['merchants', 'partners', 'logisticsProviders', 'news', 'events', 'sessions', 'jobs', 'recruitmentSites',
     'orderBenchmarks', 'shippingTiers', 'laws', 'intelligenceSources', 'techStackShares',
-    'adBanners', 'contactForms', 'contactMessages', 'timeline', 'communityThreads', 'communityMembers'];
+    'adBanners', 'contactForms', 'contactMessages', 'timeline', 'communityThreads', 'communityMembers', 'directMessages'];
   return arrays.every((key) => Array.isArray(store[key])) &&
     ['regions', 'deliveryStats', 'paketindex', 'pageContent'].every((key) => store[key] !== null &&
       typeof store[key] === 'object' && !Array.isArray(store[key])) &&

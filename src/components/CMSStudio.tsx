@@ -2404,6 +2404,116 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                 </div>
               )}
 
+              {/* Community Member Applications & Verification */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h2 className="font-display text-lg font-bold text-[#040B16] inline-flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#059669]" />
+                      Medlemsansökningar &amp; Verifiering ({store.communityMembers.length})
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Granska e-handelsbutik, domän och ordervolym innan medlemmar markeras som verifierade.
+                    </p>
+                  </div>
+                </div>
+
+                {store.communityMembers.length === 0 ? (
+                  <div className="text-xs text-slate-500 p-4 rounded-xl bg-[#F4F6F9] border border-slate-200">
+                    Inga medlemsansökningar ännu.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-200 max-h-96 overflow-y-auto pr-1">
+                    {store.communityMembers.map((mem) => {
+                      const vStatus = mem.verificationStatus || 'pending';
+                      const badgeCls =
+                        vStatus === 'verified'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          : vStatus === 'rejected'
+                          ? 'bg-rose-50 text-rose-800 border-rose-200'
+                          : 'bg-amber-50 text-amber-800 border-amber-200';
+                      const badgeLabel =
+                        vStatus === 'verified'
+                          ? 'Verifierad'
+                          : vStatus === 'rejected'
+                          ? 'Avslagen'
+                          : 'Väntar verifiering';
+
+                      return (
+                        <div key={mem.id} className="py-3.5 space-y-2">
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                            <div className="space-y-0.5 text-xs">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span
+                                  className={`px-2 py-0.5 rounded-md border text-[11px] font-mono font-bold ${badgeCls}`}
+                                >
+                                  {badgeLabel}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-mono font-semibold">
+                                  {mem.memberType || 'E-handlare / Butik'}
+                                </span>
+                                <span className="font-bold text-[#040B16]">{mem.name}</span>
+                                <span className="text-slate-500">({mem.email})</span>
+                              </div>
+                              <div className="text-slate-700">
+                                <strong>{mem.role}</strong> · {mem.city}
+                                {mem.company ? ` · ${mem.company}` : ''}
+                                {mem.website ? ` (${mem.website})` : ''}
+                              </div>
+                              {(mem.annualOrders || mem.serviceFocus || mem.platform || mem.linkedinUrl) && (
+                                <div className="text-[11px] text-slate-500">
+                                  {[mem.annualOrders, mem.serviceFocus, mem.platform, mem.linkedinUrl]
+                                    .filter(Boolean)
+                                    .join(' · ')}
+                                </div>
+                              )}
+                              {mem.interests && mem.interests.length > 0 && (
+                                <div className="text-[11px] text-[#006AA7] font-medium">
+                                  Intressen: {mem.interests.join(' · ')}
+                                </div>
+                              )}
+                              {mem.motivation && (
+                                <p className="text-[11px] text-slate-600 pt-0.5">{mem.motivation}</p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <select
+                                value={vStatus}
+                                onChange={async (e) => {
+                                  const next = e.target.value as 'pending' | 'verified' | 'rejected';
+                                  await api.updateMemberStatus(mem.id, next);
+                                  await onRefresh();
+                                  onNotify(`Medlemsstatus för ${mem.name} uppdaterad.`);
+                                }}
+                                className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold"
+                                aria-label={`Verifieringsstatus för ${mem.name}`}
+                              >
+                                <option value="pending">Väntar</option>
+                                <option value="verified">Verifierad</option>
+                                <option value="rejected">Avslagen</option>
+                              </select>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await api.deleteMember(mem.id);
+                                  await onRefresh();
+                                  onNotify(`Ansökan från ${mem.name} borttagen.`);
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                                aria-label={`Ta bort ${mem.name}`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
                 <h2 className="font-display text-lg font-bold text-[#040B16]">
                   Moderera Community-trådar ({store.communityThreads.length})

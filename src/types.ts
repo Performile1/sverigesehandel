@@ -324,22 +324,91 @@ export interface TimelineMilestone {
   stack: string;
 }
 
+export type CommunityMemberType =
+  | 'E-handlare / Butik'
+  | 'Tjänsteleverantör / Byrå'
+  | 'Transportör / Logistik / 3PL'
+  | 'Plattform / PSP / SaaS';
+
+export interface CommunityComment {
+  id: string;
+  author: string;
+  authorRole?: string;
+  authorCompany?: string;
+  authorMemberType?: CommunityMemberType;
+  authorUid?: string;
+  body: string;
+  createdAt: string;
+}
+
 export interface CommunityThread {
   id: string;
   channel: string;
   author: string;
+  authorRole?: string;
+  authorCompany?: string;
+  authorMemberType?: CommunityMemberType;
+  authorUid?: string;
   title: string;
+  body?: string;
   votes: number;
   replies: number;
+  comments?: CommunityComment[];
   time: string;
 }
+
+export type MemberVerificationStatus = 'pending' | 'verified' | 'rejected';
 
 export interface CommunityMember {
   id: string;
   name: string;
   email: string;
+  memberType?: CommunityMemberType;
   role: string;
   city: string;
+  company?: string;
+  website?: string;
+  linkedinUrl?: string;
+  annualOrders?: string;
+  platform?: string;
+  serviceFocus?: string;
+  interests?: string[];
+  motivation?: string;
+  verificationStatus?: MemberVerificationStatus;
+  verifiedAt?: string;
+  authorUid?: string;
+  createdAt: string;
+}
+
+export interface PublicMemberProfile {
+  id: string;
+  name: string;
+  memberType: CommunityMemberType;
+  role: string;
+  city: string;
+  company?: string;
+  website?: string;
+  platform?: string;
+  serviceFocus?: string;
+  interests?: string[];
+  verificationStatus: MemberVerificationStatus;
+  isSelf?: boolean;
+}
+
+export interface CommunityDirectMessage {
+  id: string;
+  senderMemberId?: string;
+  senderUid: string;
+  senderName: string;
+  senderCompany?: string;
+  senderMemberType?: CommunityMemberType;
+  recipientMemberId: string;
+  recipientUid?: string;
+  recipientName: string;
+  recipientCompany?: string;
+  subject: string;
+  body: string;
+  read: boolean;
   createdAt: string;
 }
 
@@ -582,7 +651,9 @@ export interface CMSStore {
   timeline: TimelineMilestone[];
   communityThreads: CommunityThread[];
   communityMembers: CommunityMember[];
+  directMessages?: CommunityDirectMessage[];
   communityMemberCount?: number;
+  communityVerifiedCount?: number;
   communityMemberCities?: string[];
   updatedAt: string;
 }

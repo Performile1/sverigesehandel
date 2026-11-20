@@ -48,6 +48,9 @@ const database = {
 const service = createFirestoreStore(() => database as unknown as ReturnType<typeof cmsFirestore>);
 const app = createCmsApp(service, async (identity) => {
   if (identity === 'invalid-fixture') throw new Error('Invalid fixture identity');
+  if (identity === 'member-two') {
+    return { uid: 'fixture-user-two', email: 'two@example.invalid', verified: true, admin: false };
+  }
   return { uid: 'fixture-user', email: 'fixture@example.invalid', verified: identity !== 'unverified-fixture', admin: identity === 'admin-fixture' };
 });
 // Ensures the API middleware doesn't intercept local Vite/static routes.
@@ -154,7 +157,10 @@ try {
     onJoinMember: async () => {},
   }));
   assert.ok(!communityHtml.includes('1 640+'));
-  assert.ok(communityHtml.replace(/<!-- -->/g, '').includes(`${visible.communityMemberCount} sökande`));
+  const cleanCommunityHtml = communityHtml.replace(/<!-- -->/g, '');
+  assert.ok(cleanCommunityHtml.includes(`${visible.communityMemberCount} registrerade i nätverket`));
+  assert.ok(cleanCommunityHtml.includes('Transportör / Logistik / 3PL'));
+  assert.ok(cleanCommunityHtml.includes('Medlemskatalog &amp; Direktmeddelanden') || cleanCommunityHtml.includes('Medlemskatalog'));
   assert.deepEqual(upgraded.merchants, legacy.merchants);
   assert.deepEqual(upgraded.contactMessages, legacy.contactMessages);
   assert.equal(JSON.stringify(snapshot), legacyJson, 'Read migration must not mutate or persist stored data');
@@ -212,6 +218,7 @@ try {
     ['/api/news/item', 'DELETE'], ['/api/cms/status', 'GET'],
     ['/api/jobs/validate', 'POST'], ['/api/contact/item', 'DELETE'],
     ['/api/contact/item/status', 'PUT'], ['/api/forms', 'POST'], ['/api/forms/item', 'DELETE'],
+    ['/api/community/members/item/status', 'PUT'], ['/api/community/members/item', 'DELETE'],
     ['/api/paketindex', 'PUT'], ['/api/pages', 'PUT'], ['/api/timeline', 'POST'],
   ]) {
     assert.equal((await request(path, method, method === 'GET' ? undefined : {})).status, 401, `${method} ${path}`);
@@ -349,16 +356,104 @@ try {
   assert.equal((await request(`/api/partners/${partnerDirectJson.partner.id}`, 'DELETE', undefined, 'admin-fixture')).status, 200);
   assert.deepEqual((await (await request('/api/cms/store')).json()).contactMessages, []);
   assert.equal((await request('/api/contact', 'POST', { name: 'Visitor', email: 'visitor@example.invalid', topic: 'Test', message: 'x'.repeat(2001) }, 'member-fixture')).status, 400);
-  assert.equal((await request('/api/community/threads', 'POST', {
-    channel: '#test', author: 'Visitor', title: 'Fixture thread',
-  }, 'member-fixture')).status, 201);
-  assert.equal((await request('/api/community/members', 'POST', {
-    name: 'Maja', email: 'maja@example.invalid', role: 'E-handlare / Grundare', city: 'Göteborg / Borås',
-  }, 'member-fixture')).status, 201);
+  const threadCreateResp = await request('/api/community/threads', 'POST', {
+    channel: '#test',
+    author: 'Visitor',
+    title: 'Fixture thread',
+    body: 'Fördjupande kontext i tråden.',
+  }, 'member-fixture');
+  assert.equal(threadCreateResp.status, 201);
+  const createdThread = await threadCreateResp.json();
+  assert.equal(createdThread.body, 'Fördjupande kontext i tråden.');
+
+  assert.equal((await request(`/api/community/threads/${createdThread.id}/comments`, 'POST', {
+    author: 'Kommentator',
+    body: 'Bra inspel kring fraktpriser.',
+  })).status, 401);
+  const commentResp = await request(`/api/community/threads/${createdThread.id}/comments`, 'POST', {
+    author: 'Kommentator',
+    body: 'Bra inspel kring fraktpriser.',
+  }, 'member-two');
+  assert.equal(commentResp.status, 201);
+  const commentedThread = await commentResp.json();
+  assert.equal(commentedThread.replies, 1);
+  assert.equal(commentedThread.comments.length, 1);
+
+  const memberResp = await request('/api/community/members', 'POST', {
+    name: 'Maja',
+    email: 'maja@example.invalid',
+    memberType: 'E-handlare / Butik',
+    role: 'E-handlare / Grundare',
+    city: 'Göteborg / Borås',
+    company: 'Majas E-handel AB',
+    website: 'majashandel.se',
+    annualOrders: '25 000 – 100 000 paket/år',
+    platform: 'Shopify',
+    interests: ['Benchmark-rapporter', 'Frakt & 3PL'],
+  }, 'member-fixture');
+  assert.equal(memberResp.status, 201);
+  const createdMember = await memberResp.json();
+  assert.equal(createdMember.company, 'Majas E-handel AB');
+  assert.equal(createdMember.memberType, 'E-handlare / Butik');
+  assert.equal(createdMember.verificationStatus, 'pending');
+
+  const carrierMemberResp = await request('/api/community/members', 'POST', {
+    name: 'Kalle',
+    email: 'two@example.invalid',
+    memberType: 'Transportör / Logistik / 3PL',
+    role: 'Logistikchef / 3PL-ansvarig',
+    city: 'Stockholm / Uppsala',
+    company: 'Nordic Parcel AB',
+    website: 'nordicparcel.se',
+    serviceFocus: '3PL / Lagerhotell & AutoStore',
+    platform: 'Flera plattformar (Plattformsoberoende)',
+  }, 'member-two');
+  assert.equal(carrierMemberResp.status, 201);
+  const createdCarrierMember = await carrierMemberResp.json();
+  assert.equal(createdCarrierMember.memberType, 'Transportör / Logistik / 3PL');
+  assert.equal(createdCarrierMember.serviceFocus, '3PL / Lagerhotell & AutoStore');
+
+  assert.equal(
+    (await request(`/api/community/members/${createdMember.id}/status`, 'PUT', { verificationStatus: 'verified' }, 'admin-fixture')).status,
+    200
+  );
+
+  // Member directory & DM endpoints require verified login and never leak private emails
+  assert.equal((await request('/api/community/directory')).status, 401);
+  assert.equal((await request('/api/community/directory', 'GET', undefined, 'unverified-fixture')).status, 403);
+  const dirResp = await request('/api/community/directory', 'GET', undefined, 'member-fixture');
+  assert.equal(dirResp.status, 200);
+  const dirData = await dirResp.json();
+  assert.ok(dirData.members.some((m: { id: string }) => m.id === createdCarrierMember.id));
+  assert.ok(dirData.members.every((m: Record<string, unknown>) => m.email === undefined && m.linkedinUrl === undefined), 'Directory must never expose email or linkedinUrl');
+
+  assert.equal((await request('/api/community/messages')).status, 401);
+  const dmSendResp = await request('/api/community/messages', 'POST', {
+    recipientMemberId: createdCarrierMember.id,
+    subject: 'Fråga om 3PL-kapacitet',
+    body: 'Hej Kalle, tar ni in nya Shopify-handlare i Q2?',
+  }, 'member-fixture');
+  assert.equal(dmSendResp.status, 201);
+  const sentDm = await dmSendResp.json();
+  assert.equal(sentDm.recipientMemberId, createdCarrierMember.id);
+
+  // Sender cannot mark recipient's incoming message as read; recipient can
+  assert.equal((await request(`/api/community/messages/${sentDm.id}/read`, 'PUT', {}, 'member-fixture')).status, 403);
+  const twoInbox = await (await request('/api/community/messages', 'GET', undefined, 'member-two')).json();
+  assert.equal(twoInbox.messages.length, 1);
+  const readResp = await request(`/api/community/messages/${sentDm.id}/read`, 'PUT', {}, 'member-two');
+  assert.equal(readResp.status, 200);
+  assert.equal((await readResp.json()).read, true);
+
   const updatedPublic = await (await request('/api/cms/store')).json();
   assert.deepEqual(updatedPublic.communityMembers, []);
-  assert.equal(updatedPublic.communityMemberCount, 2);
-  assert.deepEqual(updatedPublic.communityMemberCities, ['Göteborg / Borås', 'Test']);
+  assert.deepEqual(updatedPublic.directMessages, []);
+  const publicCommentedThread = updatedPublic.communityThreads.find((t: { id: string }) => t.id === createdThread.id);
+  assert.equal(publicCommentedThread.authorUid, undefined, 'Public threads must strip authorUid');
+  assert.equal(publicCommentedThread.comments[0].authorUid, undefined, 'Public comments must strip authorUid');
+  assert.equal(updatedPublic.communityMemberCount, 3);
+  assert.equal(updatedPublic.communityVerifiedCount, 1);
+  assert.deepEqual(updatedPublic.communityMemberCities, ['Stockholm / Uppsala', 'Göteborg / Borås', 'Test']);
   assert.ok(transactions >= 3, 'Writes must pass through Firestore transactions');
   const contactCount = snapshot.contactMessages.length;
   const isolated = operations.withStore(snapshot, () => operations.resetStore());

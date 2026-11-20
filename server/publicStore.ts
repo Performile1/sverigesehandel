@@ -3,6 +3,9 @@ import type { CMSStore } from '../src/types.ts';
 export function publicStore(store: CMSStore, admin = false): CMSStore {
   const members = store.communityMembers || [];
   const communityMemberCount = members.length;
+  const communityVerifiedCount = members.filter(
+    (member) => member.verificationStatus === 'verified'
+  ).length;
   const communityMemberCities = Array.from(
     new Set(members.map((member) => member.city.trim()).filter(Boolean))
   );
@@ -18,13 +21,29 @@ export function publicStore(store: CMSStore, admin = false): CMSStore {
         hasDirectIntroEmail: Boolean(lp.introEmail?.trim()),
       })),
       communityMemberCount,
+      communityVerifiedCount,
       communityMemberCities,
+      directMessages: [],
     };
   }
   const result = structuredClone(store);
   result.contactMessages = [];
   result.communityMembers = [];
+  result.directMessages = [];
+  result.communityThreads = (result.communityThreads || []).map((thread) => {
+    const cleanThread = { ...thread };
+    delete cleanThread.authorUid;
+    if (Array.isArray(cleanThread.comments)) {
+      cleanThread.comments = cleanThread.comments.map((c) => {
+        const cleanComment = { ...c };
+        delete cleanComment.authorUid;
+        return cleanComment;
+      });
+    }
+    return cleanThread;
+  });
   result.communityMemberCount = communityMemberCount;
+  result.communityVerifiedCount = communityVerifiedCount;
   result.communityMemberCities = communityMemberCities;
   for (const key of ['merchants', 'partners', 'logisticsProviders', 'news', 'events', 'sessions', 'jobs', 'recruitmentSites'] as const) {
     // Filter drafts on the server, not only in the public React components.

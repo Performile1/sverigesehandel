@@ -3,7 +3,9 @@ import type {
   AdBanner,
   CategoryOrderBenchmark,
   CMSStore,
+  CommunityDirectMessage,
   CommunityMember,
+  CommunityMemberType,
   CommunityThread,
   ContactFormConfig,
   ContactMessage,
@@ -25,6 +27,7 @@ import type {
   Merchant,
   PageContentMap,
   PaketindexData,
+  PublicMemberProfile,
   RecruitmentSite,
   RegionMetric,
   ShippingCostTier,
@@ -296,8 +299,13 @@ export const api = {
   deleteContactMessage: (id: string) =>
     request<{ deleted: boolean }>(`/api/contact/${id}`, { method: 'DELETE' }),
 
-  addThread: (payload: { channel: string; author: string; title: string }) =>
+  addThread: (payload: { channel: string; author: string; title: string; body?: string }) =>
     request<CommunityThread>('/api/community/threads', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  addThreadComment: (threadId: string, payload: { author: string; body: string }) =>
+    request<CommunityThread>(`/api/community/threads/${threadId}/comments`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
@@ -309,11 +317,50 @@ export const api = {
     request<{ deleted: boolean }>(`/api/community/threads/${id}`, {
       method: 'DELETE',
     }),
-  addMember: (payload: { name: string; email: string; role: string; city: string }) =>
+  getMemberDirectory: () =>
+    request<{ members: PublicMemberProfile[] }>('/api/community/directory'),
+  getDirectMessages: () =>
+    request<{ messages: CommunityDirectMessage[]; myMemberIds: string[] }>('/api/community/messages'),
+  sendDirectMessage: (payload: {
+    recipientMemberId: string;
+    subject: string;
+    body: string;
+    senderName?: string;
+  }) =>
+    request<CommunityDirectMessage>('/api/community/messages', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  markMessageRead: (id: string) =>
+    request<CommunityDirectMessage>(`/api/community/messages/${id}/read`, {
+      method: 'PUT',
+    }),
+  addMember: (payload: {
+    name: string;
+    email: string;
+    memberType?: CommunityMemberType;
+    role: string;
+    city: string;
+    company?: string;
+    website?: string;
+    linkedinUrl?: string;
+    annualOrders?: string;
+    platform?: string;
+    serviceFocus?: string;
+    interests?: string[];
+    motivation?: string;
+  }) =>
     request<CommunityMember>('/api/community/members', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  updateMemberStatus: (id: string, verificationStatus: 'pending' | 'verified' | 'rejected') =>
+    request<CommunityMember>(`/api/community/members/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ verificationStatus }),
+    }),
+  deleteMember: (id: string) =>
+    request<{ deleted: boolean }>(`/api/community/members/${id}`, { method: 'DELETE' }),
 
   discover: <T extends DiscoveryTarget>(payload: {
     target: T;

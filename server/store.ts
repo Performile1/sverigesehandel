@@ -5,13 +5,17 @@ import type {
   AdBanner,
   CategoryOrderBenchmark,
   CMSStore,
+  CommunityComment,
+  CommunityDirectMessage,
   CommunityMember,
+  CommunityMemberType,
   CommunityThread,
   ContactFormConfig,
   ContactMessage,
   ContactMessageStatus,
   DCSession,
   DeliveryStatsData,
+  PublicMemberProfile,
   EcommerceEvent,
   EcommerceJob,
   EcommerceLaw,
@@ -436,6 +440,7 @@ function ensureStoreFile(): CMSStore {
       timeline: upgradedRaw.timeline ?? INITIAL_CMS_DATA.timeline,
       communityThreads: upgradedRaw.communityThreads ?? INITIAL_CMS_DATA.communityThreads,
       communityMembers: upgradedRaw.communityMembers ?? [],
+      directMessages: Array.isArray(upgradedRaw.directMessages) ? upgradedRaw.directMessages : [],
       updatedAt: upgradedRaw.updatedAt ?? new Date().toISOString(),
     };
 
@@ -519,7 +524,12 @@ export function replaceStore(newStore: CMSStore): CMSStore {
 }
 
 export function resetStore(): CMSStore {
-  return saveStore({ ...structuredClone(INITIAL_CMS_DATA), contactMessages: [], communityMembers: [] });
+  return saveStore({
+    ...structuredClone(INITIAL_CMS_DATA),
+    contactMessages: [],
+    communityMembers: [],
+    directMessages: [],
+  });
 }
 
 export function upsertMerchant(input: Partial<Merchant> & { name: string }): { merchant: Merchant; created: boolean } {
@@ -1137,19 +1147,93 @@ export function deleteLaw(id: string): boolean {
   return true;
 }
 
-export function addCommunityThread(input: { channel: string; author: string; title: string; authorUid?: string }): CommunityThread {
+function resolveMemberByIdentity(
+  members: CommunityMember[],
+  uid?: string,
+  email?: string
+): CommunityMember | undefined {
+  const cleanEmail = email?.trim().toLowerCase();
+  return members.find(
+    (m) =>
+      (uid && m.authorUid === uid) ||
+      (cleanEmail && m.email.trim().toLowerCase() === cleanEmail)
+  );
+}
+
+const VALID_MEMBER_TYPES: CommunityMemberType[] = [
+  'E-handlare / Butik',
+  'Tjänsteleverantör / Byrå',
+  'Transportör / Logistik / 3PL',
+  'Plattform / PSP / SaaS',
+];
+
+function normalizeMemberType(value?: string): CommunityMemberType {
+  if (value && VALID_MEMBER_TYPES.includes(value as CommunityMemberType)) {
+    return value as CommunityMemberType;
+  }
+  return 'E-handlare / Butik';
+}
+
+export function addCommunityThread(input: {
+  channel: string;
+  author: string;
+  title: string;
+  body?: string;
+  authorUid?: string;
+  authorEmail?: string;
+}): CommunityThread {
   const store = ensureStoreFile();
+  const profile = resolveMemberByIdentity(store.communityMembers, input.authorUid, input.authorEmail);
+  const cleanBody = input.body?.trim();
   const thread: CommunityThread = {
     ...(input.authorUid ? { authorUid: input.authorUid } : {}),
+    ...(profile?.role ? { authorRole: profile.role } : {}),
+    ...(profile?.company ? { authorCompany: profile.company } : {}),
+    ...(profile?.memberType ? { authorMemberType: normalizeMemberType(profile.memberType) } : {}),
     id: `c-${Date.now()}`,
     channel: input.channel || '#ai-och-data',
-    author: input.author || 'Verifierad Medlem',
+    author: input.author.trim() || profile?.name || 'Verifierad Medlem',
     title: input.title.trim(),
+    ...(cleanBody ? { body: cleanBody } : {}),
     votes: 1,
     replies: 0,
+    comments: [],
     time: 'Just nu',
   };
   store.communityThreads.unshift(thread);
+  saveStore(store);
+  return thread;
+}
+
+export function addCommunityComment(
+  threadId: string,
+  input: {
+    author: string;
+    body: string;
+    authorUid?: string;
+    authorEmail?: string;
+  }
+): CommunityThread | null {
+  const store = ensureStoreFile();
+  const thread = store.communityThreads.find((t) => t.id === threadId);
+  if (!thread) return null;
+
+  const profile = resolveMemberByIdentity(store.communityMembers, input.authorUid, input.authorEmail);
+  const comment: CommunityComment = {
+    id: `cm-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    author: input.author.trim() || profile?.name || 'Verifierad Medlem',
+    ...(profile?.role ? { authorRole: profile.role } : {}),
+    ...(profile?.company ? { authorCompany: profile.company } : {}),
+    ...(profile?.memberType ? { authorMemberType: normalizeMemberType(profile.memberType) } : {}),
+    ...(input.authorUid ? { authorUid: input.authorUid } : {}),
+    body: input.body.trim(),
+    createdAt: new Date().toISOString(),
+  };
+  const existingComments = Array.isArray(thread.comments) ? thread.comments : [];
+  thread.comments = [...existingComments, comment].slice(-50);
+  thread.replies = Math.max(thread.replies || 0, 0) === existingComments.length
+    ? thread.comments.length
+    : (thread.replies || 0) + 1;
   saveStore(store);
   return thread;
 }
@@ -1172,19 +1256,240 @@ export function deleteCommunityThread(id: string): boolean {
   return true;
 }
 
-export function addCommunityMember(input: { name: string; email: string; role: string; city: string }): CommunityMember {
+export function addCommunityMember(input: {
+  name: string;
+  email: string;
+  memberType?: CommunityMemberType | string;
+  role: string;
+  city: string;
+  company?: string;
+  website?: string;
+  linkedinUrl?: string;
+  annualOrders?: string;
+  platform?: string;
+  serviceFocus?: string;
+  interests?: string[];
+  motivation?: string;
+  authorUid?: string;
+}): CommunityMember {
   const store = ensureStoreFile();
+  const normalizedEmail = input.email.trim().toLowerCase();
+  const cleanWebsite = input.website?.trim();
+  const resolvedType = normalizeMemberType(input.memberType);
+  const cleanInterests = Array.isArray(input.interests)
+    ? input.interests.map((item) => String(item).trim()).filter(Boolean).slice(0, 10)
+    : undefined;
+
+  const existingIdx = store.communityMembers.findIndex(
+    (m) => m.email.trim().toLowerCase() === normalizedEmail
+  );
+
+  if (existingIdx >= 0) {
+    const existing = store.communityMembers[existingIdx];
+    const updated: CommunityMember = {
+      ...existing,
+      name: input.name.trim(),
+      email: input.email.trim(),
+      memberType: input.memberType ? resolvedType : existing.memberType || 'E-handlare / Butik',
+      role: input.role.trim(),
+      city: input.city.trim(),
+      company: input.company?.trim() || existing.company,
+      website: cleanWebsite || existing.website,
+      linkedinUrl: input.linkedinUrl?.trim() || existing.linkedinUrl,
+      annualOrders: input.annualOrders?.trim() || existing.annualOrders,
+      platform: input.platform?.trim() || existing.platform,
+      serviceFocus: input.serviceFocus?.trim() || existing.serviceFocus,
+      interests: cleanInterests && cleanInterests.length > 0 ? cleanInterests : existing.interests,
+      motivation: input.motivation?.trim() || existing.motivation,
+      authorUid: input.authorUid || existing.authorUid,
+    };
+    store.communityMembers[existingIdx] = updated;
+    saveStore(store);
+    return updated;
+  }
+
   const member: CommunityMember = {
     id: `mem-${Date.now()}`,
     name: input.name.trim(),
     email: input.email.trim(),
-    role: input.role,
-    city: input.city,
+    memberType: resolvedType,
+    role: input.role.trim(),
+    city: input.city.trim(),
+    ...(input.company?.trim() ? { company: input.company.trim() } : {}),
+    ...(cleanWebsite ? { website: cleanWebsite } : {}),
+    ...(input.linkedinUrl?.trim() ? { linkedinUrl: input.linkedinUrl.trim() } : {}),
+    ...(input.annualOrders?.trim() ? { annualOrders: input.annualOrders.trim() } : {}),
+    ...(input.platform?.trim() ? { platform: input.platform.trim() } : {}),
+    ...(input.serviceFocus?.trim() ? { serviceFocus: input.serviceFocus.trim() } : {}),
+    ...(cleanInterests && cleanInterests.length > 0 ? { interests: cleanInterests } : {}),
+    ...(input.motivation?.trim() ? { motivation: input.motivation.trim() } : {}),
+    verificationStatus: 'pending',
+    ...(input.authorUid ? { authorUid: input.authorUid } : {}),
     createdAt: new Date().toISOString(),
   };
   store.communityMembers.unshift(member);
+  if (store.communityMembers.length > 500) {
+    store.communityMembers = store.communityMembers.slice(0, 500);
+  }
   saveStore(store);
   return member;
+}
+
+export function updateCommunityMemberStatus(
+  id: string,
+  verificationStatus: 'pending' | 'verified' | 'rejected'
+): CommunityMember | null {
+  const store = ensureStoreFile();
+  const idx = store.communityMembers.findIndex((m) => m.id === id);
+  if (idx < 0) return null;
+  const updated: CommunityMember = {
+    ...store.communityMembers[idx],
+    verificationStatus,
+    verifiedAt: verificationStatus === 'verified' ? new Date().toISOString() : undefined,
+  };
+  store.communityMembers[idx] = updated;
+  saveStore(store);
+  return updated;
+}
+
+export function deleteCommunityMember(id: string): boolean {
+  const store = ensureStoreFile();
+  const before = store.communityMembers.length;
+  store.communityMembers = store.communityMembers.filter((m) => m.id !== id);
+  if (store.communityMembers.length === before) return false;
+  saveStore(store);
+  return true;
+}
+
+export function getMemberDirectory(requesterUid?: string, requesterEmail?: string): PublicMemberProfile[] {
+  const store = ensureStoreFile();
+  const cleanEmail = requesterEmail?.trim().toLowerCase();
+  const rank = (status?: string) => (status === 'verified' ? 0 : 1);
+
+  return (store.communityMembers || [])
+    .filter((m) => m.verificationStatus !== 'rejected')
+    .slice()
+    .sort((a, b) => rank(a.verificationStatus) - rank(b.verificationStatus))
+    .map((m): PublicMemberProfile => ({
+      id: m.id,
+      name: m.name,
+      memberType: normalizeMemberType(m.memberType),
+      role: m.role,
+      city: m.city,
+      ...(m.company ? { company: m.company } : {}),
+      ...(m.website ? { website: m.website } : {}),
+      ...(m.platform ? { platform: m.platform } : {}),
+      ...(m.serviceFocus ? { serviceFocus: m.serviceFocus } : {}),
+      ...(m.interests && m.interests.length > 0 ? { interests: m.interests } : {}),
+      verificationStatus: m.verificationStatus || 'pending',
+      isSelf: Boolean(
+        (requesterUid && m.authorUid === requesterUid) ||
+        (cleanEmail && m.email.trim().toLowerCase() === cleanEmail)
+      ),
+    }));
+}
+
+function getUserMemberIds(members: CommunityMember[], uid: string, email?: string): Set<string> {
+  const cleanEmail = email?.trim().toLowerCase();
+  const ids = new Set<string>();
+  for (const m of members) {
+    if ((uid && m.authorUid === uid) || (cleanEmail && m.email.trim().toLowerCase() === cleanEmail)) {
+      ids.add(m.id);
+    }
+  }
+  return ids;
+}
+
+export function getDirectMessagesForUser(uid: string, email?: string): {
+  messages: CommunityDirectMessage[];
+  myMemberIds: string[];
+} {
+  const store = ensureStoreFile();
+  const myMemberIds = getUserMemberIds(store.communityMembers || [], uid, email);
+  const all = Array.isArray(store.directMessages) ? store.directMessages : [];
+  const filtered = all.filter(
+    (msg) =>
+      msg.senderUid === uid ||
+      (msg.recipientUid && msg.recipientUid === uid) ||
+      (msg.senderMemberId && myMemberIds.has(msg.senderMemberId)) ||
+      myMemberIds.has(msg.recipientMemberId)
+  );
+  return {
+    messages: filtered,
+    myMemberIds: Array.from(myMemberIds),
+  };
+}
+
+export function sendDirectMessage(input: {
+  senderUid: string;
+  senderName: string;
+  senderEmail?: string;
+  recipientMemberId: string;
+  subject: string;
+  body: string;
+}): CommunityDirectMessage | null {
+  const store = ensureStoreFile();
+  const recipient = (store.communityMembers || []).find(
+    (m) => m.id === input.recipientMemberId && m.verificationStatus !== 'rejected'
+  );
+  if (!recipient) return null;
+
+  const senderProfile = resolveMemberByIdentity(
+    store.communityMembers || [],
+    input.senderUid,
+    input.senderEmail
+  );
+
+  const dm: CommunityDirectMessage = {
+    id: `dm-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    ...(senderProfile ? { senderMemberId: senderProfile.id } : {}),
+    senderUid: input.senderUid,
+    senderName: senderProfile?.name || input.senderName.trim() || 'Verifierad medlem',
+    ...(senderProfile?.company ? { senderCompany: senderProfile.company } : {}),
+    ...(senderProfile?.memberType
+      ? { senderMemberType: normalizeMemberType(senderProfile.memberType) }
+      : {}),
+    recipientMemberId: recipient.id,
+    ...(recipient.authorUid ? { recipientUid: recipient.authorUid } : {}),
+    recipientName: recipient.name,
+    ...(recipient.company ? { recipientCompany: recipient.company } : {}),
+    subject: input.subject.trim(),
+    body: input.body.trim(),
+    read: false,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (!Array.isArray(store.directMessages)) {
+    store.directMessages = [];
+  }
+  store.directMessages.unshift(dm);
+  if (store.directMessages.length > 400) {
+    store.directMessages = store.directMessages.slice(0, 400);
+  }
+  saveStore(store);
+  return dm;
+}
+
+export function markDirectMessageRead(
+  id: string,
+  uid: string,
+  email?: string
+): { status: 'ok'; message: CommunityDirectMessage } | { status: 'not_found' } | { status: 'forbidden' } {
+  const store = ensureStoreFile();
+  const all = Array.isArray(store.directMessages) ? store.directMessages : [];
+  const msg = all.find((m) => m.id === id);
+  if (!msg) return { status: 'not_found' };
+
+  const myMemberIds = getUserMemberIds(store.communityMembers || [], uid, email);
+  const isRecipient =
+    (msg.recipientUid && msg.recipientUid === uid) || myMemberIds.has(msg.recipientMemberId);
+  if (!isRecipient) return { status: 'forbidden' };
+
+  if (!msg.read) {
+    msg.read = true;
+    saveStore(store);
+  }
+  return { status: 'ok', message: msg };
 }
 
 export function upsertAdBanner(input: Partial<AdBanner> & { headline: string }): AdBanner {

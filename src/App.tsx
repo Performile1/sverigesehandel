@@ -456,12 +456,14 @@ export default function App() {
                 contactForms={store.contactForms}
                 adBanners={store.adBanners}
                 memberCount={store.communityMemberCount ?? store.communityMembers.length}
+                verifiedCount={store.communityVerifiedCount ?? 0}
                 memberCities={
                   store.communityMemberCities ??
                   Array.from(
                     new Set(store.communityMembers.map((m) => m.city.trim()).filter(Boolean))
                   )
                 }
+                userUid={user?.uid || null}
                 userDisplayName={user?.displayName || null}
                 userEmail={user?.email || null}
                 isSignedIn={Boolean(user)}
@@ -473,6 +475,11 @@ export default function App() {
                   await fetchStore();
                   notify('Din tråd har publicerats i nätverket.');
                 }}
+                onAddComment={async (threadId, payload) => {
+                  await api.addThreadComment(threadId, payload);
+                  await fetchStore();
+                  notify('Din kommentar har lagts till i tråden.');
+                }}
                 onUpvote={async (id) => {
                   await api.upvoteThread(id);
                   await fetchStore();
@@ -480,7 +487,11 @@ export default function App() {
                 onJoinMember={async (payload) => {
                   await api.addMember(payload);
                   await fetchStore();
-                  notify(`Tack ${payload.name}! Din ansökan till nätverket (${payload.city}) är mottagen.`);
+                  notify(
+                    `Tack ${payload.name}! Din medlemsansökan${
+                      payload.company ? ` för ${payload.company}` : ''
+                    } (${payload.city}) är mottagen.`
+                  );
                 }}
                 onFormSubmitted={fetchStore}
                 onNotify={notify}
