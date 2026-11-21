@@ -71,7 +71,7 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.locals.cmsIdentity = identity;
     res.locals.cmsAdmin = admin;
     if (isMemberSubmission(req.method, path) && !identity?.verified) {
-      res.status(identity ? 403 : 401).json({ error: 'Logga in med ett verifierat Google-konto för att använda denna medlemsfunktion.' });
+      res.status(identity ? 403 : 401).json({ error: 'Logga in med ett konto med verifierad e-post för att använda denna medlemsfunktion.' });
       return;
     }
     if (!publicRead && !isMemberSubmission(req.method, path) && !admin) {

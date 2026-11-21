@@ -33,7 +33,7 @@ export function StaffAdminPanel({store,onRefresh}:{store:CMSStore;onRefresh:()=>
   const member=members.find((m)=>m.authorUid===uid);const profile=profiles.find((p)=>p.uid===uid);
   return <div className="space-y-5">
     <section className="bg-white border rounded-xl p-5 space-y-2"><h2 className="font-bold text-lg">Administratör för Sveriges E-handel</h2>
-      <p>{ADMIN_EMAIL} · Konfigurerad ägaradministratör (verifierad Google-inloggning krävs).</p>
+      <p>{ADMIN_EMAIL} · Konfigurerad ägaradministratör (verifierad inloggning krävs).</p>
       <p className="text-sm">Detta är befintlig behörighetskonfiguration, inte ett nyupprättat Firebase-konto. För att finnas som sparad person-/medlemsprofil: logga in med kontot och spara ”Min användarprofil” nedan. Inga roller ges utifrån fritt angiven e-post.</p>
     </section>
     <MyProfileEditor onSaved={onRefresh}/>

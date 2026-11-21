@@ -6,7 +6,7 @@ export function CreateCmsUser({onRefresh}:{onRefresh:()=>Promise<void>}) {
   return <section className="bg-white border rounded-xl p-5 space-y-3">
     <h2 className="font-bold text-xl">Lägg till användare</h2>
     <p className="text-sm">Skapa en användare i Firebase och CMS, eller registrera en redan befintlig Firebase-användare utan att ändra dess inloggning. Ingen global adminroll, företagsbehörighet eller lösenord ges här.</p>
-    <p className="text-sm">Ange den Google-adress personen ska logga in med. Nya konton skapas med overifierad e-post och väntande medlemskap, dolt i medlemskatalogen. Personen måste själv logga in och verifieras. Godkänn sedan medlemskapet och koppla företaget separat nedan.</p>
+    <p className="text-sm">Ange den e-postadress personen ska logga in med. E-postlänk kan användas utan Google-konto när Firebase-metoden aktiverats. Nya konton skapas med overifierad e-post och väntande medlemskap, dolt i medlemskatalogen. Personen måste själv logga in och verifieras. Godkänn sedan medlemskapet och koppla företaget separat nedan.</p>
     <form className="space-y-3 text-sm" onSubmit={async(e)=>{
       e.preventDefault();if(busy)return;const form=e.currentTarget;const data=new FormData(form);
       if(!window.confirm('Lägg till denna person i Firebase/CMS? Ett välkomstmejl med inloggningsinformation skickas om mejltjänsten är konfigurerad. Inga företags-/adminrättigheter tilldelas.'))return;
@@ -24,7 +24,7 @@ export function CreateCmsUser({onRefresh}:{onRefresh:()=>Promise<void>}) {
       }catch(cause){setMessage((cause as Error).message);}finally{setBusy(false);}
     }}>
       <fieldset disabled={busy} className="grid sm:grid-cols-2 gap-3">
-        <label>E-post / Google-inloggning<input name="email" className={field} type="email" maxLength={160} required placeholder="namn@foretag.se"/></label>
+        <label>E-postadress för inloggning<input name="email" className={field} type="email" maxLength={160} required placeholder="namn@foretag.se"/></label>
         <label>Namn<input name="name" className={field} maxLength={100} required placeholder="För- och efternamn"/></label>
         <label>Telefon<input name="phone" className={field} type="tel" maxLength={40}/></label>
         <label>Position<input name="position" className={field} maxLength={120}/></label>

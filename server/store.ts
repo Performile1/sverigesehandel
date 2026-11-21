@@ -2263,7 +2263,7 @@ export function prepareUserInvitation(actor:CmsIdentity,uid:string,from:string):
     return {status:'ready',invitation:member.invitation};
   }
   if(!from || from.length>320 || /[\r\n]/.test(from))throw Object.assign(new Error('Ogiltig avsändarkonfiguration.'),{status:400});
-  member.invitation={email:member.email,name:member.name,from,startedAt:new Date().toISOString()};
+  member.invitation={email:member.email,name:member.name,from,startedAt:new Date().toISOString(),templateVersion:2};
   saveStore(store);return {status:'ready',invitation:member.invitation};
 }
 export function markUserInvitationAccepted(actor:CmsIdentity,uid:string,startedAt:string) {

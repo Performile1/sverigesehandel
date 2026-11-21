@@ -24,7 +24,7 @@ const NAV_ITEMS: Array<{ id: PortalTab; label: string }> = [
 
 export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, isAdmin, authReady, signingIn, signInWithGoogle, signOutUser } = useFirebase();
+  const { user, isAdmin, authReady, signingIn, requestSignIn, signOutUser } = useFirebase();
 
   const shortUserLabel =
     user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Konto';
@@ -85,7 +85,7 @@ export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarPro
               <button
                 type="button"
                 disabled={signingIn}
-                onClick={signInWithGoogle}
+                onClick={requestSignIn}
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 disabled:opacity-60 text-xs font-semibold text-white whitespace-nowrap shrink-0 transition-colors cursor-pointer"
               >
                 <LogIn className="w-3.5 h-3.5 text-[#FECC02] shrink-0" />
@@ -155,12 +155,12 @@ export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarPro
                   type="button"
                   disabled={signingIn}
                   onClick={() => {
-                    signInWithGoogle();
+                    requestSignIn();
                     setMobileOpen(false);
                   }}
                   className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-[#FECC02] hover:bg-white/5 flex items-center justify-between"
                 >
-                  <span>{signingIn ? 'Loggar in...' : 'Logga in med Google'}</span>
+                  <span>{signingIn ? 'Loggar in...' : 'Logga in / registrera dig'}</span>
                   <LogIn className="w-4 h-4" />
                 </button>
               )}

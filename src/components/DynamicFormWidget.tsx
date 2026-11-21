@@ -49,7 +49,7 @@ export function DynamicFormWidget({
   onSubmitted,
   onNotify,
 }: DynamicFormWidgetProps) {
-  const { user, signInWithGoogle } = useFirebase();
+  const { user, requestSignIn } = useFirebase();
   const enabledFields = useMemo(
     () => (form.fields || []).filter((f) => f.enabled),
     [form.fields]
@@ -108,8 +108,8 @@ export function DynamicFormWidget({
     setError(null);
     setSentMessage(null);
 
-    if (!user) {
-      setError('Logga in med ditt Google-konto först för att verifiera att avsändaren är riktig.');
+    if (!user?.emailVerified) {
+      setError('Logga in och verifiera din e-post innan du skickar formuläret.');
       return;
     }
 
@@ -235,7 +235,7 @@ export function DynamicFormWidget({
         )}
       </div>
 
-      {!user && (
+      {!user?.emailVerified && (
         <div
           className={`p-3.5 rounded-xl border flex flex-wrap items-center justify-between gap-3 text-xs ${
             isNavy
@@ -243,10 +243,10 @@ export function DynamicFormWidget({
               : 'bg-slate-50 border-slate-200 text-slate-700'
           }`}
         >
-          <span>Verifiera med Google-konto för att skicka formuläret direkt till ansvarig.</span>
+          <span>Verifiera din e-post för att skicka formuläret direkt till ansvarig.</span>
           <button
             type="button"
-            onClick={() => void signInWithGoogle()}
+            onClick={() => void requestSignIn()}
             className={`px-3.5 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer shrink-0 ${
               isNavy
                 ? 'bg-[#FECC02] hover:bg-[#EAB308] text-[#040B16]'
@@ -254,7 +254,7 @@ export function DynamicFormWidget({
             }`}
           >
             <LogIn className="w-3.5 h-3.5" />
-            Logga in med Google
+            Logga in / registrera dig
           </button>
         </div>
       )}

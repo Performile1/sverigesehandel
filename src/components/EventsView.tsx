@@ -36,7 +36,7 @@ export function EventsView({
   const [roleView, setRoleView] = useState<'visitor' | 'exhibitor'>('visitor');
 
   const [activeTrack, setActiveTrack] = useState<string>('all');
-  const { user, savedSessionIds, toggleSavedSession, signInWithGoogle } = useFirebase();
+  const { user, savedSessionIds, toggleSavedSession, requestSignIn } = useFirebase();
 
   const publishedEvents = useMemo(
     () => events.filter((e) => e.status === 'published'),
@@ -428,10 +428,10 @@ export function EventsView({
                       {' '}
                       <button
                         type="button"
-                        onClick={signInWithGoogle}
+                        onClick={requestSignIn}
                         className="text-[#FECC02] hover:underline font-semibold cursor-pointer"
                       >
-                        Logga in med Google
+                        Logga in / registrera dig
                       </button>{' '}
                       för att spara mellan enheter.
                     </>
