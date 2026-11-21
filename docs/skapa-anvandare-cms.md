@@ -19,10 +19,39 @@
    och intro-/meddelandebehörighet genom befintligt CMS-flöde. En profil ger ingen
    åtkomst till företagsärenden utan dessa separata rättigheter.
 
-**Inget inbjudningsmejl skickas automatiskt.** Formuläret säger detta före och
-efter sparning. Dela den vanliga portaladressen separat, inte lösenord, API-nycklar
-eller privilegierade inloggningslänkar. Det finns ingen lösenordshantering i CMS.
-Detta är att lägga till en användare, inte att utse en ny plattformsadministratör.
+## Automatiskt välkomstmejl
+
+Efter bekräftad CMS-registrering skickas ett välkomstmejl genom befintlig Resend-
+integration om både `RESEND_API_KEY` och en verifierad `RESEND_FROM_EMAIL` finns.
+Ingen ny leverantör aktiveras och inga miljövariabler ändras av denna kodleverans.
+Mejlet innehåller namn, registrerad e-post, den fasta portaladressen
+`https://sverigesehandel.se/` och instruktion att använda rätt Google-konto.
+Det innehåller inga lösenord, tokens eller privilegierade inloggningslänkar och
+påstår inte att företagsåtkomst redan är godkänd.
+
+CMS skiljer på användarregistrering och utskick:
+
+- **Accepterat:** Resend accepterade anropet, inte en garanti om inkorgsleverans.
+- **Redan accepterat:** sparad status stoppar automatiskt nytt utskick.
+- **Ej konfigurerat:** användaren finns men inget mejl skickades; konfigurera
+  avsändare/nyckel själv och försök igen med samma e-post, eller dela portaladressen.
+- **Misslyckat/okänt:** konto/registrering behålls. Kontrollera mejltjänsten och
+  återförsök med samma e-post inom 23 timmar; skapa inte ett andra konto.
+- **Manuell granskning:** ett okänt utskick är äldre än 23 timmar eller adressen
+  har ändrats. Ingen automatisk omsändning sker eftersom leverantörens
+  idempotensfönster är begränsat till 24 timmar.
+
+Mottagare, namn, avsändare och starttid fryses server-side före första försöket.
+Payload och idempotensnyckel blir därför samma även om ett återförsök anger ett
+annat namn eller serveravsändaren ändrats. Status finns privat på medlemsraden;
+vanliga/publika API-svar visar inte inbjudningsmetadata. Ett timeout-/commitfel
+kan fortfarande ge okänt leveransutfall; det finns ingen webhook för studs,
+leverans, klick eller automatiska påminnelser i denna version. Inget utskick görs
+vid vanlig profilredigering, sidvisning eller enbart merge/deployment.
+
+Mejladressen skickas till Resend för leverans; inkludera det i dataskydds-
+informationen och använd en godkänd avsändare. Ingen testinbjudan skickas till
+verkliga personer under kodarbetet.
 
 ## Befintliga konton och återförsök
 

@@ -19,7 +19,7 @@ record. New CMS membership starts pending and directory-hidden. No password,
 custom claim, global admin role or company grant is created. Existing Auth/CMS
 users are not overwritten or reactivated. The person signs in with their own
 Google account and must be verified; admin approves membership/company rights
-separately. **No invitation email is sent automatically.**
+separately. **A welcome email with ordinary portal/Google sign-in instructions is sent after registration when Resend API key and verified sender are configured.** CMS reports accepted/not configured/failed/review status; provider acceptance does not prove inbox delivery. Retries reuse a saved payload/key and accepted messages are not automatically re-sent.
 
 See [workflow, retry handling and isolated Auth testing](docs/skapa-anvandare-cms.md).
 Live service-account Auth permissions and Google account linking must be verified

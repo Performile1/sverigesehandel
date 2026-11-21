@@ -9,12 +9,17 @@ export function CreateCmsUser({onRefresh}:{onRefresh:()=>Promise<void>}) {
     <p className="text-sm">Ange den Google-adress personen ska logga in med. Nya konton skapas med overifierad e-post och väntande medlemskap, dolt i medlemskatalogen. Personen måste själv logga in och verifieras. Godkänn sedan medlemskapet och koppla företaget separat nedan.</p>
     <form className="space-y-3 text-sm" onSubmit={async(e)=>{
       e.preventDefault();if(busy)return;const form=e.currentTarget;const data=new FormData(form);
-      if(!window.confirm('Lägg till denna person i Firebase/CMS? Inget inbjudningsmejl skickas och inga företags-/adminrättigheter tilldelas.'))return;
+      if(!window.confirm('Lägg till denna person i Firebase/CMS? Ett välkomstmejl med inloggningsinformation skickas om mejltjänsten är konfigurerad. Inga företags-/adminrättigheter tilldelas.'))return;
       setBusy(true);setMessage('');
       try {
         const input={email:String(data.get('email')),name:String(data.get('name')),phone:String(data.get('phone')),position:String(data.get('position')),company:String(data.get('company')),employmentSince:String(data.get('since')),expertise:String(data.get('expertise'))};
         const result=await api.createCmsUser(input);
-        setMessage(result.alreadyRegistered?'Användaren finns redan i CMS. Befintlig profil, status och behörigheter har inte skrivits över.':`${result.authCreated?'Nytt Firebase-konto och':'Befintligt Firebase-konto kopplat till'} ny CMS-registerpost. Medlemskap väntar på godkännande. Be personen logga in med rätt Google-konto; inget inbjudningsmejl har skickats.`);
+        const invitationText={accepted:'Välkomstmejlet har accepterats av mejltjänsten. Detta bekräftar inte leverans till inkorgen.',
+          'already-accepted':'Välkomstmejlet har redan accepterats av mejltjänsten; inget nytt utskick görs.',
+          'not-configured':'Inget mejl skickades: konfigurera RESEND_API_KEY och verifierad RESEND_FROM_EMAIL. Dela portaladressen manuellt eller försök igen med samma adress efter konfiguration.',
+          failed:'Användaren är registrerad, men utskicket kunde inte bekräftas. Kontrollera mejltjänsten och försök igen med samma e-post inom 23 timmar. Skapa inte ett nytt konto.',
+          'needs-review':'Utskickets status behöver manuell kontroll hos mejltjänsten. Inget nytt mejl skickades automatiskt eftersom retryfönstret gått ut eller adressen ändrats.'}[result.invitationStatus];
+        setMessage((result.alreadyRegistered?'Användaren finns redan i CMS. Profil och behörigheter är oförändrade. ':'Användaren är registrerad med väntande medlemskap. ')+invitationText);
         form.reset();await onRefresh();
       }catch(cause){setMessage((cause as Error).message);}finally{setBusy(false);}
     }}>
@@ -30,6 +35,6 @@ export function CreateCmsUser({onRefresh}:{onRefresh:()=>Promise<void>}) {
       <button className="px-4 py-2 bg-slate-900 text-white rounded-lg disabled:opacity-50" disabled={busy}>{busy?'Kontrollerar och registrerar…':'Lägg till användare'}</button>
     </form>
     {message&&<p role="status" className="text-sm whitespace-pre-wrap">{message}</p>}
-    <p className="text-xs text-slate-600">Inga lösenord eller inloggningslänkar visas i CMS. Inget mejl skickas automatiskt. Om kontot redan finns lämnas Firebase-profil, verifiering, blockering och roller oförändrade. Kontoskapande kräver Firebase Auth-behörighet för serverns servicekonto och separat isolerat test före drift.</p>
+    <p className="text-xs text-slate-600">Inga lösenord eller inloggningslänkar visas i CMS. Välkomstmejl skickas automatiskt efter lyckad registrering via konfigurerad Resend. CMS visar om tjänsten accepterat utskicket, inte om det nått inkorgen. Om kontot redan finns lämnas Firebase-profil, verifiering, blockering och roller oförändrade. Kontoskapande kräver Firebase Auth-behörighet för serverns servicekonto och separat isolerat test före drift.</p>
   </section>;
 }

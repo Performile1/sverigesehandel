@@ -1,3 +1,4 @@
+import { invitationPayload } from '../server/userInvitation.ts';
 import { parseCmsUserInput, resolveCmsUser } from '../server/cmsUsers.ts';
 import { CreateCmsUser } from '../src/components/CreateCmsUser.tsx';
 import type { cmsFirebaseAuth } from '../server/firebaseAdmin.ts';
@@ -77,6 +78,7 @@ let reportCalls = 0;
 let providerFails = false;
 let userResolveCalls=0;
 let userResolveFails=false;
+let inviteEnabled=false;let inviteSuccess=true;let inviteCalls=0;
 const fixtureImage = { path: 'cms-public/fixture.webp', url: 'https://firebasestorage.googleapis.com/v0/b/fixture/o/cms-public%2Ffixture.webp?alt=media',
   alt: 'Fixture logo', width: 2, height: 2 };
 const app = createCmsApp(service, async (identity) => {
@@ -93,7 +95,7 @@ const app = createCmsApp(service, async (identity) => {
   report: async (days) => { reportCalls++; if (providerFails) throw new Error('provider-detail-not-for-client'); return { days, timeZone: 'Europe/Stockholm', rows: [
     { page: '/jobb', views: 10, activeUsers: 5, engagementSeconds: 60 },
   ], truncated: false, dataLossFromOtherRow: false, subjectToThresholding: false }; },
-}, {resolve:async(input)=>{userResolveCalls++;if(userResolveFails)throw new Error('private-provider-detail');return {uid:'cms-new-fixture',email:input.email,emailVerified:false,created:userResolveCalls===1};}});
+}, {resolve:async(input)=>{userResolveCalls++;if(userResolveFails)throw new Error('private-provider-detail');return {uid:'cms-new-fixture',email:input.email,emailVerified:false,created:userResolveCalls===1};}}, {configured:()=>inviteEnabled,sender:()=> 'Fixture <welcome@example.invalid>',send:async(invite)=>{inviteCalls++;assert.equal(invite.email,'new-user@example.invalid');return inviteSuccess;}});
 // Ensures the API middleware doesn't intercept local Vite/static routes.
 app.get('/portal-fixture', (_req, res) => { res.send('portal'); });
 const server = app.listen(0, '127.0.0.1');
@@ -675,9 +677,28 @@ try {
   assert.equal(addedMember.email,newUserInput.email);assert.equal(addedMember.verificationStatus,'pending');assert.equal(addedMember.directoryHidden,true);
   assert.equal(snapshot.staffProfiles?.find((p)=>p.uid===addedUser.uid)?.position,'Sales');
   assert.ok(!snapshot.memberGovernance?.links.some((l)=>l.uid===addedUser.uid));
+  assert.equal(addedUser.invitationStatus,'not-configured');assert.equal(inviteCalls,0);
   const beforeRetry=structuredClone(snapshot);
   const retried=await (await request('/api/cms/users','POST',{...newUserInput,name:'Must not overwrite'},'governance-admin')).json();
   assert.equal(retried.alreadyRegistered,true);assert.deepEqual(snapshot,beforeRetry,'Retry must preserve profiles and status');
+  inviteEnabled=true;inviteSuccess=false;
+  const failedInvite=await (await request('/api/cms/users','POST',newUserInput,'governance-admin')).json();
+  assert.equal(failedInvite.invitationStatus,'failed');assert.equal(inviteCalls,1);
+  assert.equal(snapshot.communityMembers.filter((m)=>m.authorUid===addedUser.uid).length,1);
+  const frozenInvitation=structuredClone(snapshot.communityMembers.find((m)=>m.authorUid===addedUser.uid)!.invitation!);
+  inviteSuccess=true;
+  const sentInvite=await (await request('/api/cms/users','POST',{...newUserInput,name:'Changed retry name'},'governance-admin')).json();
+  assert.equal(sentInvite.invitationStatus,'accepted');assert.equal(inviteCalls,2);
+  const repeatInvite=await (await request('/api/cms/users','POST',newUserInput,'governance-admin')).json();
+  assert.equal(repeatInvite.invitationStatus,'already-accepted');assert.equal(inviteCalls,2);
+  const payload=invitationPayload(frozenInvitation);
+  assert.ok(payload.text.includes('https://sverigesehandel.se/')&&payload.text.includes(newUserInput.email)&&payload.text.includes('Google-konto'));
+  const memberInvite=snapshot.communityMembers.find((m)=>m.authorUid===addedUser.uid)!.invitation!;
+  delete memberInvite.acceptedAt;memberInvite.startedAt='2020-01-01T00:00:00Z';
+  const oldInvite=await (await request('/api/cms/users','POST',newUserInput,'governance-admin')).json();
+  assert.equal(oldInvite.invitationStatus,'needs-review');assert.equal(inviteCalls,2);
+  inviteEnabled=false;
+
   snapshot.memberGovernance!.blocks.push({uid:addedUser.uid,reason:'Fixture blocked',createdAt:new Date().toISOString()});
   const callsBeforeBlocked=userResolveCalls;
   assert.equal((await request('/api/cms/users','POST',newUserInput,'governance-admin')).status,409);
