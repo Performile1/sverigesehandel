@@ -95,6 +95,7 @@ export interface TechPartner {
   introEmail?: string;
   introRoutingMode?: 'default' | 'self' | 'direct';
   hasDirectIntroEmail?: boolean;
+  hasCompanyIntroInbox?: boolean;
   status: PublishStatus;
   sourceUrl?: string;
   updatedAt: string;
@@ -123,6 +124,7 @@ export interface LogisticsProvider {
   introEmail?: string;
   introRoutingMode?: 'default' | 'self' | 'direct';
   hasDirectIntroEmail?: boolean;
+  hasCompanyIntroInbox?: boolean;
   status: PublishStatus;
   updatedAt: string;
 }
@@ -642,6 +644,8 @@ export interface MapPoint {
 }
 
 export interface CMSStore {
+  memberGovernance?: MemberGovernance;
+  communitySettings?: CommunitySettings;
   insightPosts?: InsightPost[];
   paketindexArchive?: PaketindexObservation[];
   mapPoints?: MapPoint[];
@@ -758,6 +762,7 @@ export type PortalTab =
   | 'kontakt';
 
 export type CMSSection =
+  | 'members'
   | 'insights'
   | 'firebase'
   | 'overview'
@@ -846,4 +851,38 @@ export interface InsightPost {
   theme: 'light' | 'dark';
   order: number;
   status: PublishStatus;
+}
+
+export type CompanyEntityType = 'partner' | 'logistics' | 'merchant';
+export interface CommunitySettings {
+  enabled: boolean; postingEnabled: boolean; commentsEnabled: boolean; messagesEnabled: boolean;
+  registrationEnabled: boolean; directoryEnabled: boolean; reportsEnabled: boolean;
+}
+export interface CompanyMemberLink {
+  id: string; uid: string; entityType: CompanyEntityType; entityId: string;
+  status: 'active' | 'revoked'; canPropose: boolean; receiveIntros: boolean;
+  receiveMessages: boolean; includeHistory: boolean; createdAt: string; updatedAt: string;
+}
+export interface CompanyProposal {
+  id: string; uid: string; entityType: CompanyEntityType; entityId: string; kind: 'edit' | 'delete';
+  patch: Record<string, string>; base: Record<string, string>; reason: string;
+  status: 'pending' | 'approved' | 'rejected'; createdAt: string; comment: string;
+}
+export interface CommunityReport {
+  id: string; uid: string; threadId: string; commentId: string;
+  reason: 'offensive' | 'incorrect' | 'spam' | 'other'; detail: string;
+  status: 'open' | 'resolved'; createdAt: string; resolution: string;
+}
+export interface MemberGovernance {
+  settings: CommunitySettings; links: CompanyMemberLink[]; proposals: CompanyProposal[];
+  reports: CommunityReport[]; blocks: Array<{ uid: string; reason: string; createdAt: string }>;
+  hidden: Array<{ threadId: string; commentId: string }>;
+  audit: Array<{ id: string; actorUid: string; action: string; target: string; createdAt: string; detail?: string }>;
+  inboxReads: Array<{ uid: string; messageId: string }>;
+}
+export interface CompanyWorkspace {
+  companies: Array<{ link: CompanyMemberLink; name: string; fields: Record<string,string> }>;
+  proposals: CompanyProposal[];
+  messages: Array<{ id: string; name: string; email: string; company?: string; topic: string;
+    message: string; createdAt: string; entityName: string; read: boolean; kind: string }>;
 }

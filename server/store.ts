@@ -1,3 +1,6 @@
+import { isBlocked } from '../shared/memberGovernance.ts';
+import { runGovernance, companyWorkspace, assertCommunityAction, companyInboxAvailable } from './memberGovernance.ts';
+import type { CmsIdentity } from './authPolicy.ts';
 import { INITIAL_INSIGHT_POSTS, validInsightPost, validInsightPosts } from '../shared/insightPosts.ts';
 import type { InsightPost } from '../src/types.ts';
 import { validSalaryEstimate } from '../shared/salary.ts';
@@ -411,6 +414,7 @@ function ensureStoreFile(): CMSStore {
       mapPoints: Array.isArray(parsed.mapPoints) ? parsed.mapPoints : [],
       paketindexArchive: upgradedRaw.paketindexArchive,
       insightPosts: upgradedRaw.insightPosts,
+      memberGovernance: upgradedRaw.memberGovernance,
       orderBenchmarks:
         Array.isArray(upgradedRaw.orderBenchmarks) && upgradedRaw.orderBenchmarks.length > 0
           ? upgradedRaw.orderBenchmarks
@@ -706,6 +710,7 @@ export function upsertPartner(input: Partial<TechPartner> & { name: string }): {
       updatedAt: now,
     };
     delete updated.hasDirectIntroEmail;
+    delete updated.hasCompanyIntroInbox;
     if (isCarrier) {
       delete updated.customerCount;
     }
@@ -1216,7 +1221,7 @@ function resolveMemberByIdentity(
   return members.find(
     (m) =>
       (uid && m.authorUid === uid) ||
-      (cleanEmail && m.email.trim().toLowerCase() === cleanEmail)
+      (!m.authorUid && cleanEmail && m.email.trim().toLowerCase() === cleanEmail)
   );
 }
 
@@ -1243,6 +1248,7 @@ export function addCommunityThread(input: {
   authorEmail?: string;
 }): CommunityThread {
   const store = ensureStoreFile();
+  assertCommunityAction(store, input.authorUid, 'postingEnabled');
   const profile = resolveMemberByIdentity(store.communityMembers, input.authorUid, input.authorEmail);
   const cleanBody = input.body?.trim();
   const thread: CommunityThread = {
@@ -1275,6 +1281,8 @@ export function addCommunityComment(
   }
 ): CommunityThread | null {
   const store = ensureStoreFile();
+  assertCommunityAction(store, input.authorUid, 'commentsEnabled');
+  if (store.memberGovernance?.hidden.some((h) => h.threadId === threadId && !h.commentId)) throw Object.assign(new Error('Innehållet är dolt.'), { status: 403 });
   const thread = store.communityThreads.find((t) => t.id === threadId);
   if (!thread) return null;
 
@@ -1298,8 +1306,10 @@ export function addCommunityComment(
   return thread;
 }
 
-export function upvoteCommunityThread(id: string): CommunityThread | null {
+export function upvoteCommunityThread(id: string, uid?: string): CommunityThread | null {
   const store = ensureStoreFile();
+  assertCommunityAction(store, uid, 'postingEnabled');
+  if (store.memberGovernance?.hidden.some((h) => h.threadId === id && !h.commentId)) throw Object.assign(new Error('Innehållet är dolt.'), { status: 403 });
   const thread = store.communityThreads.find((t) => t.id === id);
   if (!thread) return null;
   thread.votes += 1;
@@ -1333,6 +1343,7 @@ export function addCommunityMember(input: {
   authorUid?: string;
 }): CommunityMember {
   const store = ensureStoreFile();
+  assertCommunityAction(store, input.authorUid, 'registrationEnabled');
   const normalizedEmail = input.email.trim().toLowerCase();
   const cleanWebsite = input.website?.trim();
   const resolvedType = normalizeMemberType(input.memberType);
@@ -1346,6 +1357,7 @@ export function addCommunityMember(input: {
 
   if (existingIdx >= 0) {
     const existing = store.communityMembers[existingIdx];
+    if (existing.authorUid && existing.authorUid !== input.authorUid) throw Object.assign(new Error('Medlemsprofilen tillhör ett annat konto.'), { status: 403 });
     const updated: CommunityMember = {
       ...existing,
       name: input.name.trim(),
@@ -1397,9 +1409,12 @@ export function addCommunityMember(input: {
 
 export function updateCommunityMemberStatus(
   id: string,
-  verificationStatus: 'pending' | 'verified' | 'rejected'
+  verificationStatus: 'pending' | 'verified' | 'rejected',
+  actor?: CmsIdentity
 ): CommunityMember | null {
   const store = ensureStoreFile();
+  if (actor && !store.communityMembers.some((m)=>m.id===id)) return null;
+  if (actor) { runGovernance(store,actor,'member-status',{id,status:verificationStatus}); saveStore(store); return store.communityMembers.find((m)=>m.id===id) || null; }
   const idx = store.communityMembers.findIndex((m) => m.id === id);
   if (idx < 0) return null;
   const updated: CommunityMember = {
@@ -1412,8 +1427,10 @@ export function updateCommunityMemberStatus(
   return updated;
 }
 
-export function deleteCommunityMember(id: string): boolean {
+export function deleteCommunityMember(id: string, actor?: CmsIdentity): boolean {
   const store = ensureStoreFile();
+  if (actor && !store.communityMembers.some((m)=>m.id===id)) return false;
+  if (actor) { runGovernance(store,actor,'member-delete',{id}); saveStore(store); return true; }
   const before = store.communityMembers.length;
   store.communityMembers = store.communityMembers.filter((m) => m.id !== id);
   if (store.communityMembers.length === before) return false;
@@ -1423,11 +1440,12 @@ export function deleteCommunityMember(id: string): boolean {
 
 export function getMemberDirectory(requesterUid?: string, requesterEmail?: string): PublicMemberProfile[] {
   const store = ensureStoreFile();
+  assertCommunityAction(store, requesterUid, 'directoryEnabled');
   const cleanEmail = requesterEmail?.trim().toLowerCase();
   const rank = (status?: string) => (status === 'verified' ? 0 : 1);
 
   return (store.communityMembers || [])
-    .filter((m) => m.verificationStatus !== 'rejected')
+    .filter((m) => m.verificationStatus !== 'rejected' && !store.memberGovernance?.blocks.some((b) => b.uid === m.authorUid))
     .slice()
     .sort((a, b) => rank(a.verificationStatus) - rank(b.verificationStatus))
     .map((m): PublicMemberProfile => ({
@@ -1444,7 +1462,7 @@ export function getMemberDirectory(requesterUid?: string, requesterEmail?: strin
       verificationStatus: m.verificationStatus || 'pending',
       isSelf: Boolean(
         (requesterUid && m.authorUid === requesterUid) ||
-        (cleanEmail && m.email.trim().toLowerCase() === cleanEmail)
+        (!m.authorUid && cleanEmail && m.email.trim().toLowerCase() === cleanEmail)
       ),
     }));
 }
@@ -1453,7 +1471,7 @@ function getUserMemberIds(members: CommunityMember[], uid: string, email?: strin
   const cleanEmail = email?.trim().toLowerCase();
   const ids = new Set<string>();
   for (const m of members) {
-    if ((uid && m.authorUid === uid) || (cleanEmail && m.email.trim().toLowerCase() === cleanEmail)) {
+    if ((uid && m.authorUid === uid) || (!m.authorUid && cleanEmail && m.email.trim().toLowerCase() === cleanEmail)) {
       ids.add(m.id);
     }
   }
@@ -1465,6 +1483,7 @@ export function getDirectMessagesForUser(uid: string, email?: string): {
   myMemberIds: string[];
 } {
   const store = ensureStoreFile();
+  assertCommunityAction(store, uid, 'messagesEnabled');
   const myMemberIds = getUserMemberIds(store.communityMembers || [], uid, email);
   const all = Array.isArray(store.directMessages) ? store.directMessages : [];
   const filtered = all.filter(
@@ -1489,10 +1508,11 @@ export function sendDirectMessage(input: {
   body: string;
 }): CommunityDirectMessage | null {
   const store = ensureStoreFile();
+  assertCommunityAction(store, input.senderUid, 'messagesEnabled');
   const recipient = (store.communityMembers || []).find(
     (m) => m.id === input.recipientMemberId && m.verificationStatus !== 'rejected'
   );
-  if (!recipient) return null;
+  if (!recipient || (recipient.authorUid && store.memberGovernance?.blocks.some((b) => b.uid === recipient.authorUid))) return null;
 
   const senderProfile = resolveMemberByIdentity(
     store.communityMembers || [],
@@ -1536,6 +1556,7 @@ export function markDirectMessageRead(
   email?: string
 ): { status: 'ok'; message: CommunityDirectMessage } | { status: 'not_found' } | { status: 'forbidden' } {
   const store = ensureStoreFile();
+  assertCommunityAction(store, uid, 'messagesEnabled');
   const all = Array.isArray(store.directMessages) ? store.directMessages : [];
   const msg = all.find((m) => m.id === id);
   if (!msg) return { status: 'not_found' };
@@ -1679,6 +1700,7 @@ export function addContactMessage(input: {
   const form = input.formId
     ? (store.contactForms || []).find((f) => f.id === input.formId)
     : undefined;
+  if (isBlocked(store.memberGovernance, input.authorUid)) throw Object.assign(new Error('Kontot är blockerat.'), { status: 403 });
   const editorialDefault =
     store.pageContent?.kontakt?.contactEmail?.trim() || 'hej@sverigesehandel.se';
 
@@ -1704,6 +1726,8 @@ export function addContactMessage(input: {
   const entity = targetPartner || targetLogistics;
   const entityRouting = entity?.introRoutingMode;
   const entityEmail = entity?.introEmail?.trim() || '';
+  const isIntro = input.submissionType === 'intro' || (!input.submissionType && form?.purpose === 'intro');
+  const hasCompanyInbox = Boolean(entity && companyInboxAvailable(store,input.targetEntityType,entity.id,isIntro));
 
   let routingMode: FormRoutingMode = form?.routingMode || 'self';
   if (entityRouting === 'self') {
@@ -1721,6 +1745,10 @@ export function addContactMessage(input: {
   if (routingMode === 'direct-partner') {
     if (entityEmail) {
       routedToEmail = entityEmail;
+    } else if (hasCompanyInbox) {
+      // Direct delivery occurs in the scoped company inbox. Existing editorial email
+      // remains the fallback notification destination; no user email is guessed.
+      routedToEmail = editorialDefault;
     } else {
       routingMode = 'self';
       routedToEmail = form?.recipientEmail?.trim() || editorialDefault;
@@ -2138,4 +2166,12 @@ export function deleteInsightPost(id: string): boolean {
   const store = ensureStoreFile(); const posts = store.insightPosts ?? structuredClone(INITIAL_INSIGHT_POSTS);
   if (!posts.some((p) => p.id === id)) return false;
   store.insightPosts = posts.filter((p) => p.id !== id); saveStore(store); return true;
+}
+
+export function executeMemberGovernance(actor: CmsIdentity, operation: string, input: unknown) {
+  const store = structuredClone(ensureStoreFile()); const result = runGovernance(store, actor, operation, input);
+  saveStore(store); return result;
+}
+export function getCompanyWorkspace(actor: CmsIdentity) {
+  return companyWorkspace(ensureStoreFile(), actor);
 }

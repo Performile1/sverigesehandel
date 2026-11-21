@@ -1,3 +1,4 @@
+import { validGovernance } from '../shared/memberGovernance.ts';
 import { INITIAL_INSIGHT_POSTS, validInsightPosts } from '../shared/insightPosts.ts';
 import { validSalaryEstimate } from '../shared/salary.ts';
 import { legacyObservation, validArchive } from '../shared/paketindexArchive.ts';
@@ -180,7 +181,7 @@ export function validateSnapshot(value: unknown): value is CMSStore {
   const arrays = ['merchants', 'partners', 'logisticsProviders', 'news', 'events', 'sessions', 'jobs', 'recruitmentSites',
     'orderBenchmarks', 'shippingTiers', 'laws', 'intelligenceSources', 'techStackShares',
     'adBanners', 'contactForms', 'contactMessages', 'timeline', 'communityThreads', 'communityMembers', 'directMessages'];
-  return (store.insightPosts === undefined || validInsightPosts(store.insightPosts)) && (Array.isArray(store.jobs) && store.jobs.every((job) => job && (job.salaryEstimate == null || validSalaryEstimate(job.salaryEstimate)))) && (store.paketindexArchive === undefined || validArchive(store.paketindexArchive)) && (store.mapPoints === undefined || (Array.isArray(store.mapPoints) &&
+  return (store.memberGovernance === undefined || validGovernance(store.memberGovernance)) && (store.insightPosts === undefined || validInsightPosts(store.insightPosts)) && (Array.isArray(store.jobs) && store.jobs.every((job) => job && (job.salaryEstimate == null || validSalaryEstimate(job.salaryEstimate)))) && (store.paketindexArchive === undefined || validArchive(store.paketindexArchive)) && (store.mapPoints === undefined || (Array.isArray(store.mapPoints) &&
     store.mapPoints.every(validMapPoint) && new Set(store.mapPoints.map((point) => point.id)).size === store.mapPoints.length)) && arrays.every((key) => Array.isArray(store[key])) &&
     ['regions', 'deliveryStats', 'paketindex', 'pageContent'].every((key) => store[key] !== null &&
       typeof store[key] === 'object' && !Array.isArray(store[key])) &&

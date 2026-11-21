@@ -1,3 +1,6 @@
+import { CommunityReportButton } from './CommunityReportButton';
+import type { CommunitySettings } from '../types';
+import { DEFAULT_COMMUNITY_SETTINGS } from '../../shared/memberGovernance';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
@@ -45,6 +48,7 @@ export interface JoinMemberPayload {
 }
 
 interface CommunityViewProps {
+  settings?: CommunitySettings;
   threads: CommunityThread[];
   pageCopy?: PageCopyBlock;
   contactForms?: ContactFormConfig[];
@@ -205,6 +209,7 @@ const NETWORK_INTERESTS = [
 ];
 
 export function CommunityView({
+  settings = DEFAULT_COMMUNITY_SETTINGS,
   threads,
   pageCopy,
   contactForms = [],
@@ -286,7 +291,7 @@ export function CommunityView({
   }, [userDisplayName, userEmail]);
 
   const loadMemberNetwork = useCallback(async () => {
-    if (!isSignedIn) {
+    if (!isSignedIn || !settings.enabled) {
       setDirectoryMembers([]);
       setMessages([]);
       setMyMemberIds([]);
@@ -296,8 +301,8 @@ export function CommunityView({
     setNetworkError(null);
     try {
       const [dirRes, msgRes] = await Promise.all([
-        api.getMemberDirectory(),
-        api.getDirectMessages(),
+        settings.directoryEnabled ? api.getMemberDirectory() : Promise.resolve({ members: [] }),
+        settings.messagesEnabled ? api.getDirectMessages() : Promise.resolve({ messages: [], myMemberIds: [] }),
       ]);
       setDirectoryMembers(dirRes.members || []);
       setMessages(msgRes.messages || []);
@@ -307,9 +312,10 @@ export function CommunityView({
     } finally {
       setLoadingNetwork(false);
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, settings.enabled, settings.directoryEnabled, settings.messagesEnabled, userUid]);
 
   useEffect(() => {
+    setDirectoryMembers([]); setMessages([]); setMyMemberIds([]);
     void loadMemberNetwork();
   }, [loadMemberNetwork]);
 
@@ -519,6 +525,7 @@ export function CommunityView({
 
   return (
     <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      {(!settings.enabled || !settings.postingEnabled || !settings.commentsEnabled || !settings.messagesEnabled) && <p role="status" className="p-4 bg-amber-50 border rounded-xl text-sm">Communityfunktioner kan vara pausade av Sveriges E-handel. Inställningarna kontrolleras även på servern.</p>}
       <div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-6 space-y-4">
           <div className="font-mono text-xs font-semibold text-[#10B981]">
@@ -745,12 +752,13 @@ export function CommunityView({
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                        Arbetsmejl *
+                        Verifierad inloggningsadress *
                       </label>
                       <input
                         type="email"
                         required
-                        value={joinEmail}
+                        value={userEmail || joinEmail}
+                        readOnly={Boolean(userEmail)}
                         onChange={(e) => setJoinEmail(e.target.value)}
                         placeholder="namn@foretag.se"
                         className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#006AA7] focus:outline-none"
@@ -996,7 +1004,7 @@ export function CommunityView({
                     </button>
                     <button
                       type="submit"
-                      disabled={joining}
+                      disabled={joining || !settings.enabled || !settings.registrationEnabled}
                       className="flex-1 py-3 rounded-xl bg-[#FECC02] hover:bg-[#EAB308] disabled:opacity-60 text-[#040B16] font-bold text-sm transition-colors cursor-pointer"
                     >
                       {joining ? 'Skickar ansökan...' : 'Skicka ansökan →'}
@@ -1187,7 +1195,7 @@ export function CommunityView({
                   </select>
                   <button
                     type="submit"
-                    disabled={posting}
+                    disabled={posting || !settings.enabled || !settings.postingEnabled}
                     className="px-4 py-2 rounded-lg bg-[#040B16] hover:bg-[#006AA7] disabled:opacity-60 text-white text-xs font-bold transition-colors cursor-pointer"
                   >
                     {posting ? 'Publicerar...' : 'Publicera tråd →'}
@@ -1243,6 +1251,7 @@ export function CommunityView({
                             </p>
                           )}
                           <div className="pt-1 flex flex-wrap items-center gap-3">
+                            {settings.enabled && settings.reportsEnabled && <CommunityReportButton threadId={t.id} signedIn={Boolean(isSignedIn)} onSignIn={onSignIn} />}
                             <button
                               type="button"
                               onClick={() =>
@@ -1288,6 +1297,7 @@ export function CommunityView({
                                   <p className="text-slate-700 leading-relaxed whitespace-pre-line">
                                     {cm.body}
                                   </p>
+                                  {settings.enabled && settings.reportsEnabled && <CommunityReportButton threadId={t.id} commentId={cm.id} signedIn={Boolean(isSignedIn)} onSignIn={onSignIn} />}
                                 </div>
                               ))}
                             </div>
@@ -1313,7 +1323,7 @@ export function CommunityView({
                             />
                             <button
                               type="button"
-                              disabled={commentingId === t.id || !(commentDrafts[t.id] || '').trim()}
+                              disabled={commentingId === t.id || !(commentDrafts[t.id] || '').trim() || !settings.enabled || !settings.commentsEnabled}
                               onClick={() => void handleCommentSubmit(t.id)}
                               className="px-3.5 py-2 rounded-lg bg-[#040B16] hover:bg-[#006AA7] disabled:opacity-50 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                             >
@@ -1542,7 +1552,7 @@ export function CommunityView({
                     />
                     <button
                       type="submit"
-                      disabled={sendingDm}
+                      disabled={sendingDm || !settings.enabled || !settings.messagesEnabled}
                       className="w-full py-2.5 rounded-xl bg-[#FECC02] hover:bg-[#EAB308] disabled:opacity-60 text-[#040B16] text-xs font-extrabold inline-flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Send className="w-3.5 h-3.5" />

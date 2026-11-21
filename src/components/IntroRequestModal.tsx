@@ -14,6 +14,7 @@ export interface IntroModalTarget {
   entityName?: string;
   entityRoutingMode?: 'default' | 'self' | 'direct';
   hasDirectIntroEmail?: boolean;
+  hasCompanyIntroInbox?: boolean;
   defaultTopic?: string;
 }
 
@@ -179,7 +180,7 @@ export function IntroRequestModal({
       target.entityRoutingMode === 'direct' ||
         (target.entityRoutingMode !== 'self' &&
           introForm?.routingMode === 'direct-partner' &&
-          target.hasDirectIntroEmail)
+          (target.hasDirectIntroEmail || target.hasCompanyIntroInbox))
         ? 'direct-partner'
         : 'self'
     );
@@ -197,7 +198,7 @@ export function IntroRequestModal({
     (target.entityType === 'partner' || target.entityType === 'logistics');
 
   const routingDescription = (() => {
-    if (target.entityRoutingMode === 'direct' && target.hasDirectIntroEmail) {
+    if (target.entityRoutingMode === 'direct' && (target.hasDirectIntroEmail || target.hasCompanyIntroInbox)) {
       return `Skickas direkt till ansvarig kontakt hos ${target.entityName}.`;
     }
     if (target.entityRoutingMode === 'self') {
@@ -206,8 +207,8 @@ export function IntroRequestModal({
     if (introForm?.routingMode === 'custom-email') {
       return 'Dirigeras till ansvarig koordinator enligt CMS-inställningen.';
     }
-    if (introForm?.routingMode === 'direct-partner' && target.hasDirectIntroEmail) {
-      return `Kan skickas direkt till ${target.entityName}s dedikerade intro-adress.`;
+    if (introForm?.routingMode === 'direct-partner' && (target.hasDirectIntroEmail || target.hasCompanyIntroInbox)) {
+      return `Kan delas direkt med ${target.entityName}s behöriga kontakter via företagsinkorg eller konfigurerad mottagaradress.`;
     }
     return `Hanteras först av redaktionen (${editorialEmail}) som säkerställer rätt kontaktperson och underlag.`;
   })();
@@ -284,7 +285,7 @@ export function IntroRequestModal({
       setCompletedMsg(
         `${msg}${
           saved.routingMode === 'direct-partner'
-            ? ' Förfrågan har dirigerats direkt till partnerns mottagaradress.'
+            ? ' Förfrågan har delats med partnerns behöriga mottagare via företagsinkorg eller konfigurerad mottagaradress.'
             : ' Redaktionen går igenom ditt behov och återkommer.'
         }`
       );
@@ -444,7 +445,7 @@ export function IntroRequestModal({
                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
                     }`}
                   >
-                    {target.hasDirectIntroEmail
+                    {(target.hasDirectIntroEmail || target.hasCompanyIntroInbox)
                       ? `Skicka direkt till ${target.entityName}`
                       : `Koppla vidare till ${target.entityName} via oss`}
                   </button>
