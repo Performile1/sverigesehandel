@@ -429,7 +429,7 @@ export function CommunityView({
     e.preventDefault();
     if (joining) return;
     if (!isSignedIn) {
-      setJoinError('Verifiera först med ditt Google-konto innan du skickar in ansökan.');
+      setJoinError('Logga in med verifierad e-post innan du skickar in ansökan.');
       return;
     }
     if (!joinName.trim() || !joinEmail.trim() || !joinCompany.trim() || !joinWebsite.trim()) {
@@ -592,13 +592,13 @@ export function CommunityView({
           <div>
             <h3 className="font-display text-xl font-extrabold">Ansök om verifierat medlemskap</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Välj om du representerar en e-handel, tjänsteleverantör, transportör/3PL eller plattform. Varje ansökan räknas upp i nätverket och ger tillgång till direktmeddelanden &amp; katalog.
+              Välj om du representerar en e-handel, tjänsteleverantör, transportör/3PL eller plattform. E-postverifiering och medlemsansökan är separata steg. Företagskoppling och företagsåtkomst godkänns av Sveriges E-handel.
             </p>
           </div>
 
           {!isSignedIn ? (
             <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-2 text-xs text-amber-950">
-              <span>Verifiera med Google-konto för att skicka in din medlemsansökan.</span>
+              <span>Registrera dig med e-post eller Google och verifiera din adress för att skicka medlemsansökan.</span>
               <button
                 type="button"
                 onClick={onSignIn}
@@ -611,7 +611,7 @@ export function CommunityView({
             <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2 text-xs text-emerald-900">
               <span className="inline-flex items-center gap-1.5 font-medium truncate">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#059669] shrink-0" />
-                Google-konto verifierat: <strong className="truncate">{userEmail}</strong>
+                Verifierad inloggningsadress: <strong className="truncate">{userEmail}</strong>
               </span>
               <span className="font-mono text-[11px] font-bold text-[#059669] shrink-0">
                 Steg {joinStep}/2
@@ -1060,7 +1060,7 @@ export function CommunityView({
         <div className="px-3 text-xs text-slate-500">
           {isSignedIn
             ? `Inloggad som ${userDisplayName || userEmail} · Full skriv- & DM-behörighet`
-            : 'Logga in med Google för att starta trådar, kommentera och skicka DM'}
+            : 'Logga in / registrera dig för att starta trådar, kommentera och skicka DM'}
         </div>
       </div>
 
@@ -1158,7 +1158,7 @@ export function CommunityView({
                       onClick={onSignIn}
                       className="text-[#006AA7] font-semibold hover:underline cursor-pointer"
                     >
-                      Logga in med Google för att publicera
+                      Logga in / registrera dig för att publicera
                     </button>
                   )}
                 </div>
@@ -1317,7 +1317,7 @@ export function CommunityView({
                               placeholder={
                                 isSignedIn
                                   ? 'Skriv en kommentar eller erfarenhet...'
-                                  : 'Logga in med Google för att kommentera...'
+                                  : 'Logga in / registrera dig för att kommentera...'
                               }
                               className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-[#006AA7] focus:outline-none"
                             />
@@ -1352,14 +1352,14 @@ export function CommunityView({
                 Logga in för medlemskatalog &amp; direktmeddelanden
               </h2>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Av integritetsskäl visas medlemskatalogen och privat meddelandefunktion endast för inloggade användare med verifierat Google-konto. Din e-postadress delas aldrig offentligt i katalogen.
+                Av integritetsskäl visas medlemskatalogen och privat meddelandefunktion endast för inloggade användare med verifierad e-post. Din e-postadress delas aldrig offentligt i katalogen.
               </p>
               <button
                 type="button"
                 onClick={onSignIn}
                 className="px-5 py-3 rounded-xl bg-[#040B16] hover:bg-[#006AA7] text-white text-sm font-bold cursor-pointer transition-colors"
               >
-                Logga in med Google →
+                Logga in / registrera dig →
               </button>
             </div>
           ) : (

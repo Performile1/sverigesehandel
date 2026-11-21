@@ -4,7 +4,7 @@
 
 1. Sveriges E-handels globalt verifierade admin öppnar **Medlemmar & Community →
    Lägg till användare**.
-2. Ange e-postadressen till personens Google-konto, namn och valfria telefon-,
+2. Ange e-postadressen personen ska verifiera och använda, namn och valfria telefon-,
    positions-, företags-, anställnings- och kompetensuppgifter.
 3. Bekräfta skapandet. Servern slår upp adressen i det befintliga Firebase-projektets
    Auth. Finns inget konto skapas ett konto med Firebase-genererat UID,
@@ -12,9 +12,9 @@
    dess Auth-profil, verifieringsstatus och rättigheter oförändrade.
 4. En CMS-medlem skapas med status **pending** och dold medlemskatalogspost samt
    en privat personalprofil. Ingen global adminroll eller företagskoppling skapas.
-5. Be personen logga in med rätt Google-konto i befintlig portalinloggning.
-   Kontrollera att Firebase ger samma UID och verifierad e-post. Appen inför
-   inte ett nytt lösenords-/magic-link-flöde och märker inte adressen verifierad.
+5. Be personen logga in med e-postlänk eller ett konfigurerat socialt konto med rätt adress.
+   Kontrollera att Firebase ger samma UID och verifierad e-post. Appen har nu ett separat Firebase-e-postlänksflöde efter provideraktivering;
+   CMS-skapandet markerar inte adressen verifierad.
 6. Granska/godkänn medlemskapet och lägg därefter till eventuell företagskoppling
    och intro-/meddelandebehörighet genom befintligt CMS-flöde. En profil ger ingen
    åtkomst till företagsärenden utan dessa separata rättigheter.
@@ -25,7 +25,7 @@ Efter bekräftad CMS-registrering skickas ett välkomstmejl genom befintlig Rese
 integration om både `RESEND_API_KEY` och en verifierad `RESEND_FROM_EMAIL` finns.
 Ingen ny leverantör aktiveras och inga miljövariabler ändras av denna kodleverans.
 Mejlet innehåller namn, registrerad e-post, den fasta portaladressen
-`https://sverigesehandel.se/` och instruktion att använda rätt Google-konto.
+`https://sverigesehandel.se/` och instruktion att välja e-postlänk eller anslutet socialt konto med rätt adress. Ny mall har version 2; äldre frysta retry-payloads behålls.
 Det innehåller inga lösenord, tokens eller privilegierade inloggningslänkar och
 påstår inte att företagsåtkomst redan är godkänd.
 
@@ -79,9 +79,9 @@ verkliga personer under kodarbetet.
   Denna PR ändrar inga IAM-policyer, faktureringsplaner eller projektinställningar.
 - Verifiera på isolerad previewdatabas **och isolerat Auth-projekt** före riktiga
   inskickningar. En annan Firestore-databas i samma Firebase-projekt isolerar inte
-  Auth-användare. Testa Google-inloggning/kontolänkning mot projektets verkliga
+  Auth-användare. Testa e-post-/social inloggning och kontolänkning mot projektets verkliga
   account-per-email-/providerkonfiguration; förutsätt inte att alla externa
-  företagsadresser är användbara Google-konton.
+  företagsadresser är Google-konton; använd e-postalternativet när det är konfigurerat.
 - Använd aldrig produktionens medlems- eller Auth-data för raderingstest. Det
   finns inga dokumenterade testkonton eller auth-bypass i README.
 - Lokala tester använder isolerade Auth-fakes och Firestore-adapter för skapande,
@@ -94,3 +94,5 @@ Detta tillägg hanterar inte 2FA, inbjudningspåminnelser, CSV-bulkimport, mailu
 Firebase-avstängning, global adminrekrytering eller automatiskt godkännande.
 
 Referens: https://firebase.google.com/docs/auth/admin/manage-users
+
+E-post-/socialt inloggningsupplägg och konfiguration: se `epost-social-inloggning.md`.

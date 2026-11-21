@@ -145,7 +145,7 @@ export function IntroRequestModal({
   onSubmitted,
   onNotify,
 }: IntroRequestModalProps) {
-  const { user, signInWithGoogle } = useFirebase();
+  const { user, requestSignIn } = useFirebase();
 
   const activeFields = useMemo(() => {
     const list =
@@ -222,8 +222,8 @@ export function IntroRequestModal({
     if (sending || !target) return;
     setError(null);
 
-    if (!user) {
-      setError('Logga in med Google först för att skicka en verifierad förfrågan.');
+    if (!user?.emailVerified) {
+      setError('Logga in / registrera dig först för att skicka en verifierad förfrågan.');
       return;
     }
 
@@ -333,16 +333,16 @@ export function IntroRequestModal({
           </div>
         </div>
 
-        {!user && (
+        {!user?.emailVerified && (
           <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-950">
-            <span>Logga in med ditt Google-konto för att verifiera och skicka förfrågan.</span>
+            <span>Logga in med e-post eller anslutet socialt konto och verifiera adressen för att skicka förfrågan.</span>
             <button
               type="button"
-              onClick={() => void signInWithGoogle()}
+              onClick={() => void requestSignIn()}
               className="px-3.5 py-1.5 rounded-lg bg-[#040B16] hover:bg-[#006AA7] text-white font-bold inline-flex items-center gap-1.5 cursor-pointer"
             >
               <LogIn className="w-3.5 h-3.5" />
-              Logga in med Google
+              Logga in / registrera dig
             </button>
           </div>
         )}

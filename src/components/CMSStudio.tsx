@@ -192,7 +192,7 @@ const JOB_ROLE_OPTIONS: JobRoleCategory[] = [
 ];
 
 export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudioProps) {
-  const { user, isAdmin, signingIn, signInWithGoogle } = useFirebase();
+  const { user, isAdmin, signingIn, requestSignIn } = useFirebase();
   const [section, setSection] = useState<CMSSection>('discover');
 
   // Table Filters
@@ -869,7 +869,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
               <button
                 type="button"
                 disabled={signingIn}
-                onClick={signInWithGoogle}
+                onClick={requestSignIn}
                 className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap disabled:opacity-60"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-[#006AA7]" />

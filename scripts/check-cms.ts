@@ -1,3 +1,6 @@
+import { authProviderOptions, normalizeLoginEmail, emailLinkReturnUrl, loginErrorMessage } from '../shared/authOptions.ts';
+import { requestEmailLogin, completeEmailLogin, emailCallbackLocation } from '../shared/emailAuthFlow.ts';
+import { SignInDialog } from '../src/components/SignInDialog.tsx';
 import { invitationPayload } from '../server/userInvitation.ts';
 import { parseCmsUserInput, resolveCmsUser } from '../server/cmsUsers.ts';
 import { CreateCmsUser } from '../src/components/CreateCmsUser.tsx';
@@ -107,6 +110,41 @@ async function request(path: string, method = 'GET', body?: unknown, identity?: 
   }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
 }
 try {
+  assert.equal(normalizeLoginEmail(' Person@Company.SE '),'person@company.se');
+  assert.throws(()=>normalizeLoginEmail('bad-address'));assert.throws(()=>normalizeLoginEmail('x'.repeat(170)+'@mail.se'));
+  assert.equal(emailLinkReturnUrl('https://sverigesehandel.se/?email=private@example.invalid&returnTo=https://evil.invalid'),'https://sverigesehandel.se/');
+  assert.throws(()=>emailLinkReturnUrl('http://sverigesehandel.se'));
+  assert.throws(()=>emailLinkReturnUrl('https://user:pass@sverigesehandel.se'));
+  assert.deepEqual(authProviderOptions({}),{email:true,facebook:false,linkedin:''});
+  assert.deepEqual(authProviderOptions({VITE_FIREBASE_EMAIL_LINK_ENABLED:'false',VITE_FIREBASE_FACEBOOK_ENABLED:'true',VITE_FIREBASE_LINKEDIN_PROVIDER_ID:'oidc.linkedin'}),{email:false,facebook:true,linkedin:'oidc.linkedin'});
+  assert.equal(authProviderOptions({VITE_FIREBASE_LINKEDIN_PROVIDER_ID:'google.com'}).linkedin,'');
+  const emailRequests:Array<{email:string;settings:{url:string;handleCodeInApp:true}}>=[];
+  await requestEmailLogin(' staff@company.se ','https://sverigesehandel.se/path?returnTo=https://evil.invalid',async(email,settings)=>{emailRequests.push({email,settings});});
+  assert.deepEqual(emailRequests,[{email:'staff@company.se',settings:{url:'https://sverigesehandel.se/',handleCodeInApp:true}}]);
+  await assert.rejects(requestEmailLogin('bad','https://sverigesehandel.se',async()=>{throw Error('Must not call');}));
+  let emailCompletions=0;
+  const emailResult=await completeEmailLogin(' staff@company.se ','https://sverigesehandel.se/?mode=signIn&oobCode=fixture',async(email,link)=>{
+    emailCompletions++;assert.equal(email,'staff@company.se');assert.ok(link.includes('oobCode=fixture'));return {uid:'existing-mail-fixture',emailVerified:true};
+  });
+  assert.equal(emailResult.uid,'existing-mail-fixture');assert.equal(emailCompletions,1);
+  await assert.rejects(completeEmailLogin('staff@company.se',null,async()=>{emailCompletions++;}));assert.equal(emailCompletions,1);
+  await assert.rejects(completeEmailLogin('wrong@company.se','fixture',async()=>{throw {code:'auth/invalid-action-code'};}));
+  const callbackHref='https://sverigesehandel.se/?mode=signIn&oobCode=fixture&apiKey=public#community';
+  assert.deepEqual(emailCallbackLocation(callbackHref,()=>true),{link:callbackHref,cleanPath:'/#community'});
+  assert.equal(emailCallbackLocation(callbackHref,()=>false),null);
+  assert.ok(!loginErrorMessage({code:'auth/invalid-action-code',message:'private-action-url'}).includes('private-action-url'));
+  assert.ok(loginErrorMessage({code:'auth/account-exists-with-different-credential'}).includes('slås inte ihop automatiskt'));
+  assert.ok(loginErrorMessage({code:'auth/operation-not-allowed'}).includes('inte aktiverat'));
+  const dialogProps={busy:false,error:null,user:null,emailEnabled:true,facebookEnabled:false,linkedinEnabled:false,pendingEmailLink:false,
+    onClose:()=>{},onGoogle:()=>{},onGoogleRedirect:()=>{},onSocial:()=>{},onEmail:async()=>true,onVerify:async()=>true,onReload:async()=>{},onDiscardLink:()=>{}};
+  const loginDialogHtml=renderToString(createElement(SignInDialog,dialogProps));
+  assert.ok(loginDialogHtml.includes('Fortsätt med Google')&&loginDialogHtml.includes('Registrera / logga in med e-postlänk'));
+  assert.ok(!loginDialogHtml.includes('Fortsätt med Facebook')&&!loginDialogHtml.includes('Fortsätt med LinkedIn'));
+  const socialDialogHtml=renderToString(createElement(SignInDialog,{...dialogProps,facebookEnabled:true,linkedinEnabled:true}));
+  assert.ok(socialDialogHtml.includes('Fortsätt med Facebook')&&socialDialogHtml.includes('Fortsätt med LinkedIn'));
+  const callbackDialogHtml=renderToString(createElement(SignInDialog,{...dialogProps,pendingEmailLink:true}));
+  assert.ok(callbackDialogHtml.includes('Slutför e-postinloggning')&&callbackDialogHtml.includes('Verifiera adress och logga in'));
+  assert.ok(!callbackDialogHtml.includes('Fortsätt med Google'));
   // Editorial regression checks: real API routes + transactional readback, no external fetches.
   const editorialSnapshot = structuredClone(snapshot);
   const validArticle = 'https://publisher.invalid/news/one-story';
@@ -693,6 +731,9 @@ try {
   assert.equal(repeatInvite.invitationStatus,'already-accepted');assert.equal(inviteCalls,2);
   const payload=invitationPayload(frozenInvitation);
   assert.ok(payload.text.includes('https://sverigesehandel.se/')&&payload.text.includes(newUserInput.email)&&payload.text.includes('Google-konto'));
+  assert.equal(frozenInvitation.templateVersion,2);
+  assert.ok(payload.text.includes('begär en e-postlänk'));
+  assert.ok(invitationPayload({...frozenInvitation,templateVersion:undefined}).text.includes('använd ditt Google-konto'));
   const memberInvite=snapshot.communityMembers.find((m)=>m.authorUid===addedUser.uid)!.invitation!;
   delete memberInvite.acceptedAt;memberInvite.startedAt='2020-01-01T00:00:00Z';
   const oldInvite=await (await request('/api/cms/users','POST',newUserInput,'governance-admin')).json();

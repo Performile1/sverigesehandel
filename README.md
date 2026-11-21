@@ -11,18 +11,33 @@ Paketindex history, analytics, job descriptions, salary estimates, regional maps
 and direct links to the correct news articles. The plan does not implement or
 activate these features.
 
+## Email-link and optional social sign-in
+
+All sign-in entry points open one dialog: existing Google (popup/redirect) and
+Firebase passwordless email links. Email verification no longer requires a
+Google account. The callback asks for the matching email explicitly, clears
+one-time query parameters from browser history and never auto-merges accounts.
+Unverified social users can request Firebase email verification and refresh
+status; server-side verification and membership/company approval remain required.
+
+Facebook and LinkedIn/OIDC buttons are hidden unless explicitly configured with
+non-secret build flags. **No Firebase/Meta/LinkedIn provider, Identity Platform
+upgrade, authorized domain or billing is changed by the PR.** Email link UI is
+available by default, but Firebase's Email/Password + Email link providers and
+safe HTTPS domains must be enabled before it can send working links. Google
+remains available during rollout. See [setup, security and isolated test gates](docs/epost-social-inloggning.md).
+
 ## Add users from CMS
 
 Global admins can use **Medlemmar & Community → Lägg till användare** to create
 or resolve a Firebase Auth account by email and register a private staff/member
 record. New CMS membership starts pending and directory-hidden. No password,
 custom claim, global admin role or company grant is created. Existing Auth/CMS
-users are not overwritten or reactivated. The person signs in with their own
-Google account and must be verified; admin approves membership/company rights
-separately. **A welcome email with ordinary portal/Google sign-in instructions is sent after registration when Resend API key and verified sender are configured.** CMS reports accepted/not configured/failed/review status; provider acceptance does not prove inbox delivery. Retries reuse a saved payload/key and accepted messages are not automatically re-sent.
+users are not overwritten or reactivated. The person signs in with a configured email-link/social method and must be verified; admin approves membership/company rights
+separately. **A welcome email with ordinary portal/email-or-social sign-in instructions is sent after registration when Resend API key and verified sender are configured.** CMS reports accepted/not configured/failed/review status; provider acceptance does not prove inbox delivery. Retries reuse a saved payload/key and accepted messages are not automatically re-sent.
 
 See [workflow, retry handling and isolated Auth testing](docs/skapa-anvandare-cms.md).
-Live service-account Auth permissions and Google account linking must be verified
+Live service-account Auth permissions and email/social account linking must be verified
 before real use. Code delivery creates no production accounts and changes no IAM.
 
 ## Private staff profiles and individual inbox assignment
@@ -175,8 +190,9 @@ This branch preserves the Firebase setup from `main`:
 
 - `firebase-applet-config.json` selects the same project **and named Firestore
   database** for both browser and Admin SDK. No separate default database,
-  `VITE_FIREBASE_*` variables, or second Firebase Auth app is used.
-- Google sign-in, the Firebase provider, user profiles and saved sessions remain.
+  duplicated VITE project/credential configuration or second Firebase Auth app is used.
+  Optional non-secret VITE auth UI/provider flags are documented separately.
+- Google sign-in remains; configured email-link/social sign-in uses the same Firebase app, user profiles and saved sessions.
 - CMS administration follows the existing Rules policy: verified email matching
   the configured owner, or a verified user present in `admins/{uid}` in that same
   database. The browser and API both check this; API verification checks revoked

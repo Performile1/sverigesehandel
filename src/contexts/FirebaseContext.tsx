@@ -1,4 +1,8 @@
+import { requestEmailLogin, completeEmailLogin, emailCallbackLocation } from '../../shared/emailAuthFlow';
+import { SignInDialog } from '../components/SignInDialog';
+import { authProviderOptions, normalizeLoginEmail, loginErrorMessage } from '../../shared/authOptions';
 import {
+  FacebookAuthProvider, OAuthProvider, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, sendEmailVerification, reload,
   getRedirectResult,
   onIdTokenChanged,
   signInWithPopup,
@@ -12,6 +16,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useRef,
   type ReactNode,
 } from 'react';
 import { auth, googleProvider, db } from '../firebase';
@@ -25,6 +30,7 @@ import {
 import type { DCSession } from '../types';
 
 interface FirebaseContextValue {
+  requestSignIn: () => void;
   user: User | null;
   authReady: boolean;
   isAdmin: boolean;
@@ -39,23 +45,8 @@ interface FirebaseContextValue {
 
 const FirebaseContext = createContext<FirebaseContextValue | null>(null);
 
-function formatAuthError(err: unknown): string {
-  const code = (err as { code?: string })?.code;
-  const host = typeof window !== 'undefined' ? window.location.hostname : 'denna domän';
-  if (code === 'auth/unauthorized-domain') {
-    return `Domänen "${host}" är inte godkänd i Firebase Authentication ännu. Lägg till "${host}" under Firebase Console → Authentication → Settings → Authorized domains.`;
-  }
-  if (code === 'auth/popup-blocked') {
-    return 'Webbläsaren blockerade popup-fönstret för Google-inloggning. Försök med omdirigering nedan eller tillåt popups.';
-  }
-  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-    return 'Inloggningsfönstret stängdes innan inloggningen slutfördes.';
-  }
-  if (code === 'auth/network-request-failed') {
-    return 'Nätverksfel vid kontakt med Google/Firebase. Kontrollera uppkopplingen och försök igen.';
-  }
-  return err instanceof Error ? err.message : 'Kunde inte logga in med Google.';
-}
+const formatAuthError=loginErrorMessage;
+const providerOptions=authProviderOptions(import.meta.env);
 
 export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -64,6 +55,19 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [signingIn, setSigningIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [savedSessionIds, setSavedSessionIds] = useState<string[]>([]);
+  const [showSignIn,setShowSignIn]=useState(false);
+  const [pendingEmailLink,setPendingEmailLink]=useState<string|null>(null);
+  const authAttempt=useRef(false);
+  const requestSignIn=useCallback(()=>{setAuthError(null);setShowSignIn(true);},[]);
+  useEffect(()=>{
+    const callback=emailCallbackLocation(window.location.href,(href)=>isSignInWithEmailLink(auth,href));
+    if(callback){
+      setPendingEmailLink(callback.link);setShowSignIn(true);
+      // Keep the one-time code only in component memory, not URL/history/logs/storage.
+      window.history.replaceState(null,'',callback.cleanPath);
+    }
+  },[]);
+
 
   useEffect(() => {
     let active = true;
@@ -115,17 +119,19 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   }, [authReady, user]);
 
   const signInWithGoogleRedirect = useCallback(async () => {
+    if(authAttempt.current)return;authAttempt.current=true;
     setSigningIn(true);
     setAuthError(null);
     try {
       await signInWithRedirect(auth, googleProvider);
     } catch (err) {
       setAuthError(formatAuthError(err));
-      setSigningIn(false);
+      setSigningIn(false);authAttempt.current=false;
     }
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
+    if(authAttempt.current)return null;authAttempt.current=true;
     setSigningIn(true);
     setAuthError(null);
     try {
@@ -137,6 +143,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
           console.warn('Profile sync warning after login:', profileErr);
         }
       }
+      setShowSignIn(false);
       return result.user;
     } catch (err) {
       const code = (err as { code?: string })?.code;
@@ -152,9 +159,50 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
       setAuthError(formatAuthError(err));
       return null;
     } finally {
-      setSigningIn(false);
+      setSigningIn(false);authAttempt.current=false;
     }
   }, []);
+
+  const emailSignIn=async(rawEmail:string,complete:boolean):Promise<boolean>=>{
+    if(authAttempt.current)return false;
+    let email:string;try{email=normalizeLoginEmail(rawEmail);}catch{setAuthError('Ange en giltig e-postadress.');return false;}
+    authAttempt.current=true;setSigningIn(true);setAuthError(null);
+    try{
+      if(complete){
+        if(!pendingEmailLink)throw new Error('No pending link');
+        await completeEmailLogin(email,pendingEmailLink,(address,link)=>signInWithEmailLink(auth,address,link));
+        setPendingEmailLink(null);setShowSignIn(false);
+      }else{
+        if(!providerOptions.email)throw new Error('Disabled');
+        await requestEmailLogin(email,window.location.origin,(address,settings)=>sendSignInLinkToEmail(auth,address,settings));
+      }
+      return true;
+    }catch(error){setAuthError(formatAuthError(error));return false;}
+    finally{authAttempt.current=false;setSigningIn(false);}
+  };
+  const socialSignIn=async(kind:'facebook'|'linkedin')=>{
+    if(authAttempt.current)return;authAttempt.current=true;setSigningIn(true);setAuthError(null);
+    try{
+      if((kind==='facebook'&&!providerOptions.facebook)||(kind==='linkedin'&&!providerOptions.linkedin))throw new Error('Disabled provider');
+      const provider=kind==='facebook'?new FacebookAuthProvider():new OAuthProvider(providerOptions.linkedin);
+      provider.addScope('email');if(kind==='linkedin')provider.addScope('profile');
+      const result=await signInWithPopup(auth,provider);setShowSignIn(!result.user.emailVerified);
+    }catch(error){setAuthError(formatAuthError(error));}
+    finally{authAttempt.current=false;setSigningIn(false);}
+  };
+  const verifyCurrentEmail=async()=>{
+    if(authAttempt.current||!auth.currentUser||auth.currentUser.emailVerified)return false;
+    authAttempt.current=true;setSigningIn(true);setAuthError(null);
+    try{await sendEmailVerification(auth.currentUser);return true;}
+    catch(error){setAuthError(formatAuthError(error));return false;}
+    finally{authAttempt.current=false;setSigningIn(false);}
+  };
+  const reloadVerification=async()=>{
+    if(!auth.currentUser||authAttempt.current)return;authAttempt.current=true;setSigningIn(true);setAuthError(null);
+    try{await reload(auth.currentUser);await auth.currentUser.getIdToken(true);if(auth.currentUser.emailVerified)setShowSignIn(false);else setAuthError('Adressen är fortfarande inte verifierad. Öppna länken i verifieringsmejlet först.');}
+    catch(error){setAuthError(formatAuthError(error));}
+    finally{authAttempt.current=false;setSigningIn(false);}
+  };
 
   const signOutUser = useCallback(async () => {
     setAuthError(null);
@@ -183,6 +231,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     <FirebaseContext.Provider
       value={{
         user,
+        requestSignIn,
         authReady,
         isAdmin,
         signingIn,
@@ -195,6 +244,12 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      {showSignIn&&<SignInDialog busy={signingIn} error={authError} user={user}
+        emailEnabled={providerOptions.email} facebookEnabled={providerOptions.facebook} linkedinEnabled={Boolean(providerOptions.linkedin)}
+        pendingEmailLink={Boolean(pendingEmailLink)} onClose={()=>{if(!signingIn)setShowSignIn(false);}}
+        onGoogle={()=>void signInWithGoogle()} onGoogleRedirect={()=>void signInWithGoogleRedirect()}
+        onSocial={(kind)=>void socialSignIn(kind)} onEmail={emailSignIn} onVerify={verifyCurrentEmail}
+        onReload={reloadVerification} onDiscardLink={()=>{setPendingEmailLink(null);setAuthError(null);}}/>}
     </FirebaseContext.Provider>
   );
 }

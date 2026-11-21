@@ -42,7 +42,7 @@ function getInitialTab(): PortalTab {
 }
 
 export default function App() {
-  const { user, authReady, isAdmin, authError, signInWithGoogle, signOutUser } = useFirebase();
+  const { user, authReady, isAdmin, authError, requestSignIn, signOutUser } = useFirebase();
   const fetchSequence = useRef(0);
   const [store, setStore] = useState<CMSStore | null>(null);
   const [loading, setLoading] = useState(true);
@@ -477,9 +477,9 @@ export default function App() {
                 userUid={user?.uid || null}
                 userDisplayName={user?.displayName || null}
                 userEmail={user?.email || null}
-                isSignedIn={Boolean(user)}
+                isSignedIn={Boolean(user?.emailVerified)}
                 onSignIn={() => {
-                  void signInWithGoogle();
+                  void requestSignIn();
                 }}
                 onAddThread={async (payload) => {
                   await api.addThread(payload);

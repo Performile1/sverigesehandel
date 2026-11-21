@@ -7,8 +7,7 @@ export function CMSAccess({ isAdmin, children }: { isAdmin: boolean; children: R
     authReady,
     signingIn,
     authError,
-    signInWithGoogle,
-    signInWithGoogleRedirect,
+    requestSignIn,
     signOutUser,
   } = useFirebase();
 
@@ -48,7 +47,7 @@ export function CMSAccess({ isAdmin, children }: { isAdmin: boolean; children: R
             onClick={() => { void signOutUser(); }}
             className="font-bold underline text-[#040B16] cursor-pointer"
           >
-            Logga ut och byt Google-konto
+            Logga ut och byt konto
           </button>
         </div>
       )}
@@ -58,18 +57,9 @@ export function CMSAccess({ isAdmin, children }: { isAdmin: boolean; children: R
           type="button"
           className="w-full rounded-xl bg-[#040B16] hover:bg-[#006AA7] p-3 text-white text-sm font-bold cursor-pointer disabled:opacity-60 transition-colors"
           disabled={signingIn}
-          onClick={() => { void signInWithGoogle(); }}
+          onClick={() => { requestSignIn(); }}
         >
-          {signingIn ? 'Loggar in…' : 'Logga in med Google'}
-        </button>
-
-        <button
-          type="button"
-          className="w-full rounded-xl border border-slate-200 hover:bg-slate-50 py-2.5 px-3 text-slate-700 text-xs font-semibold cursor-pointer disabled:opacity-60 transition-colors"
-          disabled={signingIn}
-          onClick={() => { void signInWithGoogleRedirect(); }}
-        >
-          Föredrar omdirigering (om popup blockeras)
+          {signingIn ? 'Loggar in…' : 'Välj inloggningssätt – e-post eller Google'}
         </button>
       </div>
 

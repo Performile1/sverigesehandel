@@ -188,6 +188,7 @@ export function validateSnapshot(value: unknown): value is CMSStore {
       typeof store[key] === 'object' && !Array.isArray(store[key])) &&
     (Array.isArray(store.contactMessages) && store.contactMessages.every((message)=>message && (message.assignedStaffUid === undefined || (typeof message.assignedStaffUid === 'string' && message.assignedStaffUid.length > 0 && message.assignedStaffUid.length <= 128)))) &&
     (Array.isArray(store.communityMembers) && store.communityMembers.every((member)=>member && (!member.invitation || (
+      (member.invitation.templateVersion===undefined||member.invitation.templateVersion===2) &&
       typeof member.invitation.email==='string' && member.invitation.email.length<=160 &&
       typeof member.invitation.name==='string' && member.invitation.name.length<=100 &&
       typeof member.invitation.from==='string' && member.invitation.from.length<=320 &&
