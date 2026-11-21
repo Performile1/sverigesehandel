@@ -24,7 +24,7 @@ const route = (handler: RequestHandler): RequestHandler => (req, res, next) => {
 const isMemberCommentRoute = (path: string) => /^\/api\/community\/threads\/[^/]+\/comments$/.test(path);
 const isMemberMessageReadRoute = (path: string) => /^\/api\/community\/messages\/[^/]+\/read$/.test(path);
 
-const isCompanyMemberRoute = (method: string, path: string) => (method === 'GET' && path === '/api/company/workspace') ||
+const isCompanyMemberRoute = (method: string, path: string) => (method === 'GET' && ['/api/company/workspace','/api/staff/me'].includes(path)) || (method === 'PUT' && path === '/api/staff/me') ||
   (method === 'POST' && ['/api/company/proposals', '/api/company/inbox/read', '/api/community/reports'].includes(path));
 
 const isMemberSubmission = (method: string, path: string) => isCompanyMemberRoute(method, path) || (
@@ -543,6 +543,9 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       throw error;
     }
   });
+  app.get('/api/staff/me',governanceRoute(async (_req,res)=>{res.json(await store.getMyStaffProfile(res.locals.cmsIdentity));}));
+  app.put('/api/staff/me',governanceRoute(async (req,res)=>{res.json(await store.saveStaffProfile(res.locals.cmsIdentity,req.body));}));
+  app.put('/api/staff/:uid',governanceRoute(async (req,res)=>{res.json(await store.saveStaffProfile(res.locals.cmsIdentity,req.body,req.params.uid));}));
   app.get('/api/company/workspace', governanceRoute(async (_req, res) => {
     res.json(await store.getCompanyWorkspace(res.locals.cmsIdentity));
   }));

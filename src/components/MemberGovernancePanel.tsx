@@ -1,3 +1,4 @@
+import { StaffAdminPanel } from './StaffProfiles';
 import { useState } from 'react';
 import type { CMSStore, CompanyEntityType, CompanyMemberLink } from '../types';
 import { api } from '../api';
@@ -20,6 +21,7 @@ export function MemberGovernancePanel({ store, onRefresh }: { store: CMSStore; o
     <h1 className="text-2xl font-bold">Medlemmar, företag & Community</h1>
     <p className="text-sm">Bara Sveriges E-handel godkänner företagskopplingar, publiceringsförslag, borttagningsbegäranden och moderationsbeslut. Blockering gäller konto-UID i applikationen, inte IP eller Firebase-kontoradering. Gamla inlägg döljs separat.</p>
     {error && <p role="alert" className="text-red-700">{error}</p>}
+    <StaffAdminPanel store={store} onRefresh={onRefresh}/>
     <form key={JSON.stringify(g.settings)} className="bg-white border rounded-xl p-5 space-y-3" onSubmit={(e) => {
       e.preventDefault(); const data = new FormData(e.currentTarget);
       void act('settings', Object.fromEntries(Object.keys(g.settings).map((k) => [k,data.has(k)])));

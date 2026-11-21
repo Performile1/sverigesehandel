@@ -33,6 +33,7 @@ export function publicStore(store: CMSStore, admin = false): CMSStore {
     };
   }
   const result = structuredClone(store);
+  delete result.staffProfiles;
   delete result.memberGovernance;
   result.communitySettings = { ...(store.memberGovernance?.settings ?? DEFAULT_COMMUNITY_SETTINGS) };
   result.insightPosts = (result.insightPosts ?? INITIAL_INSIGHT_POSTS).filter((post) => post.status === 'published');

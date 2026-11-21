@@ -48,6 +48,7 @@ export function companyWorkspace(store: CMSStore, actor: CmsIdentity): CompanyWo
     const link = links.find((l) => l.entityType === m.targetEntityType && l.entityId === m.targetEntityId &&
       (m.submissionType === 'intro' ? l.receiveIntros : l.receiveMessages) && (l.includeHistory || m.createdAt >= l.createdAt));
     if (!link) return [];
+    if (m.assignedStaffUid && m.assignedStaffUid!==actor.uid) return [];
     return [{ id: m.id, name: m.name, email: m.email, company: m.company, topic: m.topic, message: m.message,
       createdAt: m.createdAt, entityName: m.targetEntityName || '', kind: m.submissionType || 'contact',
       read: g.inboxReads.some((r) => r.uid === actor.uid && r.messageId === m.id) }];
@@ -78,6 +79,17 @@ export function runGovernance(store: CMSStore, actor: CmsIdentity, operation: st
       canPropose: input.canPropose, receiveIntros: input.receiveIntros, receiveMessages: input.receiveMessages, includeHistory: input.includeHistory,
       createdAt: previous?.status === 'active' && bools.every((key) => previous[key] === input[key]) ? previous.createdAt : now, updatedAt: now };
     g.links = g.links.filter((l) => l.id !== link.id); g.links.push(link); audit(g, actor, 'company-link-' + status, link.id);
+  } else if (operation === 'assign-message') {
+    const id=text(input.id,200,true);const uid=text(input.uid,128);
+    const message=store.contactMessages.find((m)=>m.id===id);
+    if (!message) fail('Ärendet hittades inte.',404);
+    if (message.routingMode!=='direct-partner' || !isCompanyType(message.targetEntityType) || !['partner','logistics'].includes(message.targetEntityType)) fail('Endast direktstyrda företagsärenden kan tilldelas.');
+    if (uid) {
+      const link=linkFor(store,uid,message.targetEntityType,message.targetEntityId || '');
+      if (!link || isBlocked(g,uid) || !(message.submissionType==='intro'?link.receiveIntros:link.receiveMessages) || (!link.includeHistory && message.createdAt<link.createdAt)) fail('Mottagaren saknar rättigheter eller historikåtkomst för detta ärende.',403);
+      message.assignedStaffUid=uid;
+    } else delete message.assignedStaffUid;
+    audit(g,actor,'company-message-assigned',id,uid || 'Gemensam företagsinkorg');
   } else if (operation === 'revoke-link') {
     const link = g.links.find((l) => l.id === input.id);
     if (!link) fail('Kopplingen hittades inte.',404);

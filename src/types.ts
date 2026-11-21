@@ -365,6 +365,7 @@ export interface CommunityThread {
 export type MemberVerificationStatus = 'pending' | 'verified' | 'rejected';
 
 export interface CommunityMember {
+  directoryHidden?: boolean;
   id: string;
   name: string;
   email: string;
@@ -513,6 +514,7 @@ export interface ContactFormConfig {
 }
 
 export interface ContactMessage {
+  assignedStaffUid?: string;
   id: string;
   name: string;
   email: string;
@@ -644,6 +646,7 @@ export interface MapPoint {
 }
 
 export interface CMSStore {
+  staffProfiles?: StaffProfile[];
   memberGovernance?: MemberGovernance;
   communitySettings?: CommunitySettings;
   insightPosts?: InsightPost[];
@@ -885,4 +888,13 @@ export interface CompanyWorkspace {
   proposals: CompanyProposal[];
   messages: Array<{ id: string; name: string; email: string; company?: string; topic: string;
     message: string; createdAt: string; entityName: string; read: boolean; kind: string }>;
+}
+
+export interface StaffProfile {
+  uid: string; email: string; name: string; phone: string; position: string;
+  company: string; employmentSince: string; expertise: string; photoUrl: string; updatedAt: string;
+}
+export interface MyStaffProfile {
+  profile: StaffProfile | null;
+  identity: { uid: string; email: string; admin: boolean };
 }
