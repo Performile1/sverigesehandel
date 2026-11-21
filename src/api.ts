@@ -80,6 +80,9 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  createCmsUser:(input:{email:string;name:string;phone:string;position:string;company:string;employmentSince:string;expertise:string})=>request<{
+    uid:string;memberId:string;alreadyRegistered:boolean;authCreated:boolean;
+  }>('/api/cms/users',{method:'POST',body:JSON.stringify(input)}),
   myStaffProfile:()=>request<MyStaffProfile>('/api/staff/me'),
   saveStaffProfile:(profile:Partial<StaffProfile>,uid?:string)=>request<StaffProfile>(uid?`/api/staff/${uid}`:'/api/staff/me',{method:'PUT',body:JSON.stringify(profile)}),
   companyWorkspace: () => request<CompanyWorkspace>('/api/company/workspace'),

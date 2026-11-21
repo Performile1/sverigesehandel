@@ -1,3 +1,5 @@
+import { parseCmsUserInput } from './cmsUsers.ts';
+import type { ResolvedCmsUser } from './cmsUsers.ts';
 import { validStaffProfile, validStaffProfiles } from '../shared/staffProfiles.ts';
 import type { StaffProfile } from '../src/types.ts';
 import { isBlocked, emptyGovernance } from '../shared/memberGovernance.ts';
@@ -2219,4 +2221,31 @@ export function saveStaffProfile(actor: CmsIdentity, input: unknown, targetUid?:
   governance.audit=governance.audit.slice(0,500);store.memberGovernance=governance;
   if (Buffer.byteLength(JSON.stringify(store),'utf8')>890000) throw Object.assign(new Error('CMS-lagringen är full.'),{status:413});
   saveStore(store);return profile;
+}
+
+export function registerCmsUser(actor:CmsIdentity, raw:unknown, account:ResolvedCmsUser) {
+  const store=structuredClone(ensureStoreFile());
+  if (!actor.admin || !actor.verified || isBlocked(store.memberGovernance,actor.uid)) throw Object.assign(new Error('Endast Sveriges E-handels administratör får lägga till användare.'),{status:403});
+  const input=parseCmsUserInput(raw);
+  if (!account.uid || account.uid.length>128 || account.email.toLowerCase()!==input.email || isBlocked(store.memberGovernance,account.uid)) throw Object.assign(new Error('Kontot kan inte registreras. Kontrollera identitet och eventuell blockering.'),{status:409});
+  const byUid=store.communityMembers.find((m)=>m.authorUid===account.uid);
+  const byEmail=store.communityMembers.find((m)=>m.email.toLowerCase()===input.email);
+  if (byEmail && byEmail.authorUid!==account.uid) throw Object.assign(new Error('Adressen finns redan i CMS utan matchande inloggningskoppling. Granska registerposten manuellt; ingen automatisk överföring sker.'),{status:409});
+  // A retry or adding an already registered user must never reset approval,
+  // directory privacy, staff data, company links or blocked/rejected status.
+  if (byUid) return {memberId:byUid.id,uid:account.uid,alreadyRegistered:true,authCreated:account.created};
+  if (store.communityMembers.length>=500) throw Object.assign(new Error('Medlemsregistret är fullt.'),{status:413});
+  const now=new Date().toISOString();
+  const member={id:`cms-${account.uid}`,authorUid:account.uid,email:account.email,name:input.name,role:input.position||'Medlem',city:'',company:input.company,
+    verificationStatus:'pending' as const,directoryHidden:true,createdAt:now};
+  const profile:StaffProfile={...input,uid:account.uid,email:account.email,photoUrl:'',updatedAt:now};
+  const profiles=store.staffProfiles || [];
+  if (!profiles.some((p)=>p.uid===account.uid)) profiles.push(profile);
+  if (!validStaffProfiles(profiles)) throw Object.assign(new Error('Personalregistret är fullt.'),{status:413});
+  store.staffProfiles=profiles;store.communityMembers.push(member);
+  const g=store.memberGovernance ?? emptyGovernance();
+  g.audit.unshift({id:`user-${Date.now()}-${Math.random().toString(36).slice(2,9)}`,actorUid:actor.uid,action:'cms-user-registered',target:account.uid,createdAt:now});
+  g.audit=g.audit.slice(0,500);store.memberGovernance=g;
+  if (Buffer.byteLength(JSON.stringify(store),'utf8')>890000) throw Object.assign(new Error('CMS-lagringen är full.'),{status:413});
+  saveStore(store);return {memberId:member.id,uid:account.uid,alreadyRegistered:false,authCreated:account.created};
 }

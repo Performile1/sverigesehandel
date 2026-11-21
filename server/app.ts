@@ -1,3 +1,4 @@
+import { parseCmsUserInput, resolveCmsUser } from './cmsUsers.ts';
 import { isBlocked } from '../shared/memberGovernance.ts';
 import { firebaseFeatureStatus, prepareImage, uploadCmsImage, reportDays, getCmsAnalytics } from './firebaseFeatures.ts';
 import express, { type RequestHandler, type ErrorRequestHandler } from 'express';
@@ -39,7 +40,7 @@ const isMemberSubmission = (method: string, path: string) => isCompanyMemberRout
 
 export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) => Promise<CmsIdentity>, features = {
   status: firebaseFeatureStatus, upload: uploadCmsImage, report: getCmsAnalytics,
-}) {
+}, users = { resolve: resolveCmsUser }) {
   const app = express();
   app.disable('x-powered-by');
   app.use('/api', (_req, res, next) => {
@@ -543,6 +544,25 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       throw error;
     }
   });
+  app.post('/api/cms/users',governanceRoute(async (req,res)=>{
+    const input=parseCmsUserInput(req.body);
+    const current=await store.getStore();
+    const existing=current.communityMembers.find((m)=>m.email.toLowerCase()===input.email);
+    if (existing && !existing.authorUid) {res.status(409).json({error:'E-postadressen finns i en äldre registerpost utan UID. Granska/koppla den manuellt före tillägg.'});return;}
+    if (existing?.authorUid && isBlocked(current.memberGovernance,existing.authorUid)) {res.status(409).json({error:'Kontot är blockerat. Att lägga till igen avblockerar det inte.'});return;}
+    if (!existing && (current.communityMembers.length>=500 || (current.staffProfiles?.length||0)>=300)) {res.status(413).json({error:'Användarregistret är fullt.'});return;}
+    let account;
+    try {account=await users.resolve(input);} catch(error) {
+      if ((error as {status?:number}).status===409) {res.status(409).json({error:(error as Error).message});return;}
+      res.status(503).json({error:'Firebase-kontot kunde inte kontrolleras/skapas. Ingen automatisk återaktivering eller rolländring sker. Kontrollera serverns Firebase Auth-behörigheter och försök sedan igen med samma e-post.'});return;
+    }
+    try {res.json(await store.registerCmsUser(res.locals.cmsIdentity,input,account));}
+    catch {
+      // Auth and Firestore are separate systems. Do not delete an Auth account
+      // after an uncertain commit or expose raw provider errors/credentials.
+      res.status(409).json({error:'Firebase-kontot är identifierat, men CMS-registreringen kunde inte bekräftas. Ladda om medlemsregistret och kontrollera posten. Försök vid behov igen med samma e-post; inget konto raderas automatiskt.'});
+    }
+  }));
   app.get('/api/staff/me',governanceRoute(async (_req,res)=>{res.json(await store.getMyStaffProfile(res.locals.cmsIdentity));}));
   app.put('/api/staff/me',governanceRoute(async (req,res)=>{res.json(await store.saveStaffProfile(res.locals.cmsIdentity,req.body));}));
   app.put('/api/staff/:uid',governanceRoute(async (req,res)=>{res.json(await store.saveStaffProfile(res.locals.cmsIdentity,req.body,req.params.uid));}));

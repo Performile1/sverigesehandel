@@ -1,3 +1,6 @@
+import { parseCmsUserInput, resolveCmsUser } from '../server/cmsUsers.ts';
+import { CreateCmsUser } from '../src/components/CreateCmsUser.tsx';
+import type { cmsFirebaseAuth } from '../server/firebaseAdmin.ts';
 import { FirebaseProvider } from '../src/contexts/FirebaseContext.tsx';
 import { validStaffProfiles, validEmploymentDate, employmentDuration, validProfilePhoto } from '../shared/staffProfiles.ts';
 import { MemberGovernancePanel } from '../src/components/MemberGovernancePanel.tsx';
@@ -72,6 +75,8 @@ let featureReports = false;
 let uploads = 0;
 let reportCalls = 0;
 let providerFails = false;
+let userResolveCalls=0;
+let userResolveFails=false;
 const fixtureImage = { path: 'cms-public/fixture.webp', url: 'https://firebasestorage.googleapis.com/v0/b/fixture/o/cms-public%2Ffixture.webp?alt=media',
   alt: 'Fixture logo', width: 2, height: 2 };
 const app = createCmsApp(service, async (identity) => {
@@ -88,7 +93,7 @@ const app = createCmsApp(service, async (identity) => {
   report: async (days) => { reportCalls++; if (providerFails) throw new Error('provider-detail-not-for-client'); return { days, timeZone: 'Europe/Stockholm', rows: [
     { page: '/jobb', views: 10, activeUsers: 5, engagementSeconds: 60 },
   ], truncated: false, dataLossFromOtherRow: false, subjectToThresholding: false }; },
-});
+}, {resolve:async(input)=>{userResolveCalls++;if(userResolveFails)throw new Error('private-provider-detail');return {uid:'cms-new-fixture',email:input.email,emailVerified:false,created:userResolveCalls===1};}});
 // Ensures the API middleware doesn't intercept local Vite/static routes.
 app.get('/portal-fixture', (_req, res) => { res.send('portal'); });
 const server = app.listen(0, '127.0.0.1');
@@ -646,6 +651,58 @@ try {
   assert.ok(!validGovernance({...emptyGovernance(),links:[null]}));
   assert.ok(!validateSnapshot({...snapshot,memberGovernance:{...snapshot.memberGovernance,settings:{enabled:'yes'}}}));
   snapshot=governanceSnapshot;
+
+
+  const beforeCmsUsers=structuredClone(snapshot);
+  const newUserInput={email:'new-user@example.invalid',name:'New staff',phone:'+46 700000000',position:'Sales',company:'Fixture',employmentSince:'2025-01-01',expertise:'Payments'};
+  assert.equal((await request('/api/cms/users','POST',newUserInput)).status,401);
+  assert.equal((await request('/api/cms/users','POST',newUserInput,'member-fixture')).status,403);
+  assert.equal((await request('/api/cms/users','POST',newUserInput,'unverified-fixture')).status,403);
+  assert.equal(userResolveCalls,0);
+  assert.equal((await request('/api/cms/users','POST',{...newUserInput,email:'invalid'},'governance-admin')).status,400);
+  assert.equal(userResolveCalls,0);
+  userResolveFails=true;
+  const beforeAuthFailure=JSON.stringify(snapshot);
+  const authFailureResponse=await request('/api/cms/users','POST',newUserInput,'governance-admin');
+  assert.equal(authFailureResponse.status,503);assert.ok(!(await authFailureResponse.text()).includes('private-provider-detail'));
+  assert.equal(JSON.stringify(snapshot),beforeAuthFailure);
+  userResolveFails=false;userResolveCalls=0;
+  const addedUserResponse=await request('/api/cms/users','POST',{...newUserInput,admin:true,uid:'forged',emailVerified:true,verificationStatus:'verified'},'governance-admin');
+  assert.equal(addedUserResponse.status,200);
+  const addedUser=await addedUserResponse.json();
+  assert.equal(addedUser.uid,'cms-new-fixture');
+  const addedMember=snapshot.communityMembers.find((m)=>m.authorUid===addedUser.uid)!;
+  assert.equal(addedMember.email,newUserInput.email);assert.equal(addedMember.verificationStatus,'pending');assert.equal(addedMember.directoryHidden,true);
+  assert.equal(snapshot.staffProfiles?.find((p)=>p.uid===addedUser.uid)?.position,'Sales');
+  assert.ok(!snapshot.memberGovernance?.links.some((l)=>l.uid===addedUser.uid));
+  const beforeRetry=structuredClone(snapshot);
+  const retried=await (await request('/api/cms/users','POST',{...newUserInput,name:'Must not overwrite'},'governance-admin')).json();
+  assert.equal(retried.alreadyRegistered,true);assert.deepEqual(snapshot,beforeRetry,'Retry must preserve profiles and status');
+  snapshot.memberGovernance!.blocks.push({uid:addedUser.uid,reason:'Fixture blocked',createdAt:new Date().toISOString()});
+  const callsBeforeBlocked=userResolveCalls;
+  assert.equal((await request('/api/cms/users','POST',newUserInput,'governance-admin')).status,409);
+  assert.equal(userResolveCalls,callsBeforeBlocked,'Blocked account must not resolve/create again');
+  snapshot.communityMembers.push({id:'legacy-user',email:'legacy-user@example.invalid',name:'Legacy',role:'Staff',city:'',createdAt:'2026-01-01'});
+  assert.equal((await request('/api/cms/users','POST',{...newUserInput,email:'legacy-user@example.invalid'},'governance-admin')).status,409);
+  assert.equal(userResolveCalls,callsBeforeBlocked);
+  let createdAuthCalls=0;
+  const fixtureAuth={getUserByEmail:async()=>{throw {code:'auth/user-not-found'};},createUser:async(values:any)=>{
+    createdAuthCalls++;assert.equal(values.emailVerified,false);assert.equal(values.password,undefined);assert.equal(values.customClaims,undefined);
+    return {uid:'real-generated-fixture',email:values.email,emailVerified:false,disabled:false};
+  }} as unknown as ReturnType<typeof cmsFirebaseAuth>;
+  const parsedNewUser=parseCmsUserInput(newUserInput);
+  const resolvedUser=await resolveCmsUser(parsedNewUser,fixtureAuth);
+  assert.equal(resolvedUser.created,true);assert.equal(createdAuthCalls,1);
+  const existingAuth={getUserByEmail:async()=>({uid:'existing-fixture',email:newUserInput.email,emailVerified:true,disabled:false}),createUser:async()=>{throw Error('Must not create');}} as unknown as ReturnType<typeof cmsFirebaseAuth>;
+  assert.equal((await resolveCmsUser(parsedNewUser,existingAuth)).created,false);
+  const disabledAuth={getUserByEmail:async()=>({uid:'disabled-fixture',email:newUserInput.email,emailVerified:true,disabled:true})} as unknown as ReturnType<typeof cmsFirebaseAuth>;
+  await assert.rejects(resolveCmsUser(parsedNewUser,disabledAuth));
+  const raceAuth={getUserByEmail:(()=>{let lookup=0;return async()=>{if(!lookup++)throw {code:'auth/user-not-found'};return {uid:'race-fixture',email:newUserInput.email,emailVerified:false,disabled:false};};})(),createUser:async()=>{throw {code:'auth/email-already-exists'};}} as unknown as ReturnType<typeof cmsFirebaseAuth>;
+  assert.equal((await resolveCmsUser(parsedNewUser,raceAuth)).uid,'race-fixture');
+  const userFormHtml=renderToString(createElement(CreateCmsUser,{onRefresh:async()=>{}}));
+  assert.ok(userFormHtml.includes('Lägg till användare')&&userFormHtml.includes('Ingen global adminroll'));
+  assert.ok(!JSON.stringify(publicStore(snapshot)).includes('new-user@example.invalid'));
+  snapshot=beforeCmsUsers;
 
   const currentSnapshot = upgradeSnapshot(structuredClone(snapshot)) as typeof snapshot;
   const legacy = structuredClone(snapshot) as Partial<typeof snapshot>;

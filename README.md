@@ -11,6 +11,20 @@ Paketindex history, analytics, job descriptions, salary estimates, regional maps
 and direct links to the correct news articles. The plan does not implement or
 activate these features.
 
+## Add users from CMS
+
+Global admins can use **Medlemmar & Community → Lägg till användare** to create
+or resolve a Firebase Auth account by email and register a private staff/member
+record. New CMS membership starts pending and directory-hidden. No password,
+custom claim, global admin role or company grant is created. Existing Auth/CMS
+users are not overwritten or reactivated. The person signs in with their own
+Google account and must be verified; admin approves membership/company rights
+separately. **No invitation email is sent automatically.**
+
+See [workflow, retry handling and isolated Auth testing](docs/skapa-anvandare-cms.md).
+Live service-account Auth permissions and Google account linking must be verified
+before real use. Code delivery creates no production accounts and changes no IAM.
+
 ## Private staff profiles and individual inbox assignment
 
 CMS **Medlemmar & Community** and **Min företagsyta** now include private staff
