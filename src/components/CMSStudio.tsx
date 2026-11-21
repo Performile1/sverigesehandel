@@ -1,3 +1,4 @@
+import { InsightPostsEditor } from './InsightPostsEditor';
 import { PaketindexArchiveEditor } from './PaketindexArchiveEditor';
 import { CmsFirebasePanel } from './CmsFirebasePanel';
 import { MapPointsEditor } from './MapPointsEditor';
@@ -777,6 +778,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
     { id: 'partners', label: 'Tech & Partners', icon: Layers, count: store.partners.length },
     { id: 'logistics', label: '3PL & 4PL', icon: Warehouse, count: (store.logisticsProviders || []).length },
     { id: 'paketindex', label: 'Paketindex & Marknad', icon: BarChart3 },
+    { id: 'insights', label: 'Blogg & Insikter', icon: FileText, count: (store.insightPosts || []).length },
     { id: 'news', label: 'Nyheter', icon: Newspaper, count: (store.news || []).length },
     { id: 'events', label: 'Event & Mässor', icon: Calendar, count: store.events.length },
     { id: 'timeline', label: 'Historia (Tidslinje)', icon: Clock, count: store.timeline.length },
@@ -3082,6 +3084,8 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
               onOpenInbox={() => setSection('content')}
             />
           )}
+
+          {section === 'insights' && <InsightPostsEditor posts={store.insightPosts || []} onRefresh={onRefresh} />}
 
           {section === 'firebase' && <CmsFirebasePanel store={store} onRefresh={onRefresh} />}
 

@@ -1,3 +1,6 @@
+import { InsightPosts } from './InsightPosts';
+import type { InsightPost } from '../types';
+import { INITIAL_INSIGHT_POSTS } from '../../shared/insightPosts';
 import { PaketindexArchive } from './PaketindexArchive';
 import type { PaketindexObservation } from '../types';
 import { MARKET_TITLE } from '../../shared/portalContent';
@@ -60,6 +63,7 @@ import { ResilientImage } from './ResilientImage';
 import { SwedenLogisticsMap } from './SwedenLogisticsMap';
 
 interface MarknadViewProps {
+  insightPosts?: InsightPost[];
   paketindexArchive?: PaketindexObservation[];
   mapPoints?: MapPoint[];
   regions: Record<string, RegionMetric>;
@@ -153,6 +157,7 @@ function TrendChartTooltip({
 }
 
 export function MarknadView({
+  insightPosts = INITIAL_INSIGHT_POSTS,
   paketindexArchive = [],
   mapPoints = [],
   regions = {},
@@ -2648,94 +2653,7 @@ export function MarknadView({
           onBookSlot={onBookAdSlot}
         />
 
-        {/* 3 Insight Cards with Generated Visuals */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col">
-            <div className="h-44 relative">
-              <ResilientImage
-                src="/src/assets/images/checkout_mobile_payment_1795029384663.jpg"
-                alt="Svensk konsument betalar med mobilen"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-              <div>
-                <div className="text-xs font-mono text-[#006AA7] font-semibold">Checkout-data</div>
-                <h3 className="font-display font-bold text-lg text-[#040B16] mt-1">
-                  One-Click BankID &amp; Swish sänker avhopp med 34%
-                </h3>
-                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                  Svenska konsumenter överger kassan direkt om manuella kortuppgifter krävs. Friktionsfri identifiering är standard 2027.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('ehandlare')}
-                className="text-xs font-bold text-[#006AA7] hover:underline text-left cursor-pointer"
-              >
-                Jämför topprankade e-handlare &rarr;
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col">
-            <div className="h-44 relative">
-              <ResilientImage
-                src="/src/assets/images/nordic_green_logistics_1795029385111.jpg"
-                alt="Eldrivet paketfordon och nordiskt paketskåp"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-              <div>
-                <div className="text-xs font-mono text-[#059669] font-semibold">Grön logistik</div>
-                <h3 className="font-display font-bold text-lg text-[#040B16] mt-1">
-                  Klimatdata i kassan styr mot fossilfri last-mile
-                </h3>
-                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                  När e-handlaren visar tydlig miljödata för eldrivna hemleveranser och paketskåp väljer majoriteten av konsumenterna ett fossilfritt alternativ.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('partners')}
-                className="text-xs font-bold text-[#059669] hover:underline text-left cursor-pointer"
-              >
-                Se tech- &amp; logistikpartners &rarr;
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl overflow-hidden flex flex-col">
-            <div className="h-44 relative">
-              <ResilientImage
-                src="/src/assets/images/dcongress_stage_1795029383597.jpg"
-                alt="Svenska e-handelsmässor och konferenser 2027"
-                className="w-full h-full object-cover opacity-85"
-              />
-            </div>
-            <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-              <div>
-                <div className="text-xs font-mono text-[#FECC02] font-semibold">
-                  Göteborg · Stockholm · Oslo 2027
-                </div>
-                <h3 className="font-display font-bold text-lg text-white mt-1">
-                  D-Congress, E-commerce Expo & Retail Technology
-                </h3>
-                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-                  Komplett mäss- och konferensguide: Kistamässan (25–26 maj), Älvsjö + Formex (24–25 aug), Stora Ehandelsdagen, NXT Nordic & D-Congress.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('event')}
-                className="text-xs font-bold text-[#FECC02] hover:underline text-left cursor-pointer"
-              >
-                Öppna Event & Mässor &rarr;
-              </button>
-            </div>
-          </div>
-        </div>
+        <InsightPosts posts={insightPosts} onNavigate={onNavigate} />
 
         {/* Quick Navigation Strip to Jobb & Historia */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

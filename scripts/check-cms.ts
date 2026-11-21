@@ -1,3 +1,5 @@
+import { INITIAL_INSIGHT_POSTS, validInsightPosts } from '../shared/insightPosts.ts';
+import { InsightPosts } from '../src/components/InsightPosts.tsx';
 import fs from 'node:fs';
 import { parseArchiveCsv, comparison, observationKey, validArchive, csvCells, validObservation } from '../shared/paketindexArchive.ts';
 import { PaketindexArchive } from '../src/components/PaketindexArchive.tsx';
@@ -402,6 +404,63 @@ try {
   assert.ok(salaryHtml.includes('Uppskattat lönespann') && salaryHtml.includes('riksunderlag') && salaryHtml.includes('2025'));
   assert.ok(renderToString(createElement(SalaryDisplay, { job: { ...jobForSalary, salaryEstimate: null } })).includes('underlag saknas'));
   snapshot = beforeArchiveTests;
+
+  const beforeInsightTests = structuredClone(snapshot);
+  const missingInsights = structuredClone(snapshot) as Partial<typeof snapshot>;
+  delete missingInsights.insightPosts;
+  const upgradedInsights = upgradeSnapshot(missingInsights) as typeof snapshot;
+  assert.deepEqual(upgradedInsights.insightPosts, INITIAL_INSIGHT_POSTS);
+  assert.equal(missingInsights.insightPosts, undefined, 'Read migration must not mutate input');
+  assert.deepEqual((upgradeSnapshot({ ...snapshot, insightPosts: [] }) as typeof snapshot).insightPosts, []);
+  const post = { ...INITIAL_INSIGHT_POSTS[0], id: 'insight-fixture', title: 'Editorial fixture',
+    body: 'Stycke ett.\n\nStycke två.\n- Punkt ett\n- Punkt två\n<script>window.fixture=1</script>', status: 'draft' as const };
+  for (const method of ['PUT', 'DELETE']) {
+    assert.equal((await request('/api/insights/insight-fixture', method, post)).status, 401);
+    assert.equal((await request('/api/insights/insight-fixture', method, post, 'member-fixture')).status, 403);
+  }
+  assert.equal((await request('/api/insights/insight-fixture', 'PUT', post, 'admin-fixture')).status, 200);
+  assert.equal((await service.getStore()).insightPosts?.find((p) => p.id === post.id)?.body, post.body);
+  assert.ok(!publicStore(await service.getStore()).insightPosts?.some((p) => p.id === post.id));
+  assert.equal((await request('/api/insights/insight-fixture', 'PUT', { ...post, status: 'published', targetUrl: 'javascript:alert(1)', targetTab: '' }, 'admin-fixture')).status, 400);
+  assert.equal((await request('/api/insights/insight-fixture', 'PUT', { ...post, status: 'published', imageAlt: '' }, 'admin-fixture')).status, 400);
+  assert.equal((await request('/api/insights/insight-fixture', 'PUT', { ...post, status: 'published', order: 1 }, 'admin-fixture')).status, 200);
+  const savedPost = (await service.getStore()).insightPosts!.find((p) => p.id === post.id)!;
+  assert.ok(publicStore(await service.getStore()).insightPosts?.some((p) => p.id === post.id));
+  const publishedInsightHtml = renderToString(createElement(InsightPosts, { posts: [savedPost], onNavigate: () => {} }));
+  assert.ok(publishedInsightHtml.includes('Editorial fixture') && publishedInsightHtml.includes('Läs hela artikeln'));
+  assert.ok(!publishedInsightHtml.includes('<script>'));
+  assert.equal(renderToString(createElement(InsightPosts, { posts: [post], onNavigate: () => {} })), '');
+  assert.ok(renderToString(createElement(InsightPosts, { posts: [post], onNavigate: () => {}, preview: true })).includes('CMS-förhandsvisning'));
+  assert.ok(!validInsightPosts([savedPost, savedPost]));
+  assert.ok(!validInsightPosts(Array.from({ length: 51 }, (_, index) => ({ ...savedPost, id: `insight-count-${index}` }))));
+  const orderedHtml = renderToString(createElement(InsightPosts, { posts: [
+    { ...savedPost, id: 'insight-later', title: 'Later fixture', order: 5 },
+    { ...savedPost, id: 'insight-first', title: 'First fixture', order: 0 },
+  ], onNavigate: () => {} }));
+  assert.ok(orderedHtml.indexOf('First fixture') < orderedHtml.indexOf('Later fixture'));
+
+  assert.ok(!validateSnapshot({ ...snapshot, insightPosts: [savedPost, savedPost] }));
+  assert.ok(!validateSnapshot({ ...snapshot, insightPosts: [{ ...savedPost, body: 'x'.repeat(15001) }] }));
+  featureMedia = true;
+  const insightImageUpload = await request('/api/media/image', 'POST', { targetType: 'insight', targetId: post.id,
+    data: png.toString('base64'), alt: 'Inläggsbild' }, 'admin-fixture');
+  assert.equal(insightImageUpload.status, 200);
+  assert.deepEqual((await service.getStore()).insightPosts?.find((p) => p.id === post.id)?.image, fixtureImage);
+  assert.equal((await service.getStore()).insightPosts?.find((p) => p.id === post.id)?.body, post.body);
+  await request('/api/insights/insight-fixture', 'PUT', { ...savedPost, title: 'Edited after upload' }, 'admin-fixture');
+  assert.deepEqual((await service.getStore()).insightPosts?.find((p) => p.id === post.id)?.image, fixtureImage, 'Text edits preserve newer image reference');
+  assert.ok(!validateSnapshot({ ...snapshot, insightPosts: [{ ...savedPost, image: null }] }));
+
+  assert.equal((await request('/api/media/image', 'DELETE', { targetType: 'insight', targetId: post.id }, 'admin-fixture')).status, 200);
+  assert.equal((await service.getStore()).insightPosts?.find((p) => p.id === post.id)?.image, undefined);
+  featureMedia = false;
+  assert.equal((await request('/api/insights/insight-fixture', 'DELETE', undefined, 'admin-fixture')).status, 200);
+  assert.ok(!(await service.getStore()).insightPosts?.some((p) => p.id === post.id));
+  // Deletions are not resurrected by migration or later edits.
+  snapshot.insightPosts = [];
+  await service.upsertMerchant({ name: 'Insight preservation fixture' });
+  assert.deepEqual((await service.getStore()).insightPosts, []);
+  snapshot = beforeInsightTests;
 
   const currentSnapshot = upgradeSnapshot(structuredClone(snapshot)) as typeof snapshot;
   const legacy = structuredClone(snapshot) as Partial<typeof snapshot>;

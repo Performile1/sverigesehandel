@@ -11,6 +11,21 @@ Paketindex history, analytics, job descriptions, salary estimates, regional maps
 and direct links to the correct news articles. The plan does not implement or
 activate these features.
 
+## Editable Blogg & Insikter cards
+
+CMS **Blogg & Insikter** now manages the former three static Market cards and
+new editorial posts: title, label, excerpt, full plain text, image/alt text,
+author/date, source, CTA, theme, order and draft/publication. Full text expands in
+the card; drafts are filtered server-side. This is a small blog/article module,
+not standalone article URLs, RSS, scheduled publishing or a complete SEO blog.
+See [workflow and compatibility details](docs/blogg-insikter.md).
+
+The previous three cards are preserved on missing-field migration only; deleted
+posts and explicit empty lists are not restored. Existing factual claims and
+event dates are not newly verified. Own images use the existing, disabled-by-default
+Firebase image flow (choose **Inläggsbild**); bundled images work without activation.
+No billing, storage resources, collection or production writes are activated.
+
 ## Versioned Paketindex archive and salary evidence
 
 The CMS **Paketindex & Marknad** view now has a period/report-edition archive,

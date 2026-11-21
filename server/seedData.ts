@@ -1,8 +1,10 @@
+import { INITIAL_INSIGHT_POSTS } from '../shared/insightPosts.ts';
 import type { CMSStore } from '../src/types.ts';
 
 const now = '2026-11-18T10:00:00.000Z';
 
 export const INITIAL_CMS_DATA: CMSStore = {
+  insightPosts: structuredClone(INITIAL_INSIGHT_POSTS),
   schemaVersion: 4,
   updatedAt: now,
   merchants: [

@@ -1,3 +1,4 @@
+import type { InsightPost } from './types';
 import type { PaketindexObservation } from './types';
 import type { CmsImage, CmsAnalyticsReport, FirebaseFeatureStatus } from './types';
 import type { MapPoint } from './types';
@@ -77,6 +78,8 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  saveInsightPost: (post: InsightPost) => request<InsightPost>(`/api/insights/${post.id}`, { method: 'PUT', body: JSON.stringify(post) }),
+  deleteInsightPost: (id: string) => request<{ deleted: boolean }>(`/api/insights/${id}`, { method: 'DELETE' }),
   savePaketindexObservation: (row: PaketindexObservation) => request<PaketindexObservation>('/api/paketindex/archive', { method: 'POST', body: JSON.stringify(row) }),
   deletePaketindexObservation: (key: string) => request<{ deleted: boolean }>('/api/paketindex/archive', { method: 'DELETE', body: JSON.stringify({ key }) }),
   importPaketindexCsv: (csv: string, policy: 'reject' | 'skip' | 'replace', commit: boolean) => request<{
@@ -84,9 +87,9 @@ export const api = {
   }>('/api/paketindex/archive/import', { method: 'POST', body: JSON.stringify({ csv, policy, commit }) }),
   firebaseFeatures: () => request<FirebaseFeatureStatus>('/api/firebase-features'),
   analyticsReport: (days: number) => request<{ enabled: boolean; report?: CmsAnalyticsReport }>(`/api/analytics/report?days=${days}`),
-  uploadImage: (payload: { targetType: 'partner' | 'ad'; targetId: string; data: string; alt: string }) =>
+  uploadImage: (payload: { targetType: 'partner' | 'ad' | 'insight'; targetId: string; data: string; alt: string }) =>
     request<{ image: CmsImage }>('/api/media/image', { method: 'POST', body: JSON.stringify(payload) }),
-  detachImage: (targetType: 'partner' | 'ad', targetId: string) =>
+  detachImage: (targetType: 'partner' | 'ad' | 'insight', targetId: string) =>
     request<{ detached: boolean }>('/api/media/image', { method: 'DELETE', body: JSON.stringify({ targetType, targetId }) }),
   upsertMapPoint: (point: MapPoint) => request<MapPoint>(`/api/map-points/${point.id}`, { method: 'PUT', body: JSON.stringify(point) }),
   deleteMapPoint: (id: string) => request<{ deleted: boolean }>(`/api/map-points/${id}`, { method: 'DELETE' }),

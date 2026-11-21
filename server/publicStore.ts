@@ -1,3 +1,4 @@
+import { INITIAL_INSIGHT_POSTS } from '../shared/insightPosts.ts';
 import type { CMSStore } from '../src/types.ts';
 
 export function publicStore(store: CMSStore, admin = false): CMSStore {
@@ -27,6 +28,7 @@ export function publicStore(store: CMSStore, admin = false): CMSStore {
     };
   }
   const result = structuredClone(store);
+  result.insightPosts = (result.insightPosts ?? INITIAL_INSIGHT_POSTS).filter((post) => post.status === 'published');
   result.paketindexArchive = (result.paketindexArchive || []).filter((row) => row.status === 'published');
   result.mapPoints = (result.mapPoints || []).filter((point) => point.status === 'published');
   result.contactMessages = [];

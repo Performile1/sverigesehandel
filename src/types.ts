@@ -642,6 +642,7 @@ export interface MapPoint {
 }
 
 export interface CMSStore {
+  insightPosts?: InsightPost[];
   paketindexArchive?: PaketindexObservation[];
   mapPoints?: MapPoint[];
   schemaVersion?: number;
@@ -757,6 +758,7 @@ export type PortalTab =
   | 'kontakt';
 
 export type CMSSection =
+  | 'insights'
   | 'firebase'
   | 'overview'
   | 'discover'
@@ -824,4 +826,24 @@ export interface SalaryEstimate {
   sourceUrl: string;
   year: number;
   method: string;
+}
+
+export interface InsightPost {
+  id: string;
+  title: string;
+  category: string;
+  excerpt: string;
+  body: string;
+  imageKey: '' | 'checkout' | 'logistics' | 'events';
+  imageAlt: string;
+  image?: CmsImage;
+  ctaLabel: string;
+  targetTab: PortalTab | '';
+  targetUrl: string;
+  sourceUrl: string;
+  author: string;
+  publishedDate: string;
+  theme: 'light' | 'dark';
+  order: number;
+  status: PublishStatus;
 }

@@ -264,6 +264,7 @@ export default function App() {
           <>
             {activeTab === 'marknad' && (
               <MarknadView
+                insightPosts={store.insightPosts}
                 mapPoints={store.mapPoints}
                 merchants={store.merchants}
                 logisticsProviders={store.logisticsProviders}
