@@ -1,3 +1,5 @@
+import { companyInboxAvailable } from './memberGovernance.ts';
+import { DEFAULT_COMMUNITY_SETTINGS } from '../shared/memberGovernance.ts';
 import { INITIAL_INSIGHT_POSTS } from '../shared/insightPosts.ts';
 import type { CMSStore } from '../src/types.ts';
 
@@ -13,13 +15,16 @@ export function publicStore(store: CMSStore, admin = false): CMSStore {
   if (admin) {
     return {
       ...store,
+      communitySettings: { ...(store.memberGovernance?.settings ?? DEFAULT_COMMUNITY_SETTINGS) },
       partners: (store.partners || []).map((p) => ({
         ...p,
         hasDirectIntroEmail: Boolean(p.introEmail?.trim()),
+        hasCompanyIntroInbox: companyInboxAvailable(store,'partner',p.id,true),
       })),
       logisticsProviders: (store.logisticsProviders || []).map((lp) => ({
         ...lp,
         hasDirectIntroEmail: Boolean(lp.introEmail?.trim()),
+        hasCompanyIntroInbox: companyInboxAvailable(store,'logistics',lp.id,true),
       })),
       communityMemberCount,
       communityVerifiedCount,
@@ -28,22 +33,27 @@ export function publicStore(store: CMSStore, admin = false): CMSStore {
     };
   }
   const result = structuredClone(store);
+  delete result.memberGovernance;
+  result.communitySettings = { ...(store.memberGovernance?.settings ?? DEFAULT_COMMUNITY_SETTINGS) };
   result.insightPosts = (result.insightPosts ?? INITIAL_INSIGHT_POSTS).filter((post) => post.status === 'published');
   result.paketindexArchive = (result.paketindexArchive || []).filter((row) => row.status === 'published');
   result.mapPoints = (result.mapPoints || []).filter((point) => point.status === 'published');
   result.contactMessages = [];
   result.communityMembers = [];
   result.directMessages = [];
-  result.communityThreads = (result.communityThreads || []).map((thread) => {
+  const hidden = store.memberGovernance?.hidden || [];
+  result.communityThreads = (result.communitySettings.enabled ? result.communityThreads || [] : [])
+    .filter((thread) => !hidden.some((h) => h.threadId === thread.id && !h.commentId)).map((thread) => {
     const cleanThread = { ...thread };
     delete cleanThread.authorUid;
     if (Array.isArray(cleanThread.comments)) {
-      cleanThread.comments = cleanThread.comments.map((c) => {
+      cleanThread.comments = cleanThread.comments.filter((c) => !hidden.some((h) => h.threadId === thread.id && h.commentId === c.id)).map((c) => {
         const cleanComment = { ...c };
         delete cleanComment.authorUid;
         return cleanComment;
       });
     }
+    cleanThread.replies = cleanThread.comments?.length || 0;
     return cleanThread;
   });
   result.communityMemberCount = communityMemberCount;
@@ -55,13 +65,13 @@ export function publicStore(store: CMSStore, admin = false): CMSStore {
   }
   result.partners = result.partners.map((partner) => {
     const hasDirectIntroEmail = Boolean(partner.introEmail?.trim());
-    const copy = { ...partner, hasDirectIntroEmail };
+    const copy = { ...partner, hasDirectIntroEmail, hasCompanyIntroInbox: companyInboxAvailable(store,'partner',partner.id,true) };
     delete copy.introEmail;
     return copy;
   });
   result.logisticsProviders = result.logisticsProviders.map((provider) => {
     const hasDirectIntroEmail = Boolean(provider.introEmail?.trim());
-    const copy = { ...provider, hasDirectIntroEmail };
+    const copy = { ...provider, hasDirectIntroEmail, hasCompanyIntroInbox: companyInboxAvailable(store,'logistics',provider.id,true) };
     delete copy.introEmail;
     return copy;
   });

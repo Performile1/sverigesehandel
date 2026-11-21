@@ -1,3 +1,4 @@
+import { isBlocked } from '../shared/memberGovernance.ts';
 import { firebaseFeatureStatus, prepareImage, uploadCmsImage, reportDays, getCmsAnalytics } from './firebaseFeatures.ts';
 import express, { type RequestHandler, type ErrorRequestHandler } from 'express';
 import type { CmsDataStore } from './firestoreStore.ts';
@@ -23,7 +24,10 @@ const route = (handler: RequestHandler): RequestHandler => (req, res, next) => {
 const isMemberCommentRoute = (path: string) => /^\/api\/community\/threads\/[^/]+\/comments$/.test(path);
 const isMemberMessageReadRoute = (path: string) => /^\/api\/community\/messages\/[^/]+\/read$/.test(path);
 
-const isMemberSubmission = (method: string, path: string) => (
+const isCompanyMemberRoute = (method: string, path: string) => (method === 'GET' && path === '/api/company/workspace') ||
+  (method === 'POST' && ['/api/company/proposals', '/api/company/inbox/read', '/api/community/reports'].includes(path));
+
+const isMemberSubmission = (method: string, path: string) => isCompanyMemberRoute(method, path) || (
   (method === 'POST' && (
     ['/api/contact', '/api/community/threads', '/api/community/members', '/api/community/messages'].includes(path) ||
     /^\/api\/community\/threads\/[^/]+\/upvote$/.test(path) ||
@@ -70,6 +74,9 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     if (!publicRead && !isMemberSubmission(req.method, path) && !admin) {
       res.status(authorization ? 403 : 401).json({ error: 'CMS-administratör krävs. Öppna CMS och logga in.' });
       return;
+    }
+    if (identity && isBlocked((await store.getStore()).memberGovernance, identity.uid)) {
+      res.status(403).json({ error: 'Ditt konto är blockerat i Sveriges E-handel. Kontakta redaktionen.' }); return;
     }
     next();
   }));
@@ -529,6 +536,29 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.json(updated);
   }));
 
+  const governanceRoute = (handler: RequestHandler) => route(async (req, res, next) => {
+    try { await handler(req, res, next); } catch (error) {
+      const e = error as Error & { status?: number };
+      if ([400,403,404,409,413].includes(e.status || 0)) { res.status(e.status!).json({ error: e.message }); return; }
+      throw error;
+    }
+  });
+  app.get('/api/company/workspace', governanceRoute(async (_req, res) => {
+    res.json(await store.getCompanyWorkspace(res.locals.cmsIdentity));
+  }));
+  app.post('/api/company/proposals', governanceRoute(async (req, res) => {
+    res.json(await store.executeMemberGovernance(res.locals.cmsIdentity, 'proposal', req.body));
+  }));
+  app.post('/api/company/inbox/read', governanceRoute(async (req, res) => {
+    res.json(await store.executeMemberGovernance(res.locals.cmsIdentity, 'inbox-read', req.body));
+  }));
+  app.post('/api/community/reports', governanceRoute(async (req, res) => {
+    res.json(await store.executeMemberGovernance(res.locals.cmsIdentity, 'report', req.body));
+  }));
+  app.post('/api/governance/:operation', governanceRoute(async (req, res) => {
+    res.json(await store.executeMemberGovernance(res.locals.cmsIdentity, req.params.operation, req.body));
+  }));
+
   // --- COMMUNITY ---
   app.post('/api/community/threads', route(async (req, res) => {
     if (!req.body?.title) {
@@ -540,7 +570,7 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       authorUid: res.locals.cmsIdentity?.uid,
       authorEmail: res.locals.cmsIdentity?.email,
     });
-    res.status(201).json(created);
+    res.status(201).json(publicStore({ ...await store.getStore(), communityThreads: [created] }).communityThreads[0]);
   }));
 
   app.post('/api/community/threads/:id/comments', route(async (req, res) => {
@@ -554,16 +584,16 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       res.status(404).json({ error: 'Tråd hittades inte.' });
       return;
     }
-    res.status(201).json(updated);
+    res.status(201).json(publicStore({ ...await store.getStore(), communityThreads: [updated] }).communityThreads[0]);
   }));
 
   app.post('/api/community/threads/:id/upvote', route(async (req, res) => {
-    const updated = await store.upvoteCommunityThread(req.params.id);
+    const updated = await store.upvoteCommunityThread(req.params.id, res.locals.cmsIdentity.uid);
     if (!updated) {
       res.status(404).json({ error: 'Tråd hittades inte.' });
       return;
     }
-    res.json(updated);
+    res.json(publicStore({ ...await store.getStore(), communityThreads: [updated] }).communityThreads[0]);
   }));
 
   app.delete('/api/community/threads/:id', route(async (req, res) => {
@@ -619,13 +649,15 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   }));
 
   app.post('/api/community/members', route(async (req, res) => {
+    if (!res.locals.cmsIdentity.email) { res.status(403).json({ error: 'Verifierad inloggningsadress krävs.' }); return; }
     if (!req.body?.name || !req.body?.email) {
       res.status(400).json({ error: 'Namn och e-post krävs.' });
       return;
     }
     const created = await store.addCommunityMember({
       ...req.body,
-      authorUid: res.locals.cmsIdentity?.uid,
+      email: res.locals.cmsIdentity.email,
+      authorUid: res.locals.cmsIdentity.uid,
     });
     res.status(201).json(created);
   }));
@@ -636,7 +668,7 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       res.status(400).json({ error: 'Ogiltig verifieringsstatus.' });
       return;
     }
-    const updated = await store.updateCommunityMemberStatus(req.params.id, status);
+    const updated = await store.updateCommunityMemberStatus(req.params.id, status, res.locals.cmsIdentity);
     if (!updated) {
       res.status(404).json({ error: 'Medlemsansökan hittades inte.' });
       return;
@@ -645,7 +677,7 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   }));
 
   app.delete('/api/community/members/:id', route(async (req, res) => {
-    const ok = await store.deleteCommunityMember(req.params.id);
+    const ok = await store.deleteCommunityMember(req.params.id, res.locals.cmsIdentity);
     if (!ok) {
       res.status(404).json({ error: 'Medlemsansökan hittades inte.' });
       return;
@@ -1047,6 +1079,7 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   app.use('/api', (_req, res) => { res.status(404).json({ error: 'API-routen finns inte.' }); });
   const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     console.error('CMS API error:', error instanceof Error ? error.message : 'Unknown error');
+    if (error.status === 403) { res.status(403).json({ error: 'Åtkomst nekad: kontot saknar behörighet, innehållet är dolt eller communityfunktionen är pausad.' }); return; }
     const status = error.status === 400 || error.status === 413 ? error.status : 503;
     res.status(status).json({ error: status === 503
       ? 'CMS-databasen kunde inte nås. Kontrollera Firebase-konfigurationen på servern.'

@@ -24,7 +24,7 @@ const NAV_ITEMS: Array<{ id: PortalTab; label: string }> = [
 
 export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, authReady, signingIn, signInWithGoogle, signOutUser } = useFirebase();
+  const { user, isAdmin, authReady, signingIn, signInWithGoogle, signOutUser } = useFirebase();
 
   const shortUserLabel =
     user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Konto';
@@ -102,7 +102,7 @@ export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarPro
                 : 'bg-[#FECC02] text-[#040B16] hover:bg-[#EAB308]'
             }`}
           >
-            {mode === 'cms' ? 'Visa portal' : 'Öppna CMS'}
+            {mode === 'cms' ? 'Visa portal' : user?.emailVerified && !isAdmin ? 'Min företagsyta' : 'Öppna CMS'}
           </button>
 
           <button

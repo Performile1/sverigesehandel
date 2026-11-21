@@ -11,6 +11,31 @@ Paketindex history, analytics, job descriptions, salary estimates, regional maps
 and direct links to the correct news articles. The plan does not implement or
 activate these features.
 
+## Company editors and community moderation
+
+CMS **Medlemmar & Community** manages approved-member company links, per-person
+proposal/intro/contact permissions, proposals, deletion requests, community
+switches, reports, hide/restore, administrative UID blocks and a bounded audit log.
+A verified non-admin opens **Min företagsyta**, never the global CMS, and sees only
+assigned fields/proposals and explicitly routed company inbox messages.
+
+Company editors cannot publish, directly update/delete listings, alter routing,
+or grant permissions. Sveriges E-handel approves/rejects field-level proposals;
+conflicting intervening edits stop approval. Approved removal requests unpublish
+rather than physically delete listings. Rights are rechecked server-side.
+
+Community users can report offensive/incorrect/spam content. Reports never
+remove content automatically. Hidden material is filtered from public reads and
+mutation responses. UID blocks deny authenticated API operations, not anonymous
+reading or global Firebase authentication. Membership email is pinned to the
+verified token; company grants require an admin-approved UID-bound profile.
+
+See [workflows, routing, security limits and test prerequisites](docs/medlemmar-foretag-community.md).
+No existing user receives a company grant on startup. No Firebase roles, IAM,
+MFA, billing, mail services, raw IP analytics or heatmaps are activated. 2FA,
+real-account testing, privacy/retention and larger-scale storage remain separate
+work before a production rollout to company editors.
+
 ## Editable Blogg & Insikter cards
 
 CMS **Blogg & Insikter** now manages the former three static Market cards and

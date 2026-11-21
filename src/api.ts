@@ -1,3 +1,4 @@
+import type { CompanyWorkspace } from './types';
 import type { InsightPost } from './types';
 import type { PaketindexObservation } from './types';
 import type { CmsImage, CmsAnalyticsReport, FirebaseFeatureStatus } from './types';
@@ -78,6 +79,11 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  companyWorkspace: () => request<CompanyWorkspace>('/api/company/workspace'),
+  companyProposal: (payload: unknown) => request<{ok:boolean}>('/api/company/proposals',{method:'POST',body:JSON.stringify(payload)}),
+  companyInboxRead: (id:string) => request<{ok:boolean}>('/api/company/inbox/read',{method:'POST',body:JSON.stringify({id})}),
+  governance: (operation:string,payload:unknown) => request<{ok:boolean}>(`/api/governance/${operation}`,{method:'POST',body:JSON.stringify(payload)}),
+  reportCommunity: (payload:{threadId:string;commentId:string;reason:string;detail:string}) => request<{ok:boolean}>('/api/community/reports',{method:'POST',body:JSON.stringify(payload)}),
   saveInsightPost: (post: InsightPost) => request<InsightPost>(`/api/insights/${post.id}`, { method: 'PUT', body: JSON.stringify(post) }),
   deleteInsightPost: (id: string) => request<{ deleted: boolean }>(`/api/insights/${id}`, { method: 'DELETE' }),
   savePaketindexObservation: (row: PaketindexObservation) => request<PaketindexObservation>('/api/paketindex/archive', { method: 'POST', body: JSON.stringify(row) }),

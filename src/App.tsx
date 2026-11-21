@@ -1,3 +1,5 @@
+import { visibleCommunityThreads } from '../shared/memberGovernance';
+import { CompanyWorkspace } from './components/CompanyWorkspace';
 import { CMSAccess } from './components/CMSAccess';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Loader2, X } from 'lucide-react';
@@ -237,7 +239,7 @@ export default function App() {
       />
 
       <main className="flex-1">
-        {mode === 'cms' ? (
+        {mode === 'cms' && user?.emailVerified && !isAdmin ? <CompanyWorkspace key={user.uid} /> : mode === 'cms' ? (
           <CMSAccess isAdmin={isAdmin}>
             <CMSStudio
               store={store}
@@ -389,6 +391,7 @@ export default function App() {
                     entityName: partner.name,
                     entityRoutingMode: partner.introRoutingMode,
                     hasDirectIntroEmail: partner.hasDirectIntroEmail,
+                    hasCompanyIntroInbox: partner.hasCompanyIntroInbox,
                     defaultTopic: `Partnerintro: ${partner.name}`,
                   })
                 }
@@ -419,6 +422,7 @@ export default function App() {
                     entityName: lp.name,
                     entityRoutingMode: lp.introRoutingMode,
                     hasDirectIntroEmail: lp.hasDirectIntroEmail,
+                    hasCompanyIntroInbox: lp.hasCompanyIntroInbox,
                     defaultTopic: `3PL/4PL-intro: ${lp.name}`,
                   })
                 }
@@ -457,7 +461,8 @@ export default function App() {
             )}
             {activeTab === 'community' && (
               <CommunityView
-                threads={store.communityThreads}
+                threads={visibleCommunityThreads(store.communityThreads,store.memberGovernance)}
+                settings={store.memberGovernance?.settings || store.communitySettings}
                 pageCopy={store.pageContent?.community}
                 contactForms={store.contactForms}
                 adBanners={store.adBanners}

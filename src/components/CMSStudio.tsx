@@ -1,3 +1,4 @@
+import { MemberGovernancePanel } from './MemberGovernancePanel';
 import { InsightPostsEditor } from './InsightPostsEditor';
 import { PaketindexArchiveEditor } from './PaketindexArchiveEditor';
 import { CmsFirebasePanel } from './CmsFirebasePanel';
@@ -31,6 +32,7 @@ import {
   Sparkles,
   Trash2,
   Warehouse,
+  Users,
 } from 'lucide-react';
 import { api } from '../api';
 import { useFirebase } from '../contexts/FirebaseContext';
@@ -787,6 +789,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
     { id: 'pages', label: 'Sidtexter & Kontakt', icon: FileText },
     { id: 'content', label: 'Annons, Data & Inkorg', icon: MapPin, count: store.adBanners.length + store.contactMessages.length },
     { id: 'firebase', label: 'Firebase: Bilder & Statistik', icon: BarChart3 },
+    { id: 'members', label: 'Medlemmar & Community', icon: Users },
     { id: 'overview', label: 'Översikt & Backup', icon: Database },
   ];
 
@@ -3084,6 +3087,8 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
               onOpenInbox={() => setSection('content')}
             />
           )}
+
+          {section === 'members' && <MemberGovernancePanel store={store} onRefresh={onRefresh} />}
 
           {section === 'insights' && <InsightPostsEditor posts={store.insightPosts || []} onRefresh={onRefresh} />}
 
