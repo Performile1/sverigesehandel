@@ -11,6 +11,22 @@ Paketindex history, analytics, job descriptions, salary estimates, regional maps
 and direct links to the correct news articles. The plan does not implement or
 activate these features.
 
+## Private staff profiles and individual inbox assignment
+
+CMS **Medlemmar & Community** and **Min företagsyta** now include private staff
+profiles: verified account email/UID, name, phone, position, current company,
+employment start/duration, expertise and optional Google/Firebase image URL.
+Profiles do not grant roles/company rights and are not added to the public/member
+directory. The already configured owner-admin address is displayed in CMS;
+saving a real admin's own profile can create an internal directory-hidden registry
+entry if missing. No Auth account or guessed UID is provisioned on deployment.
+
+Admin may assign an existing direct company inquiry to one eligible staff UID.
+This narrows the company inbox (including read receipts), never grants access or
+changes already-sent mail routing. Clearing assignment returns it to the existing
+shared company inbox. See [privacy, workflows and test gates](docs/personalprofiler-tilldelning.md).
+No new upload service, notifications, MFA or production profiles are activated.
+
 ## Company editors and community moderation
 
 CMS **Medlemmar & Community** manages approved-member company links, per-person

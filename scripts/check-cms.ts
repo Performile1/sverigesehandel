@@ -1,3 +1,5 @@
+import { FirebaseProvider } from '../src/contexts/FirebaseContext.tsx';
+import { validStaffProfiles, validEmploymentDate, employmentDuration, validProfilePhoto } from '../shared/staffProfiles.ts';
 import { MemberGovernancePanel } from '../src/components/MemberGovernancePanel.tsx';
 import { CommunityReportButton } from '../src/components/CommunityReportButton.tsx';
 import { emptyGovernance, DEFAULT_COMMUNITY_SETTINGS, validGovernance, visibleCommunityThreads } from '../shared/memberGovernance.ts';
@@ -471,6 +473,38 @@ try {
   snapshot.communityMembers.push({ id: 'gov-member', name: 'Company editor', email: 'fixture@example.invalid', role: 'Editor', city: 'Stockholm', authorUid: 'fixture-user', verificationStatus: 'verified', createdAt: '2026-01-01' });
   snapshot.communityMembers.push({ id: 'gov-other', name: 'Other editor', email: 'two@example.invalid', role: 'Editor', city: 'Stockholm', authorUid: 'fixture-user-two', verificationStatus: 'verified', createdAt: '2026-01-01' });
   const govAdmin = 'governance-admin';
+  assert.equal((await request('/api/staff/me')).status,401);
+  const beforeProfileGet=JSON.stringify(snapshot);
+  await request('/api/staff/me','GET',undefined,'member-fixture');
+  assert.equal(JSON.stringify(snapshot),beforeProfileGet,'Profile GET creates no personal/member records');
+  assert.equal((await request('/api/staff/me','GET',undefined,'unverified-fixture')).status,403);
+  const staffData={name:'Staff fixture',phone:'+46 70 000 00 00',position:'Logistikansvarig',company:'Example',employmentSince:'2024-01-01',expertise:'Frakt, returfrågor',photoUrl:''};
+  assert.equal((await request('/api/staff/me','PUT',{...staffData,uid:'fixture-user-two',email:'other@example.invalid',admin:true},'member-fixture')).status,200);
+  const myProfile=await (await request('/api/staff/me','GET',undefined,'member-fixture')).json();
+  assert.equal(myProfile.profile.uid,'fixture-user'); assert.equal(myProfile.profile.email,'fixture@example.invalid'); assert.equal(myProfile.identity.admin,false);
+  assert.equal((await request('/api/staff/fixture-user-two','PUT',staffData,'member-fixture')).status,403);
+  const otherProfile=await (await request('/api/staff/me','GET',undefined,'member-two')).json();
+  assert.equal(otherProfile.profile,null);
+  assert.equal((await request('/api/staff/fixture-user-two','PUT',{...staffData,name:'Other staff'},govAdmin)).status,200);
+  assert.equal((await request('/api/staff/me','PUT',{...staffData,employmentSince:'2099-01-01'},'member-fixture')).status,400);
+  assert.equal((await request('/api/staff/me','PUT',{...staffData,photoUrl:'https://evil.invalid/track.jpg'},'member-fixture')).status,400);
+  assert.equal((await request('/api/staff/me','PUT',{...staffData,phone:'<script>'},'member-fixture')).status,400);
+  assert.equal(publicStore(snapshot).staffProfiles,undefined);
+  assert.ok(snapshot.memberGovernance!.audit.some((a)=>a.action==='staff-profile-saved'));
+  assert.ok(!JSON.stringify(publicStore(snapshot)).includes('+46 70 000 00 00'));
+  assert.ok(!validStaffProfiles([{...myProfile.profile}, {...myProfile.profile}]));
+  assert.ok(!validateSnapshot({...snapshot,staffProfiles:[{...myProfile.profile,photoUrl:'javascript:alert(1)'}]}));
+  assert.equal(employmentDuration('2024-01-01',new Date('2026-11-21T00:00:00Z')),'2 år och 10 månader');
+  assert.equal(validEmploymentDate('2026-02-30'),false);
+  assert.equal(validProfilePhoto('https://lh3.googleusercontent.com/a/fixture-photo'),true);
+  assert.equal(validProfilePhoto('https://lh3.googleusercontent.com.evil.invalid/photo'),false);
+  assert.equal(validProfilePhoto('https://user:pass@lh3.googleusercontent.com/photo'),false);
+  assert.equal((await request('/api/staff/me','PUT',{...staffData,name:'Fixture administrator'},govAdmin)).status,200);
+  const adminStaff=await (await request('/api/staff/me','GET',undefined,govAdmin)).json();
+  assert.equal(adminStaff.identity.admin,true);
+  assert.ok(snapshot.communityMembers.some((m)=>m.authorUid==='fixture-admin' && m.verificationStatus==='verified'));
+  assert.ok(!(await (await request('/api/community/directory','GET',undefined,'member-fixture')).json()).members.some((m:any)=>m.id==='staff-fixture-admin'));
+
   assert.equal((await request('/api/community/members/no-member/status','PUT',{verificationStatus:'verified'},govAdmin)).status,404);
   assert.equal((await request('/api/community/members/no-member','DELETE',undefined,govAdmin)).status,404);
   const govPartner = snapshot.partners[1]; const govOtherPartner = snapshot.partners[2];
@@ -521,12 +555,28 @@ try {
   assert.equal((await propose(proposalInput)).status,403);
   await actGov('link',{...linkInput,receiveMessages:true,includeHistory:true});
   assert.equal((await (await request('/api/company/workspace','GET',undefined,'member-fixture')).json()).messages.length,3);
+  await actGov('link',{...linkInput,memberId:'gov-other',receiveMessages:true,includeHistory:true});
+  assert.ok((await (await request('/api/company/workspace','GET',undefined,'member-two')).json()).messages.some((m:any)=>m.id==='gov-intro'));
+  assert.equal((await actGov('assign-message',{id:'gov-intro',uid:'fixture-user-two'},'member-fixture')).status,403);
+  assert.equal((await actGov('assign-message',{id:'gov-intro',uid:'unknown-user'})).status,403);
+  assert.equal((await actGov('assign-message',{id:'gov-editorial',uid:'fixture-user-two'})).status,400);
+  assert.equal((await actGov('assign-message',{id:'gov-intro',uid:'fixture-user-two'})).status,200);
+  assert.ok(!(await (await request('/api/company/workspace','GET',undefined,'member-fixture')).json()).messages.some((m:any)=>m.id==='gov-intro'));
+  assert.ok((await (await request('/api/company/workspace','GET',undefined,'member-two')).json()).messages.some((m:any)=>m.id==='gov-intro'));
+  assert.equal((await request('/api/company/inbox/read','POST',{id:'gov-intro'},'member-fixture')).status,403);
+  assert.ok(snapshot.memberGovernance!.audit.some((a)=>a.action==='company-message-assigned'));
+  assert.equal((await actGov('assign-message',{id:'gov-intro',uid:''})).status,200);
+  assert.ok((await (await request('/api/company/workspace','GET',undefined,'member-fixture')).json()).messages.some((m:any)=>m.id==='gov-intro'));
+  await actGov('revoke-link',{id:snapshot.memberGovernance!.links.find((l)=>l.uid==='fixture-user-two')!.id});
+  assert.equal((await actGov('assign-message',{id:'gov-intro',uid:'fixture-user-two'})).status,403);
+
   // A real direct-intro submission can use the company inbox without a guessed recipient email.
   await service.upsertPartner({id:govPartner.id,name:govPartner.name,introRoutingMode:'direct',introEmail:''});
-  const directToCompany = await request('/api/contact','POST',{name:'Buyer',email:'buyer@example.invalid',topic:'Company intro',message:'Please contact us',submissionType:'intro',targetEntityType:'partner',targetEntityId:govPartner.id},'member-two');
+  const directToCompany = await request('/api/contact','POST',{name:'Buyer',email:'buyer@example.invalid',topic:'Company intro',message:'Please contact us',submissionType:'intro',targetEntityType:'partner',targetEntityId:govPartner.id,assignedStaffUid:'attacker-uid'},'member-two');
   assert.equal(directToCompany.status,201);
   const directToCompanyMessage=await directToCompany.json();
   assert.equal(directToCompanyMessage.routingMode,'direct-partner');
+  assert.equal(directToCompanyMessage.assignedStaffUid,undefined,'Sender cannot select an arbitrary staff recipient');
   const afterContactWorkspace=await (await request('/api/company/workspace','GET',undefined,'member-fixture')).json();
   assert.ok(afterContactWorkspace.messages.some((m:any)=>m.id===directToCompanyMessage.id));
   assert.ok(!JSON.stringify(afterContactWorkspace).includes('routedToEmail'));
@@ -568,6 +618,8 @@ try {
   assert.equal(publicStore(snapshot).communityThreads.length,0);
   await actGov('settings',{...DEFAULT_COMMUNITY_SETTINGS});
   assert.equal((await actGov('block',{uid:'fixture-user',reason:'Repeated abuse',blocked:true})).status,200);
+  assert.equal((await request('/api/staff/me','GET',undefined,'member-fixture')).status,403);
+  assert.equal((await request('/api/staff/me','PUT',staffData,'member-fixture')).status,403);
   assert.equal((await request('/api/company/workspace','GET',undefined,'member-fixture')).status,403);
   assert.equal((await request('/api/cms/store','GET',undefined,'member-fixture')).status,403);
   assert.equal((await request('/api/community/reports','POST',{...reportPayload,commentId:reportComment.id},'member-fixture')).status,403);
@@ -583,8 +635,10 @@ try {
 
   assert.ok(validGovernance(snapshot.memberGovernance));
   assert.ok(snapshot.memberGovernance!.audit.some((a)=>a.detail==='Repeated abuse'));
-  const moderationHtml=renderToString(createElement(MemberGovernancePanel,{store:snapshot,onRefresh:async()=>{}}));
+  const moderationHtml=renderToString(createElement(FirebaseProvider,null,createElement(MemberGovernancePanel,{store:snapshot,onRefresh:async()=>{}})));
   assert.ok(moderationHtml.includes('Communityinställningar') && moderationHtml.includes('Ändringsförslag och borttagningsbegäranden'));
+  assert.ok(moderationHtml.includes(ADMIN_EMAIL) && moderationHtml.includes('Konfigurerad ägaradministratör'));
+  assert.ok(moderationHtml.includes('Tilldela företagsärende till specifik personal'));
   assert.ok(moderationHtml.includes('Anmälningar av innehåll') && moderationHtml.includes('Blockera konto'));
   const reportButtonHtml=renderToString(createElement(CommunityReportButton,{threadId:reportThread.id,signedIn:false,onSignIn:()=>{}}));
   assert.ok(reportButtonHtml.replace(/<!-- -->/g,'').includes('Anmäl inlägg'));

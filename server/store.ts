@@ -1,4 +1,6 @@
-import { isBlocked } from '../shared/memberGovernance.ts';
+import { validStaffProfile, validStaffProfiles } from '../shared/staffProfiles.ts';
+import type { StaffProfile } from '../src/types.ts';
+import { isBlocked, emptyGovernance } from '../shared/memberGovernance.ts';
 import { runGovernance, companyWorkspace, assertCommunityAction, companyInboxAvailable } from './memberGovernance.ts';
 import type { CmsIdentity } from './authPolicy.ts';
 import { INITIAL_INSIGHT_POSTS, validInsightPost, validInsightPosts } from '../shared/insightPosts.ts';
@@ -415,6 +417,7 @@ function ensureStoreFile(): CMSStore {
       paketindexArchive: upgradedRaw.paketindexArchive,
       insightPosts: upgradedRaw.insightPosts,
       memberGovernance: upgradedRaw.memberGovernance,
+      staffProfiles: upgradedRaw.staffProfiles,
       orderBenchmarks:
         Array.isArray(upgradedRaw.orderBenchmarks) && upgradedRaw.orderBenchmarks.length > 0
           ? upgradedRaw.orderBenchmarks
@@ -1445,7 +1448,7 @@ export function getMemberDirectory(requesterUid?: string, requesterEmail?: strin
   const rank = (status?: string) => (status === 'verified' ? 0 : 1);
 
   return (store.communityMembers || [])
-    .filter((m) => m.verificationStatus !== 'rejected' && !store.memberGovernance?.blocks.some((b) => b.uid === m.authorUid))
+    .filter((m) => !m.directoryHidden && m.verificationStatus !== 'rejected' && !store.memberGovernance?.blocks.some((b) => b.uid === m.authorUid))
     .slice()
     .sort((a, b) => rank(a.verificationStatus) - rank(b.verificationStatus))
     .map((m): PublicMemberProfile => ({
@@ -2174,4 +2177,46 @@ export function executeMemberGovernance(actor: CmsIdentity, operation: string, i
 }
 export function getCompanyWorkspace(actor: CmsIdentity) {
   return companyWorkspace(ensureStoreFile(), actor);
+}
+
+export function getMyStaffProfile(actor: CmsIdentity) {
+  if (!actor.verified || !actor.email || isBlocked(ensureStoreFile().memberGovernance,actor.uid)) {
+    throw Object.assign(new Error('Verifierad inloggning krävs.'),{status:403});
+  }
+  const profile = ensureStoreFile().staffProfiles?.find((p)=>p.uid===actor.uid) || null;
+  return {profile,identity:{uid:actor.uid,email:actor.email,admin:actor.admin}};
+}
+export function saveStaffProfile(actor: CmsIdentity, input: unknown, targetUid?: string): StaffProfile {
+  if (!actor.verified || !actor.email) throw Object.assign(new Error('Verifierad inloggning krävs.'),{status:403});
+  const store=structuredClone(ensureStoreFile());
+  if (isBlocked(store.memberGovernance,actor.uid)) throw Object.assign(new Error('Åtkomst nekad.'),{status:403});
+  if (targetUid && targetUid!==actor.uid && !actor.admin) throw Object.assign(new Error('Du kan bara redigera din egen profil.'),{status:403});
+  const uid=targetUid || actor.uid;
+  const previous=store.staffProfiles?.find((p)=>p.uid===uid);
+  const member=store.communityMembers.find((m)=>m.authorUid===uid);
+  const email=uid===actor.uid ? actor.email : member?.email || previous?.email;
+  if (!email) throw Object.assign(new Error('Målprofilen kräver en redan UID-kopplad medlem.'),{status:400});
+  if (!input || typeof input!=='object' || Array.isArray(input)) throw Object.assign(new Error('Ogiltig profil.'),{status:400});
+  const values=input as Record<string,unknown>;
+  if (['name','phone','position','company','employmentSince','expertise','photoUrl'].some((key)=>values[key]!==undefined&&typeof values[key]!=='string')) throw Object.assign(new Error('Profilfält måste vara text.'),{status:400});
+  const profile: StaffProfile={uid,email,name:String(values.name ?? ''),phone:String(values.phone ?? ''),position:String(values.position ?? ''),
+    company:String(values.company ?? ''),employmentSince:String(values.employmentSince ?? ''),expertise:String(values.expertise ?? ''),photoUrl:String(values.photoUrl ?? ''),updatedAt:new Date().toISOString()};
+  if (!validStaffProfile(profile)) throw Object.assign(new Error('Kontrollera namn, telefon, position, anställningsdatum och godkänd bildadress.'),{status:400});
+  const profiles=[...(store.staffProfiles || []).filter((p)=>p.uid!==uid),profile];
+  if (!validStaffProfiles(profiles) || Buffer.byteLength(JSON.stringify({...store,staffProfiles:profiles}),'utf8')>890000) {
+    throw Object.assign(new Error('Profilregistret är fullt. Arkivering/separata samlingar krävs.'),{status:413});
+  }
+  store.staffProfiles=profiles;
+  // Record an actual authenticated admin's profile without creating an Auth user or
+  // granting roles based on submitted email. This also makes the owner visible in CMS.
+  if (uid===actor.uid && actor.admin && !member) {
+    if (store.communityMembers.length>=500) throw Object.assign(new Error('Medlemsregistret är fullt.'),{status:413});
+    store.communityMembers.push({id:`staff-${actor.uid}`,directoryHidden:true,authorUid:actor.uid,email:actor.email,name:profile.name,role:profile.position || 'Administratör',
+      company:profile.company || 'Sveriges E-handel',city:'',verificationStatus:'verified',verifiedAt:profile.updatedAt,createdAt:profile.updatedAt});
+  }
+  const governance=store.memberGovernance ?? emptyGovernance();
+  governance.audit.unshift({id:`profile-${Date.now()}-${Math.random().toString(36).slice(2,9)}`,actorUid:actor.uid,action:'staff-profile-saved',target:uid,createdAt:profile.updatedAt});
+  governance.audit=governance.audit.slice(0,500);store.memberGovernance=governance;
+  if (Buffer.byteLength(JSON.stringify(store),'utf8')>890000) throw Object.assign(new Error('CMS-lagringen är full.'),{status:413});
+  saveStore(store);return profile;
 }

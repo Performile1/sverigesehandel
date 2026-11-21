@@ -1,3 +1,4 @@
+import type { StaffProfile, MyStaffProfile } from './types';
 import type { CompanyWorkspace } from './types';
 import type { InsightPost } from './types';
 import type { PaketindexObservation } from './types';
@@ -79,6 +80,8 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  myStaffProfile:()=>request<MyStaffProfile>('/api/staff/me'),
+  saveStaffProfile:(profile:Partial<StaffProfile>,uid?:string)=>request<StaffProfile>(uid?`/api/staff/${uid}`:'/api/staff/me',{method:'PUT',body:JSON.stringify(profile)}),
   companyWorkspace: () => request<CompanyWorkspace>('/api/company/workspace'),
   companyProposal: (payload: unknown) => request<{ok:boolean}>('/api/company/proposals',{method:'POST',body:JSON.stringify(payload)}),
   companyInboxRead: (id:string) => request<{ok:boolean}>('/api/company/inbox/read',{method:'POST',body:JSON.stringify({id})}),
