@@ -1,3 +1,4 @@
+import type { UserInvitation } from './userInvitation.ts';
 import { parseCmsUserInput } from './cmsUsers.ts';
 import type { ResolvedCmsUser } from './cmsUsers.ts';
 import { validStaffProfile, validStaffProfiles } from '../shared/staffProfiles.ts';
@@ -2248,4 +2249,27 @@ export function registerCmsUser(actor:CmsIdentity, raw:unknown, account:Resolved
   g.audit=g.audit.slice(0,500);store.memberGovernance=g;
   if (Buffer.byteLength(JSON.stringify(store),'utf8')>890000) throw Object.assign(new Error('CMS-lagringen är full.'),{status:413});
   saveStore(store);return {memberId:member.id,uid:account.uid,alreadyRegistered:false,authCreated:account.created};
+}
+
+export function prepareUserInvitation(actor:CmsIdentity,uid:string,from:string):{status:'ready'|'already-accepted'|'needs-review';invitation:UserInvitation} {
+  const store=structuredClone(ensureStoreFile());
+  if (!actor.admin||!actor.verified||isBlocked(store.memberGovernance,actor.uid)||isBlocked(store.memberGovernance,uid)) throw Object.assign(new Error('Åtkomst nekad.'),{status:403});
+  const member=store.communityMembers.find((m)=>m.authorUid===uid);
+  if(!member)throw Object.assign(new Error('Användaren saknas.'),{status:404});
+  if(member.invitation){
+    if(member.invitation.email!==member.email) return {status:'needs-review',invitation:member.invitation};
+    if(member.invitation.acceptedAt)return {status:'already-accepted',invitation:member.invitation};
+    if(Date.now()-Date.parse(member.invitation.startedAt)>23*3600000)return {status:'needs-review',invitation:member.invitation};
+    return {status:'ready',invitation:member.invitation};
+  }
+  if(!from || from.length>320 || /[\r\n]/.test(from))throw Object.assign(new Error('Ogiltig avsändarkonfiguration.'),{status:400});
+  member.invitation={email:member.email,name:member.name,from,startedAt:new Date().toISOString()};
+  saveStore(store);return {status:'ready',invitation:member.invitation};
+}
+export function markUserInvitationAccepted(actor:CmsIdentity,uid:string,startedAt:string) {
+  const store=ensureStoreFile();
+  if(!actor.admin||!actor.verified||isBlocked(store.memberGovernance,actor.uid))throw Object.assign(new Error('Åtkomst nekad.'),{status:403});
+  const member=store.communityMembers.find((m)=>m.authorUid===uid);
+  if(!member?.invitation||member.invitation.startedAt!==startedAt)throw Object.assign(new Error('Inbjudningsstatus ändrad.'),{status:409});
+  member.invitation.acceptedAt=new Date().toISOString();saveStore(store);return {ok:true};
 }

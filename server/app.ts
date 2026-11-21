@@ -1,3 +1,5 @@
+import { invitationConfigured, sendUserInvitation } from './userInvitation.ts';
+import type { InvitationStatus } from './userInvitation.ts';
 import { parseCmsUserInput, resolveCmsUser } from './cmsUsers.ts';
 import { isBlocked } from '../shared/memberGovernance.ts';
 import { firebaseFeatureStatus, prepareImage, uploadCmsImage, reportDays, getCmsAnalytics } from './firebaseFeatures.ts';
@@ -40,7 +42,7 @@ const isMemberSubmission = (method: string, path: string) => isCompanyMemberRout
 
 export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) => Promise<CmsIdentity>, features = {
   status: firebaseFeatureStatus, upload: uploadCmsImage, report: getCmsAnalytics,
-}, users = { resolve: resolveCmsUser }) {
+}, users = { resolve: resolveCmsUser }, invitations = { configured:invitationConfigured, send:sendUserInvitation, sender:()=>process.env.RESEND_FROM_EMAIL?.trim() || '' }) {
   const app = express();
   app.disable('x-powered-by');
   app.use('/api', (_req, res, next) => {
@@ -556,12 +558,26 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       if ((error as {status?:number}).status===409) {res.status(409).json({error:(error as Error).message});return;}
       res.status(503).json({error:'Firebase-kontot kunde inte kontrolleras/skapas. Ingen automatisk återaktivering eller rolländring sker. Kontrollera serverns Firebase Auth-behörigheter och försök sedan igen med samma e-post.'});return;
     }
-    try {res.json(await store.registerCmsUser(res.locals.cmsIdentity,input,account));}
+    let registration;
+    try {registration=await store.registerCmsUser(res.locals.cmsIdentity,input,account);}
     catch {
       // Auth and Firestore are separate systems. Do not delete an Auth account
       // after an uncertain commit or expose raw provider errors/credentials.
-      res.status(409).json({error:'Firebase-kontot är identifierat, men CMS-registreringen kunde inte bekräftas. Ladda om medlemsregistret och kontrollera posten. Försök vid behov igen med samma e-post; inget konto raderas automatiskt.'});
+      res.status(409).json({error:'Firebase-kontot är identifierat, men CMS-registreringen kunde inte bekräftas. Ladda om medlemsregistret och kontrollera posten. Försök vid behov igen med samma e-post; inget konto raderas automatiskt.'});return;
     }
+    let invitationStatus:InvitationStatus='not-configured';
+    if(invitations.configured()) {
+      try {
+        const prepared=await store.prepareUserInvitation(res.locals.cmsIdentity,account.uid,invitations.sender());
+        if(prepared.status==='already-accepted')invitationStatus='already-accepted';
+        else if(prepared.status==='needs-review')invitationStatus='needs-review';
+        else if(await invitations.send(prepared.invitation)){
+          invitationStatus='accepted';
+          await store.markUserInvitationAccepted(res.locals.cmsIdentity,account.uid,prepared.invitation.startedAt);
+        }else invitationStatus='failed';
+      }catch{invitationStatus='failed';}
+    }
+    res.json({...registration,invitationStatus});
   }));
   app.get('/api/staff/me',governanceRoute(async (_req,res)=>{res.json(await store.getMyStaffProfile(res.locals.cmsIdentity));}));
   app.put('/api/staff/me',governanceRoute(async (req,res)=>{res.json(await store.saveStaffProfile(res.locals.cmsIdentity,req.body));}));

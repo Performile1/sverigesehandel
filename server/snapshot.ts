@@ -187,5 +187,11 @@ export function validateSnapshot(value: unknown): value is CMSStore {
     ['regions', 'deliveryStats', 'paketindex', 'pageContent'].every((key) => store[key] !== null &&
       typeof store[key] === 'object' && !Array.isArray(store[key])) &&
     (Array.isArray(store.contactMessages) && store.contactMessages.every((message)=>message && (message.assignedStaffUid === undefined || (typeof message.assignedStaffUid === 'string' && message.assignedStaffUid.length > 0 && message.assignedStaffUid.length <= 128)))) &&
+    (Array.isArray(store.communityMembers) && store.communityMembers.every((member)=>member && (!member.invitation || (
+      typeof member.invitation.email==='string' && member.invitation.email.length<=160 &&
+      typeof member.invitation.name==='string' && member.invitation.name.length<=100 &&
+      typeof member.invitation.from==='string' && member.invitation.from.length<=320 &&
+      typeof member.invitation.startedAt==='string' && !Number.isNaN(Date.parse(member.invitation.startedAt)) &&
+      (member.invitation.acceptedAt===undefined || (typeof member.invitation.acceptedAt==='string' && !Number.isNaN(Date.parse(member.invitation.acceptedAt)))))))) &&
     typeof store.updatedAt === 'string';
 }

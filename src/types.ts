@@ -365,6 +365,7 @@ export interface CommunityThread {
 export type MemberVerificationStatus = 'pending' | 'verified' | 'rejected';
 
 export interface CommunityMember {
+  invitation?: {email:string;name:string;from:string;startedAt:string;acceptedAt?:string};
   directoryHidden?: boolean;
   id: string;
   name: string;
