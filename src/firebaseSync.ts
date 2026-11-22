@@ -1,3 +1,4 @@
+import { assertLayoutWriteAllowed } from './layoutPreview';
 import type { User } from 'firebase/auth';
 import {
   collection,
@@ -39,6 +40,7 @@ function isFirestoreTimestamp(val: unknown): boolean {
 }
 
 export async function ensureUserProfile(user: User): Promise<void> {
+  try{assertLayoutWriteAllowed();}catch{return;}
   if (!user.emailVerified) return;
   const uid = sanitizeFirestoreId(user.uid);
   const userPath = `users/${uid}`;
@@ -169,6 +171,7 @@ export async function toggleSavedSessionInFirestore(
   session: DCSession,
   isAdding: boolean
 ): Promise<void> {
+  assertLayoutWriteAllowed();
   const safeUid = sanitizeFirestoreId(uid);
   const safeSessionId = sanitizeFirestoreId(session.id);
   const path = `users/${safeUid}/savedSessions/${safeSessionId}`;

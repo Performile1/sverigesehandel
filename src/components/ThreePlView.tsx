@@ -1,3 +1,4 @@
+import { PageZone } from './PageLayout';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
@@ -248,7 +249,8 @@ export function ThreePlView({
   return (
     <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
       {/* Dark Hero Header & Filter Controls */}
-      <div className="bg-gradient-to-br from-[#040B16] via-[#0A1628] to-[#022C22] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+      <PageZone page="3pl" zone="content" widgets={{
+"header": (<div className="bg-gradient-to-br from-[#040B16] via-[#0A1628] to-[#022C22] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="font-mono text-xs text-[#FECC02] font-semibold">
@@ -380,10 +382,8 @@ export function ThreePlView({
             />
           </div>
         </div>
-      </div>
-
-      {/* Quick 3PL vs 4PL Decision Matrix */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      </div>),
+"decision": (<section className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-2">
           <div className="font-mono text-xs font-semibold text-slate-500">
             Fas 1 · Under 15 000 paket/år
@@ -419,26 +419,22 @@ export function ThreePlView({
             Oberoende kontrolltorn utan egna lastbilar som orkestrerar flera 3PL-lager, rederier, tull och transportavtal i ett gemensamt TMS/BI-lager (t.ex. 4PLCS, Inquire, KN Integrated).
           </p>
         </div>
-      </section>
-
-      <AdBannerSlot
+      </section>),
+"ad": (<AdBannerSlot
         banners={adBanners}
         placement="partners-top"
         onNavigate={onNavigate}
         onBookSlot={onBookAdSlot}
-      />
-
-      <PageFormSlot
+      />),
+"top-form": (<PageFormSlot
         forms={contactForms}
         page="3pl"
         position="top"
         adBanners={adBanners}
         onSubmitted={onRefresh}
         onNotify={onNotify}
-      />
-
-      {/* Empty State */}
-      {filtered.length === 0 ? (
+      />),
+"catalog": (filtered.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-4">
           <Warehouse className="w-8 h-8 text-slate-400 mx-auto" />
           <p className="text-sm text-slate-600">
@@ -771,19 +767,16 @@ export function ThreePlView({
             </article>
           ))}
         </div>
-      )}
-
-      <PageFormSlot
+      )),
+"mid-form": (<PageFormSlot
         forms={contactForms}
         page="3pl"
         position="mid"
         adBanners={adBanners}
         onSubmitted={onRefresh}
         onNotify={onNotify}
-      />
-
-      {/* Cross-links footer box */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      />),
+"cross-links": (<div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="text-xs font-mono font-semibold text-[#059669]">
             Koppla ihop lagervolym med fraktkostnad
@@ -808,16 +801,16 @@ export function ThreePlView({
             Jämför Transportörer &amp; TA &rarr;
           </button>
         </div>
-      </div>
-
-      <PageFormSlot
+      </div>),
+"bottom-form": (<PageFormSlot
         forms={contactForms}
         page="3pl"
         position="bottom"
         adBanners={adBanners}
         onSubmitted={onRefresh}
         onNotify={onNotify}
-      />
+      />)
+}}/>
 
       {/* Add / Edit Modal */}
       {modalOpen && (

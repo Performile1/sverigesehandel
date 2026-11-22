@@ -1,3 +1,4 @@
+import { PageZone, usePageWidgetEnabled } from './PageLayout';
 import { useMemo, useState } from 'react';
 import { CalendarCheck, Check, ExternalLink, MapPin, Plus, Ticket, X } from 'lucide-react';
 import { useFirebase } from '../contexts/FirebaseContext';
@@ -77,10 +78,13 @@ export function EventsView({
     }
   }
 
+  const directoryEnabled=usePageWidgetEnabled('event','directory');
+  const programEnabled=usePageWidgetEnabled('event','program');
   return (
     <div>
       {/* Hero Banner */}
-      <section className="bg-[#040B16] text-white hero-grid-bg border-b border-white/10">
+      <PageZone page="event" zone="hero" widgets={{
+"header": (<section className="bg-[#040B16] text-white hero-grid-bg border-b border-white/10">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
             <div className="lg:col-span-7 flex flex-col justify-center space-y-5">
@@ -101,18 +105,20 @@ export function EventsView({
               </p>
 
               <div className="flex flex-wrap gap-3 pt-2">
-                <a
+                {directoryEnabled&&<a
+                  onClick={e=>{e.preventDefault();document.getElementById('events-directory')?.scrollIntoView({behavior:'smooth'});}}
                   href="#events-directory"
                   className="px-6 py-3 rounded-xl bg-[#FECC02] hover:bg-[#EAB308] text-[#040B16] font-bold text-sm transition-colors"
                 >
                   Se alla mässor & event &rarr;
-                </a>
-                <a
+                </a>}
+                {programEnabled&&<a
+                  onClick={e=>{e.preventDefault();document.getElementById('dc-program')?.scrollIntoView({behavior:'smooth'});}}
                   href="#dc-program"
                   className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-semibold text-sm transition-colors"
                 >
                   D-Congress scenprogram
-                </a>
+                </a>}
               </div>
             </div>
 
@@ -165,27 +171,26 @@ export function EventsView({
             </div>
           </div>
         </div>
-      </section>
+      </section>)
+}}/>
 
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
-        <AdBannerSlot
+        <PageZone page="event" zone="content" widgets={{
+"ad": (<AdBannerSlot
           banners={adBanners}
           placement="event-top"
           onNavigate={onNavigate}
           onBookSlot={onBookAdSlot}
-        />
-
-        <PageFormSlot
+        />),
+"top-form": (<PageFormSlot
           forms={contactForms}
           page="event"
           position="top"
           adBanners={adBanners}
           onSubmitted={onFormSubmitted}
           onNotify={onNotify}
-        />
-
-        {/* ALL EVENTS & EXPOS DIRECTORY */}
-        <section id="events-directory" className="space-y-6">
+        />),
+"directory": (<section id="events-directory" className="space-y-6">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
@@ -331,19 +336,16 @@ export function EventsView({
               </article>
             ))}
           </div>
-        </section>
-
-        <PageFormSlot
+        </section>),
+"mid-form": (<PageFormSlot
           forms={contactForms}
           page="event"
           position="mid"
           adBanners={adBanners}
           onSubmitted={onFormSubmitted}
           onNotify={onNotify}
-        />
-
-        {/* D-CONGRESS 2027 SCENPROGRAM & AGENDA BUILDER */}
-        <section id="dc-program" className="space-y-6 pt-4 border-t border-slate-200">
+        />),
+"program": (<section id="dc-program" className="space-y-6 pt-4 border-t border-slate-200">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-6 space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -488,16 +490,16 @@ export function EventsView({
               </button>
             </div>
           </div>
-        </section>
-
-        <PageFormSlot
+        </section>),
+"bottom-form": (<PageFormSlot
           forms={contactForms}
           page="event"
           position="bottom"
           adBanners={adBanners}
           onSubmitted={onFormSubmitted}
           onNotify={onNotify}
-        />
+        />)
+}}/>
       </div>
     </div>
   );

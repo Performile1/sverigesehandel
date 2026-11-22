@@ -649,6 +649,7 @@ export interface MapPoint {
 }
 
 export interface CMSStore {
+  pageLayouts?: PageLayouts;
   homeWidgets?: HomeWidgetLayout;
   editorialHistory?: EditorialVersion[];
   saleCases?: SaleCase[];
@@ -960,3 +961,6 @@ export interface HomeWidgetLayout {
 export interface ContentMetadata {
   contentFormat?: 'markdown'; seoTitle?: string; seoDescription?: string; tags?: string[];
 }
+
+export interface PageLayout {version:1;revision:number;legacyHomeRevision?:number;items:Array<{id:string;enabled:boolean;order:number}>}
+export type PageLayouts=Partial<Record<PortalTab,PageLayout>>;

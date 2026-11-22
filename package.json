@@ -11,7 +11,8 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "check:cms": "bun scripts/check-cms.ts",
-    "check:startup": "node scripts/check-startup.mjs"
+    "check:startup": "node scripts/check-startup.mjs",
+    "check:page-layouts": "bun scripts/check-page-layouts.ts"
   },
   "dependencies": {
     "@firebase/eslint-plugin-security-rules": "^0.0.2",

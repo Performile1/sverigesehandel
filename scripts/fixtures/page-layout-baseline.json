@@ -1,0 +1,63 @@
+{
+  "commit": "fd6eef35ee40dbd8b707b9e6a3a27d710fc9d772",
+  "description": "Normalized signed-out public seed renders before unified layouts. Ignores generated IDs, local asset-root prefixes and whitespace only. Not a browser baseline.",
+  "pages": {
+    "marknad": {
+      "sha256": "5e945ac3cf3236a7313075ecd6ea674e09f82281118cbe0417ce154b12c36c7b",
+      "length": 142400
+    },
+    "nyheter": {
+      "sha256": "d2ae5c9dfe3e3c8c19bbe9a3c2548c0b51d4b1537c6cb67856eddc7cf5d66eae",
+      "length": 23101
+    },
+    "event": {
+      "sha256": "2489b83e49ae7ec03e28658458c358ae93a81b18ec4fee1a525c087b0af2a1fd",
+      "length": 32030
+    },
+    "historia": {
+      "sha256": "5012c959bfdee05dfb4d07f4a33a941461071ae83fb301b1547fb395e3888f1d",
+      "length": 7962
+    },
+    "ehandlare": {
+      "sha256": "b1755683b48460dc698150b75a3e58ee6ea6ff96f59d76a40ba05c9c235b8452",
+      "length": 224878
+    },
+    "partners": {
+      "sha256": "814790fab37d272d6587a18158246185358427ac295590faa57d630e2c1b8af3",
+      "length": 150887
+    },
+    "3pl": {
+      "sha256": "54e677aea19fd8a10bc492d7c356b11047211dc809c3dc270bb50352780597a0",
+      "length": 116880
+    },
+    "jobb": {
+      "sha256": "076cf686de4151d8340cecce99300143d0e60c66cfcc0e92d9f3dbf6da723704",
+      "length": 42074
+    },
+    "community": {
+      "sha256": "9485fdae70d2666c8de4b569f1aaad8bf537173333a08e8a6c2cbeb110c95100",
+      "length": 24833
+    },
+    "kontakt": {
+      "sha256": "e80d981a0bea45ea7d11836dcc36239a8b2e88ca8e99dee19f01d7c0070f29e6",
+      "length": 13309
+    },
+    "starta": {
+      "sha256": "5d6f7987e43d062f4d81ccca7a6664ea964ab366fc95f889abaae29b69bcde0a",
+      "length": 15894
+    },
+    "kop-salj": {
+      "sha256": "1ad1a20fd39a83eea0d738b624a1681e5eca29ebb77d45d2a9f91880f8e6de06",
+      "length": 1849
+    },
+    "om": {
+      "sha256": "e4181832557ea3a39496e9531c1d8403d94f151754a6621397fbcb5304a5918f",
+      "length": 1360
+    },
+    "blogg": {
+      "sha256": "4fbd81d67fb1cfd6d9b63c862fc6395fe2bc46f6cd9816b22918392780694a28",
+      "length": 4519
+    }
+  },
+  "clock": "2026-11-22T21:06:00.000Z"
+}

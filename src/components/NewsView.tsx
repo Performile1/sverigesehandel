@@ -1,3 +1,4 @@
+import { PageZone } from './PageLayout';
 import { articleUrl } from '../../shared/editorial';
 import { useMemo, useState } from 'react';
 import {
@@ -241,7 +242,8 @@ export function NewsView({
   return (
     <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#040B16] via-[#0A1628] to-[#022C22] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+      <PageZone page="nyheter" zone="intro" widgets={{
+"header": (<div className="bg-gradient-to-br from-[#040B16] via-[#0A1628] to-[#022C22] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="font-mono text-xs text-[#FECC02] font-semibold inline-flex items-center gap-1.5">
@@ -326,10 +328,10 @@ export function NewsView({
             </div>
           </div>
         </div>
-      </div>
+      </div>)
+}}/>
 
-      {/* Live Google Search News Fetch Bar */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+<div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <div className="text-xs font-mono font-semibold text-[#006AA7] inline-flex items-center gap-1.5">
@@ -501,7 +503,6 @@ export function NewsView({
           </div>
         )}
       </div>
-
       {/* Admin Quick-Add Form */}
       {isAdmin && showAddForm && (
         <form
@@ -609,24 +610,22 @@ export function NewsView({
         </form>
       )}
 
-      <AdBannerSlot
+      <PageZone page="nyheter" zone="content" widgets={{
+"ad": (<AdBannerSlot
         banners={adBanners}
         placement="ehandlare-top"
         onNavigate={onNavigate}
         onBookSlot={onBookAdSlot}
-      />
-
-      <PageFormSlot
+      />),
+"top-form": (<PageFormSlot
         forms={contactForms}
         page="nyheter"
         position="top"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted || onRefresh}
         onNotify={onNotify}
-      />
-
-      {/* News Grid */}
-      {filtered.length === 0 ? (
+      />),
+"news": (filtered.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-3">
           <p className="text-sm text-slate-600">
             Inga nyheter matchade ditt filter. Testa att byta kategori eller hämta nya artiklar via Google Search ovan.
@@ -701,27 +700,25 @@ export function NewsView({
             </article>
           ))}
         </div>
-      )}
-
-      <PageFormSlot
+      )),
+"mid-form": (<PageFormSlot
         forms={contactForms}
         page="nyheter"
         position="mid"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted || onRefresh}
         onNotify={onNotify}
-      />
-
-      <CheckoutStrategyCTA compact />
-
-      <PageFormSlot
+      />),
+"checkout": (<CheckoutStrategyCTA compact />),
+"bottom-form": (<PageFormSlot
         forms={contactForms}
         page="nyheter"
         position="bottom"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted || onRefresh}
         onNotify={onNotify}
-      />
+      />)
+}}/>
     </div>
   );
 }

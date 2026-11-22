@@ -1,6 +1,6 @@
-import { Fragment, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { HomeWidgetId } from '../types';
-import { widgetsInZone } from '../../shared/homeWidgets';
-export function HomeWidgetZone({layout,zone,widgets}:{layout:unknown;zone:import('../../shared/homeWidgets').WidgetZone;widgets:Partial<Record<HomeWidgetId,ReactNode>>}) {
-  return <>{widgetsInZone(layout,zone).map(w=><Fragment key={w.id}>{widgets[w.id]??null}</Fragment>)}</>;
+import { PageZone } from './PageLayout';
+export function HomeWidgetZone({layout,zone,widgets}:{layout:import('../types').HomeWidgetLayout|undefined;zone:import('../../shared/homeWidgets').WidgetZone;widgets:Partial<Record<HomeWidgetId,ReactNode>>}) {
+  return <PageZone page="marknad" zone={zone} legacyLayout={layout} widgets={widgets}/>;
 }

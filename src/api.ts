@@ -1,3 +1,5 @@
+import { assertLayoutWriteAllowed } from './layoutPreview';
+export { setLayoutPreviewReadOnly } from './layoutPreview';
 import type { EditorialKind, SaleCase } from './types';
 import type { GuideChapter, SaleDetails } from './types';
 import type { StaffProfile, MyStaffProfile } from './types';
@@ -45,6 +47,7 @@ import type {
 } from './types';
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  if(!['GET','HEAD'].includes(options?.method??'GET'))assertLayoutWriteAllowed();
   await auth.authStateReady();
   const buildHeaders = async (forceRefresh = false) => {
     const token = await auth.currentUser?.getIdToken(forceRefresh);
@@ -82,6 +85,7 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  savePublicPageLayout:(page:import('./types').PortalTab,layout:import('./types').PageLayout)=>request<import('./types').PageLayout>(`/api/page-layouts/${page}`,{method:'PUT',body:JSON.stringify(layout)}),
   saveHomeWidgets:(layout:import('./types').HomeWidgetLayout)=>request<import('./types').HomeWidgetLayout>('/api/home-widgets',{method:'PUT',body:JSON.stringify(layout)}),
   editorialState:(kind:EditorialKind,id:string,input:{revision:number;action:'trash'|'untrash'|'restore';versionId?:string})=>request<{ok:boolean}>(`/api/editorial/${kind}/${id}`,{method:'POST',body:JSON.stringify(input)}),
   saveSaleCase:(id:string,input:Partial<SaleCase>)=>request<{ok:boolean}>(`/api/sale-cases/${id}`,{method:'PUT',body:JSON.stringify(input)}),

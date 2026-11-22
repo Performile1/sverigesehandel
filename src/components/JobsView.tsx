@@ -1,3 +1,4 @@
+import { PageZone } from './PageLayout';
 import { SalaryDisplay } from './SalaryEstimateEditor';
 import { matchesJob } from '../../shared/portalContent';
 import { JobDescription } from './JobDescription';
@@ -113,7 +114,8 @@ export function JobsView({
   return (
     <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
       {/* Header Banner */}
-      <div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+      <PageZone page="jobb" zone="content" widgets={{
+"header": (<div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="font-mono text-xs text-[#10B981] font-semibold">
@@ -254,35 +256,30 @@ export function JobsView({
             )}
           </div>
         </div>
-      </div>
-
-      <AdBannerSlot
+      </div>),
+"ad": (<AdBannerSlot
         banners={adBanners}
         placement="jobb-top"
         onNavigate={onNavigate}
         onBookSlot={onBookAdSlot}
-      />
-
-      <PageFormSlot
+      />),
+"top-form": (<PageFormSlot
         forms={contactForms}
         page="jobb"
         position="top"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
-
-      <PageFormSlot
+      />),
+"mid-form": (<PageFormSlot
         forms={contactForms}
         page="jobb"
         position="mid"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
-
-      {/* JOBS TAB */}
-      {subTab === 'jobs' && (
+      />),
+"jobs": (subTab === 'jobs' && (
         <>
           {filteredJobs.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-4">
@@ -367,10 +364,8 @@ export function JobsView({
             </div>
           )}
         </>
-      )}
-
-      {/* RECRUITMENT SITES TAB */}
-      {subTab === 'recruiters' && (
+      )),
+"recruiters": (subTab === 'recruiters' && (
         <>
           {filteredRecruiters.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-4">
@@ -430,16 +425,16 @@ export function JobsView({
             </div>
           )}
         </>
-      )}
-
-      <PageFormSlot
+      )),
+"bottom-form": (<PageFormSlot
         forms={contactForms}
         page="jobb"
         position="bottom"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
+      />)
+}}/>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { PageZone } from './PageLayout';
 import { CommunityReportButton } from './CommunityReportButton';
 import type { CommunitySettings } from '../types';
 import { DEFAULT_COMMUNITY_SETTINGS } from '../../shared/memberGovernance';
@@ -527,7 +528,8 @@ export function CommunityView({
     <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {(!settings.enabled || !settings.postingEnabled || !settings.commentsEnabled || !settings.messagesEnabled) && <p role="status" className="p-4 bg-amber-50 border rounded-xl text-sm">Communityfunktioner kan vara pausade av Sveriges E-handel. Inställningarna kontrolleras även på servern.</p>}
       <div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-6 space-y-4">
+        <PageZone page="community" zone="public-intro" widgets={{
+"info": (<div className="lg:col-span-6 space-y-4">
           <div className="font-mono text-xs font-semibold text-[#10B981]">
             {pageCopy?.kicker || 'Sveriges E-handel Network'} · {memberCount} registrerade i nätverket
           </div>
@@ -586,7 +588,8 @@ export function CommunityView({
               <div className="text-xs text-slate-400">Kostnadsfritt nätverk</div>
             </div>
           </div>
-        </div>
+        </div>)
+}}/>
 
         <div className="lg:col-span-6 bg-white text-[#040B16] rounded-2xl p-6 space-y-4">
           <div>
@@ -1064,27 +1067,27 @@ export function CommunityView({
         </div>
       </div>
 
-      <PageFormSlot
+      <PageZone page="community" zone="top" widgets={{
+"top-form": (<PageFormSlot
         forms={contactForms}
         page="community"
         position="top"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
+      />)
+}}/>
 
       {workspaceTab === 'forum' ? (
         <>
-          <PageFormSlot
+          <PageZone page="community" zone="forum" widgets={{"mid-form": (<PageFormSlot
             forms={contactForms}
             page="community"
             position="mid"
             adBanners={adBanners}
             onSubmitted={onFormSubmitted}
             onNotify={onNotify}
-          />
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          />),"forum": (<div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-4 space-y-6">
               <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
                 <div className="text-xs font-mono font-semibold text-[#006AA7]">Ämneskanaler</div>
@@ -1338,7 +1341,7 @@ export function CommunityView({
                 })}
               </div>
             </div>
-          </div>
+          </div>)}}/>
         </>
       ) : (
         /* Member Directory & Direct Messaging Workspace */
@@ -1638,14 +1641,16 @@ export function CommunityView({
         </div>
       )}
 
-      <PageFormSlot
+      <PageZone page="community" zone="bottom" widgets={{
+"bottom-form": (<PageFormSlot
         forms={contactForms}
         page="community"
         position="bottom"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
+      />)
+}}/>
     </div>
   );
 }
