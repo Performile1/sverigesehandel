@@ -343,3 +343,18 @@ CMS quarterly total is available. It is **not** a CMS archive import or external
 feed monitor. Comparisons never mix report editions; annual/YTD, survey values
 and drafts cannot become the latest quarterly total. Existing history remains
 available. See [sources, selection rules and prioritized next steps](docs/portal-prioritering.md).
+
+## Startguide and moderated sale listings
+
+`#starta` adds ten CMS-editable planning chapters with checklists and shareable
+hash chapter links. `#kop-salj` lists only admin-published brand/webshop/stock
+listings. Verified users submit proposals; identity comes from server-verified
+Firebase UID/email, not the submitted payload. Only global admin can review and
+publish. Private seller data and notes never appear in public listing projections.
+
+Buyer inquiries are stored privately in **CMS → Formulär & Intro**, not sent to
+sellers by email and not exposed in company inboxes. Sold/unpublished listings
+cannot accept new inquiries. Full registers fail without evicting old data.
+Guide drafts and sale records are included in existing admin backup, with strict
+import validation. No new providers, billing or tracking is activated. See
+[workflow, privacy, limits and verification](docs/startguide-kop-salj.md).

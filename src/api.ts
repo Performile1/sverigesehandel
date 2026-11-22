@@ -1,3 +1,4 @@
+import type { GuideChapter, SaleDetails } from './types';
 import type { StaffProfile, MyStaffProfile } from './types';
 import type { CompanyWorkspace } from './types';
 import type { InsightPost } from './types';
@@ -80,6 +81,10 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  saveGuideChapter:(chapter:GuideChapter)=>request<GuideChapter>(`/api/start-guide/${chapter.id}`,{method:'PUT',body:JSON.stringify(chapter)}),
+  submitSaleListing:(input:SaleDetails&{requestId:string;sellerName:string;authorityConfirmed:boolean;publicContentConfirmed:boolean})=>request<{id:string;status:string}>('/api/sales/submissions',{method:'POST',body:JSON.stringify(input)}),
+  reviewSaleListing:(id:string,input:unknown)=>request<{id:string;status:string}>(`/api/sales/${id}`,{method:'PUT',body:JSON.stringify(input)}),
+  inquireSaleListing:(id:string,input:{name:string;message:string;requestId:string})=>request<{ok:boolean}>(`/api/sales/${id}/inquiries`,{method:'POST',body:JSON.stringify(input)}),
   createCmsUser:(input:{email:string;name:string;phone:string;position:string;company:string;employmentSince:string;expertise:string})=>request<{
     uid:string;memberId:string;alreadyRegistered:boolean;authCreated:boolean;invitationStatus:'accepted'|'already-accepted'|'not-configured'|'failed'|'needs-review';
   }>('/api/cms/users',{method:'POST',body:JSON.stringify(input)}),

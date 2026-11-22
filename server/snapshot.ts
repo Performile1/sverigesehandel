@@ -1,3 +1,5 @@
+import { validGuide, validSaleListings } from '../shared/commerce.ts';
+import { INITIAL_START_GUIDE } from '../shared/startGuide.ts';
 import { validStaffProfiles } from '../shared/staffProfiles.ts';
 import { validGovernance } from '../shared/memberGovernance.ts';
 import { INITIAL_INSIGHT_POSTS, validInsightPosts } from '../shared/insightPosts.ts';
@@ -168,6 +170,8 @@ export function upgradeSnapshot(value: unknown): unknown {
     draft.schemaVersion = 4;
   }
 
+  if (!hasOwn(obj, 'startGuide')) ensureClone().startGuide = structuredClone(INITIAL_START_GUIDE);
+  if (!hasOwn(obj, 'saleListings')) ensureClone().saleListings = [];
   if (!hasOwn(obj, 'insightPosts')) ensureClone().insightPosts = structuredClone(INITIAL_INSIGHT_POSTS);
   if (!hasOwn(obj, 'paketindexArchive')) {
     const legacy = next.paketindex as CMSStore['paketindex'];
@@ -182,7 +186,7 @@ export function validateSnapshot(value: unknown): value is CMSStore {
   const arrays = ['merchants', 'partners', 'logisticsProviders', 'news', 'events', 'sessions', 'jobs', 'recruitmentSites',
     'orderBenchmarks', 'shippingTiers', 'laws', 'intelligenceSources', 'techStackShares',
     'adBanners', 'contactForms', 'contactMessages', 'timeline', 'communityThreads', 'communityMembers', 'directMessages'];
-  return (store.staffProfiles === undefined || validStaffProfiles(store.staffProfiles)) && (store.memberGovernance === undefined || validGovernance(store.memberGovernance)) && (store.insightPosts === undefined || validInsightPosts(store.insightPosts)) && (Array.isArray(store.jobs) && store.jobs.every((job) => job && (job.salaryEstimate == null || validSalaryEstimate(job.salaryEstimate)))) && (store.paketindexArchive === undefined || validArchive(store.paketindexArchive)) && (store.mapPoints === undefined || (Array.isArray(store.mapPoints) &&
+  return (store.startGuide === undefined || validGuide(store.startGuide)) && (store.saleListings === undefined || validSaleListings(store.saleListings)) && (store.staffProfiles === undefined || validStaffProfiles(store.staffProfiles)) && (store.memberGovernance === undefined || validGovernance(store.memberGovernance)) && (store.insightPosts === undefined || validInsightPosts(store.insightPosts)) && (Array.isArray(store.jobs) && store.jobs.every((job) => job && (job.salaryEstimate == null || validSalaryEstimate(job.salaryEstimate)))) && (store.paketindexArchive === undefined || validArchive(store.paketindexArchive)) && (store.mapPoints === undefined || (Array.isArray(store.mapPoints) &&
     store.mapPoints.every(validMapPoint) && new Set(store.mapPoints.map((point) => point.id)).size === store.mapPoints.length)) && arrays.every((key) => Array.isArray(store[key])) &&
     ['regions', 'deliveryStats', 'paketindex', 'pageContent'].every((key) => store[key] !== null &&
       typeof store[key] === 'object' && !Array.isArray(store[key])) &&
