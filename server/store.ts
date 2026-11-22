@@ -1,3 +1,5 @@
+import { validHomeWidgets } from '../shared/homeWidgets.ts';
+import type { HomeWidgetLayout } from '../src/types.ts';
 import { editorialConflict, editorialChange, lifecycleInput } from './editorialHistory.ts';
 import { publiclyVisible, validSaleCases, validCmsImage } from '../shared/editorialLifecycle.ts';
 import type { EditorialKind, EditorialLifecycle } from '../src/types.ts';
@@ -427,6 +429,7 @@ function ensureStoreFile(): CMSStore {
       paketindexArchive: upgradedRaw.paketindexArchive,
       insightPosts: upgradedRaw.insightPosts,
       startGuide: upgradedRaw.startGuide,
+      homeWidgets: upgradedRaw.homeWidgets,
       editorialHistory: upgradedRaw.editorialHistory,
       saleCases: upgradedRaw.saleCases,
       saleListings: upgradedRaw.saleListings,
@@ -2416,4 +2419,12 @@ export function saleImageGallery(actor:CmsIdentity,id:string,input:unknown) {
   if(!Array.isArray(v?.paths)||v.paths.length>5||new Set(v.paths).size!==v.paths.length||v.paths.some(p=>!row.images?.some(i=>i.path===p)))throw Object.assign(new Error('Välj endast befintliga bildreferenser i ny ordning.'),{status:400});
   editorialChange(store,'sale',row,actor.uid,'gallery');row.images=v.paths.map(p=>row.images!.find(i=>i.path===p)!);row.revision=(row.revision??0)+1;row.updatedAt=new Date().toISOString();
   saveCommerce(store);return {ok:true};
+}
+
+export function saveHomeWidgets(actor:CmsIdentity,input:unknown) {
+  commerceActor(actor,true);
+  if(!validHomeWidgets(input))throw Object.assign(new Error('Ogiltig widgetlayout.'),{status:400});
+  const store=structuredClone(ensureStoreFile());editorialConflict(store.homeWidgets,input.revision);
+  const layout:HomeWidgetLayout={version:1,revision:input.revision+1,items:input.items.map(i=>({id:i.id,enabled:i.enabled,order:i.order}))};
+  store.homeWidgets=layout;saveCommerce(store);return layout;
 }

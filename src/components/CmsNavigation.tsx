@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CMSSection } from '../types';
 export const CMS_GROUPS:Array<{label:string;sections:CMSSection[]}>= [
   {label:'Företag & upptäckt',sections:['discover','merchants','partners','logistics']},
-  {label:'Innehåll & marknad',sections:['pages','news','insights','paketindex','timeline']},
+  {label:'Innehåll & marknad',sections:['pages','widgets','news','insights','paketindex','timeline']},
   {label:'Affärer & möjligheter',sections:['commerce','events','jobs']},
   {label:'Medlemmar & ärenden',sections:['members','forms','content']},
   {label:'Drift & säkerhet',sections:['workflow','firebase','overview']},

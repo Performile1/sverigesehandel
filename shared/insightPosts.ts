@@ -1,7 +1,7 @@
 import { validLifecycle } from './editorialLifecycle.ts';
 import type { InsightPost } from '../src/types.ts';
 
-export const INSIGHT_TABS = ['marknad', 'nyheter', 'event', 'historia', 'ehandlare', 'partners', '3pl', 'jobb', 'community', 'kontakt', 'om', 'starta', 'kop-salj'] as const;
+export const INSIGHT_TABS = ['marknad', 'nyheter', 'event', 'historia', 'ehandlare', 'partners', '3pl', 'jobb', 'community', 'kontakt', 'om', 'starta', 'kop-salj', 'blogg'] as const;
 export const INSIGHT_IMAGE_KEYS = ['checkout', 'logistics', 'events'] as const;
 export const INITIAL_INSIGHT_POSTS: InsightPost[] = [
   { id: 'insight-checkout', title: 'One-Click BankID & Swish sänker avhopp med 34%', category: 'Checkout-data',

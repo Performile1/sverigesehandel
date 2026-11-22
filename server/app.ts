@@ -370,6 +370,7 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.json({ deleted: true });
   }));
 
+  app.put('/api/home-widgets', commerceRoute(async(req,res)=>{res.json(await store.saveHomeWidgets(res.locals.cmsIdentity,req.body));}));
   app.post('/api/editorial/:kind/:id', commerceRoute(async(req,res)=>{res.json(await store.changeEditorialState(res.locals.cmsIdentity,req.params.kind as 'sale'|'guide'|'insight',req.params.id,req.body));}));
   app.put('/api/sale-cases/:id', commerceRoute(async(req,res)=>{res.json(await store.assignSaleCase(res.locals.cmsIdentity,req.params.id,req.body));}));
   app.put('/api/sales/:id/gallery', commerceRoute(async(req,res)=>{res.json(await store.saleImageGallery(res.locals.cmsIdentity,req.params.id,req.body));}));

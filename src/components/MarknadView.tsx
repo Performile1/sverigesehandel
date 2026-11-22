@@ -1,3 +1,6 @@
+import { widgetsInZone } from '../../shared/homeWidgets';
+import { HomeWidgetZone } from './HomeWidgetZone';
+import { publiclyVisible } from '../../shared/editorialLifecycle';
 import { LatestPaketindex } from './LatestPaketindex';
 import { latestPaketindex } from '../../shared/latestPaketindex';
 import { InsightPosts } from './InsightPosts';
@@ -65,6 +68,7 @@ import { ResilientImage } from './ResilientImage';
 import { SwedenLogisticsMap } from './SwedenLogisticsMap';
 
 interface MarknadViewProps {
+  homeWidgets?: import('../types').HomeWidgetLayout;
   insightPosts?: InsightPost[];
   paketindexArchive?: PaketindexObservation[];
   mapPoints?: MapPoint[];
@@ -159,6 +163,7 @@ function TrendChartTooltip({
 }
 
 export function MarknadView({
+  homeWidgets,
   insightPosts = INITIAL_INSIGHT_POSTS,
   paketindexArchive = [],
   mapPoints = [],
@@ -453,7 +458,8 @@ export function MarknadView({
 
       {/* Main Content */}
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        <section aria-label="Hitta rätt på Sveriges E-handel" className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <HomeWidgetZone layout={homeWidgets} zone="top" widgets={{
+          audience: (<section aria-label="Hitta rätt på Sveriges E-handel" className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
           {([{title:'Jag vill starta e-handel',text:'Följ guiden från affärsidé till första kunden.',tab:'starta',cta:'Starta e-handel'},
             {title:'Jag driver e-handel',text:'Hitta rätt tjänster och samarbetspartner.',tab:'partners',cta:'Hitta rätt partner'},
             {title:'Jag är leverantör eller transportör',text:'Hitta din plats i nätverket och kontakta redaktionen.',tab:'community',cta:'Bli en del av nätverket'},
@@ -461,9 +467,10 @@ export function MarknadView({
               <h2 className="font-bold text-lg">{item.title}</h2><p className="mb-3">{item.text}</p>
               <button className="mt-auto min-h-16 w-full flex items-center justify-center bg-[#006AA7] text-white rounded-lg px-4 py-2" onClick={()=>onNavigate(item.tab)}>{item.cta} →</button>
             </div>)}
-        </section>
-        <LatestPaketindex rows={paketindexArchive}/>
-        <PaketindexArchive rows={paketindexArchive} />
+        </section>),
+          'latest-index': <LatestPaketindex rows={paketindexArchive} showArchiveLink={widgetsInZone(homeWidgets,'top').some(w=>w.id==='index-archive')}/>,
+          'index-archive': <PaketindexArchive rows={paketindexArchive}/>,
+        }}/>
         {/* Top Sponsored Banner (D-Congress 2027) */}
         <AdBannerSlot
           banners={adBanners}
@@ -2667,7 +2674,11 @@ export function MarknadView({
           onBookSlot={onBookAdSlot}
         />
 
-        <InsightPosts posts={insightPosts} onNavigate={onNavigate} />
+        <HomeWidgetZone layout={homeWidgets} zone="editorial" widgets={{insights:<div className="space-y-4">
+          <div className="flex flex-wrap justify-between gap-3"><h2 className="text-2xl font-bold">Blogg & Insikter</h2><button type="button" className="underline text-blue-800" onClick={()=>onNavigate('blogg')}>Alla inlägg →</button></div>
+          <InsightPosts posts={[...insightPosts].filter(p=>publiclyVisible(p)).sort((a,b)=>a.order-b.order||a.id.localeCompare(b.id)).slice(0,3)} onNavigate={onNavigate}/>
+        </div>}}/>
+
 
         {/* Quick Navigation Strip to Jobb & Historia */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

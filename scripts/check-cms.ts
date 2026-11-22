@@ -1,3 +1,6 @@
+import { DEFAULT_HOME_WIDGETS, validHomeWidgets, homeWidgetLayout, widgetsInZone } from '../shared/homeWidgets.ts';
+import { HomeWidgetZone } from '../src/components/HomeWidgetZone.tsx';
+import { BlogView } from '../src/components/BlogView.tsx';
 import { CmsNavigation, CMS_GROUPS } from '../src/components/CmsNavigation.tsx';
 import { publiclyVisible, validLifecycle } from '../shared/editorialLifecycle.ts';
 import { CreateCmsSaleForm } from '../src/components/CommerceEditor.tsx';
@@ -132,6 +135,45 @@ async function request(path: string, method = 'GET', body?: unknown, identity?: 
   }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
 }
 try {
+  const beforeWidgets=structuredClone(await service.getStore());const rawBeforeWidgets=structuredClone(snapshot);
+  assert.ok(validHomeWidgets(DEFAULT_HOME_WIDGETS));
+  assert.deepEqual(homeWidgetLayout(undefined),DEFAULT_HOME_WIDGETS);
+  assert.deepEqual(homeWidgetLayout({version:99,items:[]}),DEFAULT_HOME_WIDGETS);
+  assert.ok(!validHomeWidgets({...DEFAULT_HOME_WIDGETS,items:[...DEFAULT_HOME_WIDGETS.items.slice(1),DEFAULT_HOME_WIDGETS.items[1]]}));
+  assert.ok(!validHomeWidgets({...DEFAULT_HOME_WIDGETS,items:DEFAULT_HOME_WIDGETS.items.map((i,n)=>n===0?{...i,id:'private-inbox'}:i)}));
+  assert.ok(!validHomeWidgets({...DEFAULT_HOME_WIDGETS,items:DEFAULT_HOME_WIDGETS.items.map(i=>({...i,order:1}))}));
+  assert.equal((await request('/api/home-widgets','PUT',DEFAULT_HOME_WIDGETS)).status,401);
+  assert.equal((await request('/api/home-widgets','PUT',DEFAULT_HOME_WIDGETS,'member-two')).status,403);
+  assert.equal((await request('/api/home-widgets','PUT',{version:1,revision:0,items:[]},'admin-fixture')).status,400);
+  const hiddenLayout={...structuredClone(DEFAULT_HOME_WIDGETS),items:DEFAULT_HOME_WIDGETS.items.map(i=>i.id==='latest-index'?{...i,enabled:false}:i)};
+  assert.equal((await request('/api/home-widgets','PUT',hiddenLayout,'admin-fixture')).status,200);
+  assert.equal((await service.getStore()).homeWidgets!.revision,1);
+  assert.equal(publicStore(await service.getStore()).homeWidgets!.items.find(i=>i.id==='latest-index')!.enabled,false);
+  assert.equal((await request('/api/home-widgets','PUT',hiddenLayout,'admin-fixture')).status,409);
+  assert.deepEqual((await service.getStore()).insightPosts,beforeWidgets.insightPosts);
+  assert.deepEqual((await service.getStore()).paketindexArchive,beforeWidgets.paketindexArchive);
+  assert.deepEqual((await service.getStore()).merchants,beforeWidgets.merchants);
+  assert.ok(validateSnapshot(await service.getStore()));
+  assert.ok(!validateSnapshot({...beforeWidgets,homeWidgets:{version:55}}));
+  assert.equal((await request('/api/home-widgets','PUT',{...DEFAULT_HOME_WIDGETS,revision:1},'admin-fixture')).status,200);
+  const fakeWidgetNodes={audience:createElement('span',null,'Audience fixture'),'latest-index':createElement('span',null,'Latest fixture'),'index-archive':createElement('span',null,'Archive fixture')};
+  const defaultZone=renderToString(createElement(HomeWidgetZone,{layout:undefined,zone:'top',widgets:fakeWidgetNodes}));
+  assert.equal(defaultZone,renderToString(createElement(HomeWidgetZone,{layout:DEFAULT_HOME_WIDGETS,zone:'top',widgets:fakeWidgetNodes})));
+  assert.ok(defaultZone.indexOf('Audience fixture')<defaultZone.indexOf('Latest fixture')&&defaultZone.indexOf('Latest fixture')<defaultZone.indexOf('Archive fixture'));
+  const hiddenZone=renderToString(createElement(HomeWidgetZone,{layout:hiddenLayout,zone:'top',widgets:fakeWidgetNodes}));
+  assert.ok(!hiddenZone.includes('Latest fixture')&&hiddenZone.includes('Archive fixture'));
+  assert.equal(widgetsInZone({version:'bad'},'top').length,3);
+  const reversed={...structuredClone(DEFAULT_HOME_WIDGETS),items:DEFAULT_HOME_WIDGETS.items.map(i=>({...i,order:3-i.order}))};
+  assert.ok(widgetsInZone(reversed,'top')[0].id==='index-archive');
+  const widgetBlogPosts=[{...INITIAL_INSIGHT_POSTS[0],id:'insight-blog-visible',title:'Visible blog fixture'},
+    {...INITIAL_INSIGHT_POSTS[0],id:'insight-blog-draft',status:'draft' as const,title:'Secret draft title'},
+    {...INITIAL_INSIGHT_POSTS[0],id:'insight-blog-scheduled',publishAt:'2099-01-01T00:00:00.000Z',title:'Secret scheduled title'},
+    {...INITIAL_INSIGHT_POSTS[0],id:'insight-blog-trash',trashedAt:new Date().toISOString(),title:'Secret trash title'}];
+  const blogHtml=renderToString(createElement(BlogView,{posts:widgetBlogPosts,onNavigate:()=>{}}));
+  assert.ok(blogHtml.includes('Visible blog fixture')&&blogHtml.includes('#blogg/insight-blog-visible'));
+  for(const t of ['Secret draft title','Secret scheduled title','Secret trash title'])assert.ok(!blogHtml.includes(t));
+  assert.deepEqual(widgetBlogPosts[0].title,'Visible blog fixture');
+  snapshot=rawBeforeWidgets;
   const beforeCommerce=structuredClone(await service.getStore());
   const restoreCommerce=structuredClone(snapshot);
   assert.ok(validGuide(INITIAL_START_GUIDE));
@@ -330,8 +372,8 @@ try {
   const beforeHistoryFull=structuredClone(snapshot);
   assert.equal((await request(stateUrl,'POST',{action:'trash',revision:snapshot.saleListings![0].revision},'admin-fixture')).status,413);
   assert.deepEqual(snapshot,beforeHistoryFull);
-  const groupIds=CMS_GROUPS.flatMap(g=>g.sections);assert.equal(new Set(groupIds).size,18);
-  assert.equal(groupIds.length,18);
+  const groupIds=CMS_GROUPS.flatMap(g=>g.sections);assert.equal(new Set(groupIds).size,19);
+  assert.equal(groupIds.length,19);
   const cmsNavHtml=renderToString(createElement(CmsNavigation,{items:groupIds.map(id=>({id,label:id})),active:'commerce',onSelect:()=>{}}));
   assert.ok(cmsNavHtml.includes('Affärer &amp; möjligheter')&&cmsNavHtml.includes('aria-current="page"'));
   snapshot=restoreCommerce;
@@ -367,8 +409,8 @@ try {
   assert.deepEqual(sourceRows,REVIEWED_PAKETINDEX,'Selection never mutates or deletes saved rows');
   assert.equal(latestQuarter([]),undefined);
   const navIds=NAV_GROUPS.flatMap(g=>g.items.map(i=>i.id));
-  assert.equal(new Set(navIds).size,13);
-  assert.deepEqual([...navIds].sort(),['marknad','nyheter','event','historia','ehandlare','partners','3pl','jobb','community','kontakt','om','starta','kop-salj'].sort());
+  assert.equal(new Set(navIds).size,14);
+  assert.deepEqual([...navIds].sort(),['marknad','nyheter','event','historia','ehandlare','partners','3pl','jobb','community','kontakt','om','starta','kop-salj','blogg'].sort());
   const navHtml=renderToString(createElement(GroupedNavigation,{activeTab:'om',onSelect:()=>{}}));
   assert.equal((navHtml.match(/<summary/g)||[]).length,4);
   assert.ok(navHtml.includes('href="#om" aria-current="page"'));
@@ -1085,6 +1127,18 @@ try {
   assert.ok(marketHtml.includes('Svensk e-handelstillväxt'));
   assert.ok(marketHtml.includes('64,2') || marketHtml.includes('64.2'));
   assert.ok(marketHtml.includes('32,8') || marketHtml.includes('32.8'));
+  const hiddenMarketHtml=renderToString(createElement(MarknadView,{
+    regions:visible.regions,orderBenchmarks:visible.orderBenchmarks,shippingTiers:visible.shippingTiers,deliveryStats:visible.deliveryStats,
+    paketindex:visible.paketindex,laws:visible.laws,intelligenceSources:visible.intelligenceSources,techStackShares:visible.techStackShares,
+    merchants:visible.merchants,logisticsProviders:visible.logisticsProviders,adBanners:visible.adBanners,merchantCount:1,partnerCount:1,
+    homeWidgets:{...structuredClone(DEFAULT_HOME_WIDGETS),items:DEFAULT_HOME_WIDGETS.items.map(i=>({...i,enabled:false}))},
+    onNavigate:()=>{},onBookAdSlot:()=>{},
+  }));
+  assert.ok(!hiddenMarketHtml.includes('Jag vill starta e-handel'));
+  assert.ok(!hiddenMarketHtml.includes('Senaste tillgängliga Paketindex'));
+  assert.ok(!hiddenMarketHtml.includes('Paketindex – periodarkiv'));
+  for(const label of ['Svensk e-handelstillväxt','Marginalkalkylator','Regioner','Jobb &amp; Karriär'])assert.ok(hiddenMarketHtml.includes(label),`Non-widget area preserved: ${label}`);
+
   const newsHtml = renderToString(createElement(NewsView, {
     news: visible.news,
     adBanners: visible.adBanners,
