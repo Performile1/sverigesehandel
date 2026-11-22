@@ -209,3 +209,47 @@ på rätt partnerkort och i sida-vid-sida-jämförelsen. Kopplingen använder f�
 stabila ID + typ, inte namn, domän eller antagen slug. Extern hemsida och introknapp
 finns kvar separat. Utkast eller avpublicerade sidor ger ingen publik länk.
 Att skapa sidutkasten räcker alltså inte: de behöver först fyllas i och publiceras.
+
+## Sidlista, återläsning och adminutseende
+
+I **Företagssidor** och **Roller & redaktion** visas nu en sökbar lista **Företagssidor** högt upp,
+före roll-/moderationsformulären. Den listar alla behöriga sidor, även opublicerade,
+med företagsnamn, adress, arbetsstatus, publik tillgänglighet och ansvarig.
+Endast vald sida öppnas i redigeraren. Företagspostens egen publicering räknas in
+i publik tillgänglighet: en godkänd sida till ett katalogutkast är inte offentligt
+synlig. Inga sidor/utkast/företag publiceras för att lösa detta automatiskt.
+
+**Förhandsvisa** visar sparat utkast eller godkänd version privat inne i CMS,
+med mobilbredd som alternativ. Samma visningskomponent som offentligt används,
+men kontaktformulär är avstängda och privata mottagarlistor lämnas inte vidare.
+**Öppna publik sida** visas bara när sidan faktiskt kan visas offentligt.
+Admin kan alltså se utseendet innan publicering, utan någon publik utkastadress.
+Osparade redigeringsfält förhandsvisas fortsatt inne i redigeraren.
+
+Skapandeknappen har en uttrycklig bekräftelseruta i sidan, laddningsspärr och
+resultat med antal skapade/befintliga sidor. POST-svaret ger de åtta sparade
+sidreferenserna. Klienten läser därefter om arbetsytan och matchar varje ID/adress
+innan den visar att skapandet är bekräftat. Vid skriv-/återläsningsfel visas inget
+falskt framgångsbesked; läs om listan före nytt försök. Befintliga sidor bevaras.
+
+Vid felsökningen 2026-11-22 visade CDN-loggar tre skapandeförsök med HTTP 200 och
+runtime-sökningen gav inga fel för det avgränsade tidsfönstret. Detta bevisar inte
+innehållet i produktionsdatabasen. Isolerad testadapter kan skapa åtta sidor från
+ett snapshot helt utan collaboration-fält och läsa tillbaka dem via separat GET.
+Något misslyckat produktionssparande har därför inte reproducerats; tidigare UI
+saknade framgångsbesked/översikt och utkastlänken gick till den publika saknad-vyn.
+Den verkliga användarens poster har inte lästs/ändrats genom ett inloggat test.
+
+
+### Enklare ingångar i CMS
+
+**Företag & upptäckt → Företagssidor** öppnar sidlista, privat förhandsvisning,
+redigering och adressreservering utan rollformulär, redaktionskö och moderation.
+Fasta snabbval **Företagssidor**, **Medlemmar & Community** och **Sidor & layout**
+ligger över menygrupperna. Tidigare arbetsyta finns kvar som **Roller & redaktion**;
+företagsmedlemmars begränsade arbetsyta påverkas inte. Sidantal från den globala
+CMS-vyn uppdateras vid omläsning; själva sidlistan hämtar aktuell arbetsyta direkt.
+
+Beställaren bekräftade därefter att sidorna faktiskt skapats men hittades längre
+ned. Åtgärden gäller därför i första hand upptäckbarhet och återkoppling, inte en
+bevisad förlust av sparade produktionsdata. Inga poster återskapas automatiskt.

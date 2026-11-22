@@ -33,7 +33,7 @@ export function teamWorkspace(s:CMSStore,a:CmsIdentity){
     grants:admin?c.roles:[],members:admin?s.communityMembers.filter(m=>m.authorUid).map(m=>({uid:m.authorUid!,name:m.name,email:m.email,status:m.verificationStatus})):[],
     drafts:(editor?c.drafts:roles.includes('writer')?c.drafts.filter(d=>d.uid===a.uid):[]),
     editorial:editor?{insights:(s.insightPosts??[]).map(p=>({...p,editHash:contentHash(s,'insight',p.id)})),guides:(s.startGuide??[]).map(p=>({...p,editHash:contentHash(s,'guide',p.id)})),news:s.news.map(p=>({...p,editHash:contentHash(s,'news',p.id)}))}:null,
-    pages:pages.map(p=>({...p,canEdit:admin||(!p.managedByPlatform&&!!companyLink(s,a.uid,p)?.canPropose),recipients:{lead:eligibleRecipients(s,p,'lead'),support:eligibleRecipients(s,p,'support')}})),messages,
+    pages:pages.map(p=>({...p,entityName:companyEntity(s,p)?.name??p.draft.title,publicAvailable:Boolean(p.published&&companyEntity(s,p)?.status==='published'),canEdit:admin||(!p.managedByPlatform&&!!companyLink(s,a.uid,p)?.canPropose),recipients:{lead:eligibleRecipients(s,p,'lead'),support:eligibleRecipients(s,p,'support')}})),messages,
     companies:admin?[...s.partners.map(e=>({entityType:'partner',entityId:e.id,name:e.name})),...s.logisticsProviders.map(e=>({entityType:'logistics',entityId:e.id,name:e.name})),...s.merchants.map(e=>({entityType:'merchant',entityId:e.id,name:e.name}))]:[],
     moderation:moderator?{settings:s.memberGovernance?.settings,reports:s.memberGovernance?.reports??[],hidden:s.memberGovernance?.hidden??[],blocks:c.communityBlocks,threads:s.communityThreads.map(t=>({id:t.id,title:t.title,authorUid:t.authorUid,comments:t.comments?.map(m=>({id:m.id,body:m.body,authorUid:m.authorUid}))}))}:null,
   };
@@ -53,6 +53,7 @@ export function collaborationAction(s:CMSStore,a:CmsIdentity,op:string,v:any){
     if(!admin)fail('Admin krävs.',403);
     if(v.confirm!==true)fail('Bekräfta att skapa privata utkast.');
     conflict(c.revision,v.revision);
+    const results:import('../src/types.ts').StarterPagesResult['pages']=[];
     for(const spec of COMPANY_PAGE_STARTERS){
       const names=[spec.name,...spec.aliases].map(n=>n.toLowerCase());
       const candidates=s.partners.filter(e=>names.includes(e.name.trim().toLowerCase())||e.id===`p-${spec.slug}`);
@@ -62,9 +63,10 @@ export function collaborationAction(s:CMSStore,a:CmsIdentity,op:string,v:any){
       if(taken){
         if(!entity||taken.entityType!=='partner'||taken.entityId!==entity.id)fail(`Adressen ${spec.slug} används redan.`,409);
         // An existing page is not claimed, reset, assigned or overwritten by this package.
-        continue;
+        results.push({id:taken.id,slug:taken.slug,created:false});continue;
       }
-      if(entity&&c.pages.some(p=>p.entityType==='partner'&&p.entityId===entity.id))continue;
+      const existing=entity&&c.pages.find(p=>p.entityType==='partner'&&p.entityId===entity.id);
+      if(existing){results.push({id:existing.id,slug:existing.slug,created:false});continue;}
       if(!entity){
         entity={id:`p-${spec.slug}`,name:spec.name,domain:'',cat:'',origin:'',stack:'',notableClients:[],desc:'',status:'draft',updatedAt:now};
         s.partners.push(entity);
@@ -77,8 +79,9 @@ export function collaborationAction(s:CMSStore,a:CmsIdentity,op:string,v:any){
         {id:'ansvar',type:'text',title:'Om sidan',body:'Denna sida förvaltas redaktionellt av Sveriges E-handel. Den är inte företagets officiella kundservice.',url:'',alt:'',formId:'',enabled:true},
       ]};
       page.submittedBy=a.uid;page.submittedAsAdmin=Boolean(a.baseAdmin??a.admin);
+      results.push({id:page.id,slug:page.slug,created:true});
     }
-    return {ok:true};
+    return {ok:true,starterPages:{created:results.filter(p=>p.created).length,existing:results.filter(p=>!p.created).length,pages:results}};
   }
   if(op==='reserve-page'){
     if(!admin)fail('Admin krävs.',403);conflict(c.revision,v.revision);const p={entityType:v.entityType,entityId:v.entityId} as CompanyPage;

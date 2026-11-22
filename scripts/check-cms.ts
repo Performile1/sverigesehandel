@@ -1,3 +1,5 @@
+import { createAndVerifyCompanyPages } from '../src/components/companyPageCreation.ts';
+import { CompanyPagesPanel, companyPagePreview } from '../src/components/CompanyPagesPanel.tsx';
 import { CompanyPagesContext, CompanyPageLink } from '../src/components/CompanyDirectoryLinks.tsx';
 import { emptyCollaboration, validCollaboration, validCompanyContent, validSlug, companySlugFromHash } from '../shared/collaboration.ts';
 import { CompanyPageView } from '../src/components/CompanyPageView.tsx';
@@ -299,6 +301,40 @@ try {
   const beforeConflict=structuredClone(snapshot);
   assert.equal((await request('/api/teamspace/starter-pages','POST',{confirm:true,revision:snapshot.collaboration!.revision},'admin-fixture')).status,409);
   assert.deepEqual(snapshot,beforeConflict,'Conflict in package must roll back earlier additions');
+  // Reproduce the real button's POST → separate GET → CMS list flow from no collaboration field.
+  snapshot=structuredClone(rawBeforeTeam);delete snapshot.collaboration;
+  const freshCreation=await createAndVerifyCompanyPages(0,async revision=>{
+    const response=await request('/api/teamspace/starter-pages','POST',{confirm:true,revision},'admin-fixture');
+    assert.equal(response.status,200);return response.json();
+  },async()=>{
+    const response=await request('/api/teamspace','GET',undefined,'admin-fixture');assert.equal(response.status,200);return response.json();
+  });
+  assert.equal(freshCreation.summary.created,8);assert.equal(freshCreation.summary.existing,0);
+  assert.equal(freshCreation.workspace.pages.length,8);
+  assert.equal((await service.getStore()).collaboration!.pages.length,8,'Separate persisted read must return all eight pages');
+  const savedSummary=freshCreation.summary;
+  const listMarkup=renderToString(createElement(CompanyPagesPanel,{data:freshCreation.workspace,admin:true,reload:async()=>{}})).replace(/<!--.*?-->/g,'');
+  for(const slug of ['dhl','klarna','qliro','bring','postnord','wetail','synkka','alignr'])assert.ok(listMarkup.includes('#'+slug));
+  assert.ok(listMarkup.includes('Företagssidor (8)')&&listMarkup.includes('Inte publicerad'));
+  assert.ok(!listMarkup.includes('Öppna publik sida'),'Drafts must preview privately, not link to public missing-state');
+  const sample=freshCreation.workspace.pages[0];
+  const previewSource={...sample,draft:{...sample.draft,forms:[{id:'private-form',title:'Contact',purpose:'lead' as const,recipientUids:['secret-recipient'],fields:[]}]}};
+  assert.ok(!JSON.stringify(companyPagePreview(previewSource,'draft')).includes('secret-recipient'));
+  assert.equal(companyPagePreview(sample,'published'),undefined);
+  const formPreview={...sample,draft:{...sample.draft,widgets:[{id:'preview-form-widget',type:'form' as const,title:'Förhandsvisningsformulär',body:'',url:'',alt:'',formId:'preview-form',enabled:true}],forms:[{id:'preview-form',title:'Offert',purpose:'quote' as const,recipientUids:['private-uid'],fields:[{id:'question',label:'Fråga',type:'text' as const,required:true,options:[]}]}]}};
+  const formPreviewHtml=renderToString(createElement(FirebaseProvider,null,createElement(CompanyPageView,{page:companyPagePreview(formPreview,'draft'),preview:true,previewLabel:'Sparad adminförhandsvisning'})));
+  assert.ok(formPreviewHtml.includes('fieldset disabled')&&formPreviewHtml.includes('Förhandsvisning – inget skickas')&&formPreviewHtml.includes('Sparad adminförhandsvisning'));
+  assert.ok(!formPreviewHtml.includes('private-uid'));
+
+  assert.ok(renderToString(createElement(CompanyPageView,{page:companyPagePreview(sample,'draft'),preview:true})).includes('Osparad förhandsvisning'));
+  const savedAgain=await request('/api/teamspace/starter-pages','POST',{confirm:true,revision:freshCreation.workspace.revision},'admin-fixture');
+  assert.equal(savedAgain.status,200);const againSummary=(await savedAgain.json()).starterPages;
+  assert.equal(againSummary.created,0);assert.equal(againSummary.existing,8);assert.deepEqual(againSummary.pages.map((p:any)=>p.id),savedSummary.pages.map(p=>p.id));
+  await assert.rejects(createAndVerifyCompanyPages(0,async()=>({ok:true}),async()=>freshCreation.workspace),/kunde inte bekräftas/);
+  await assert.rejects(createAndVerifyCompanyPages(0,async()=>({ok:true,starterPages:savedSummary}),async()=>({...freshCreation.workspace,pages:[]})),/kunde inte läsas tillbaka/);
+  await assert.rejects(createAndVerifyCompanyPages(0,async()=>{throw new Error('Skrivning nekad');},async()=>freshCreation.workspace),/Skrivning nekad/);
+  await assert.rejects(createAndVerifyCompanyPages(0,async()=>({ok:true,starterPages:savedSummary}),async()=>{throw new Error('Återläsning misslyckades');}),/Återläsning misslyckades/);
+  const emptyList=renderToString(createElement(CompanyPagesPanel,{data:{...freshCreation.workspace,pages:[]},admin:true,reload:async()=>{}}));assert.ok(emptyList.includes('Inga företagssidor sparade ännu'));
   snapshot=rawBeforeTeam;
   const rawBeforePages=structuredClone(snapshot);const beforePages=structuredClone(await service.getStore());
   assert.equal((await request('/api/page-layouts/om','PUT',defaultPageLayout('om'))).status,401);
@@ -642,10 +678,14 @@ try {
   const beforeHistoryFull=structuredClone(snapshot);
   assert.equal((await request(stateUrl,'POST',{action:'trash',revision:snapshot.saleListings![0].revision},'admin-fixture')).status,413);
   assert.deepEqual(snapshot,beforeHistoryFull);
-  const groupIds=CMS_GROUPS.flatMap(g=>g.sections);assert.equal(new Set(groupIds).size,20);
-  assert.equal(groupIds.length,20);
+  const groupIds=CMS_GROUPS.flatMap(g=>g.sections);assert.equal(new Set(groupIds).size,21);
+  assert.equal(groupIds.length,21);
   const cmsNavHtml=renderToString(createElement(CmsNavigation,{items:groupIds.map(id=>({id,label:id})),active:'commerce',onSelect:()=>{}}));
   assert.ok(cmsNavHtml.includes('Affärer &amp; möjligheter')&&cmsNavHtml.includes('aria-current="page"'));
+  assert.ok(cmsNavHtml.includes('Snabbval i CMS')&&cmsNavHtml.includes('company-pages')&&cmsNavHtml.includes('members')&&cmsNavHtml.includes('widgets'));
+  const companyMenu=renderToString(createElement(CmsNavigation,{items:[{id:'company-pages',label:'Företagssidor'},{id:'members',label:'Medlemmar & Community'},{id:'collaboration',label:'Roller & redaktion'}],active:'company-pages',onSelect:()=>{}}));
+  assert.ok(companyMenu.includes('Företagssidor')&&companyMenu.includes('Medlemmar &amp; Community')&&companyMenu.includes('aria-current="page"'));
+
   snapshot=restoreCommerce;
   const rawBeforeAbout=structuredClone(snapshot);
   const beforeAbout=structuredClone(await service.getStore());

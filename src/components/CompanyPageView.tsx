@@ -4,9 +4,9 @@ import { ContentText } from './ContentText';
 import { contentUrl } from '../../shared/contentFormat';
 import { useFirebase } from '../contexts/FirebaseContext';
 import { api } from '../api';
-export function CompanyPageView({page,preview=false}:{page?:PublicCompanyPage;preview?:boolean}) {
+export function CompanyPageView({page,preview=false,previewLabel='Osparad förhandsvisning'}:{page?:PublicCompanyPage;preview?:boolean;previewLabel?:string}) {
   if(!page)return <section className="max-w-4xl mx-auto p-6 space-y-4"><h1 className="text-3xl font-bold">Företagssidan är inte tillgänglig</h1><p>Adressen kan saknas eller sidan är inte publicerad. Kontakta Sveriges E-handel vid frågor.</p><a className="underline" href="#partners">Till partnerkatalogen</a></section>;
-  return <section className="max-w-5xl mx-auto p-5 py-10 space-y-6"><p className="text-sm text-blue-800">Företagssida · {page.entityName} {preview?'· Osparad förhandsvisning':''}</p><h1 className="text-3xl font-bold">{page.content.title}</h1><p className="text-lg">{page.content.summary}</p>
+  return <section className="max-w-5xl mx-auto p-5 py-10 space-y-6"><p className="text-sm text-blue-800">Företagssida · {page.entityName} {preview?`· ${previewLabel}`:''}</p><h1 className="text-3xl font-bold">{page.content.title}</h1><p className="text-lg">{page.content.summary}</p>
     <p className="text-xs text-slate-600">Information från företaget, publicerad efter Sveriges E-handels granskning. Publicering är inte en garanti för tjänstens kvalitet.</p>
     {page.content.widgets.filter(w=>w.enabled).map(w=><article className="bg-white border rounded-2xl p-5 space-y-3" key={w.id}>{w.title&&<h2 className="text-xl font-bold">{w.title}</h2>}
       {w.type==='image'?contentUrl(w.url,true)&&<img src={w.url} alt={w.alt} className="w-full max-h-96 object-contain rounded-xl" loading="lazy"/>:w.type==='form'?<CompanyContactForm key={`${w.formId}-${preview}`} pageId={page.id} form={page.content.forms.find(f=>f.id===w.formId)} preview={preview}/>:<><ContentText text={w.body} format="markdown"/>{w.url&&contentUrl(w.url)&&<a className="underline text-blue-800" href={w.url} target="_blank" rel="noopener noreferrer">Till företagets webbplats →</a>}</>}
