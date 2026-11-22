@@ -453,8 +453,9 @@ export function MarknadView({
 
       {/* Main Content */}
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        <section aria-label="Hitta rätt på Sveriges E-handel" className="grid md:grid-cols-3 gap-4">
-          {([{title:'Jag driver e-handel',text:'Hitta rätt tjänster och samarbetspartner.',tab:'partners',cta:'Hitta rätt partner'},
+        <section aria-label="Hitta rätt på Sveriges E-handel" className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {([{title:'Jag vill starta e-handel',text:'Följ guiden från affärsidé till första kunden.',tab:'starta',cta:'Starta e-handel'},
+            {title:'Jag driver e-handel',text:'Hitta rätt tjänster och samarbetspartner.',tab:'partners',cta:'Hitta rätt partner'},
             {title:'Jag är leverantör eller transportör',text:'Hitta din plats i nätverket och kontakta redaktionen.',tab:'community',cta:'Bli en del av nätverket'},
             {title:'Jag söker jobb eller kunskap',text:'Upptäck möjligheter inom svensk e-handel.',tab:'jobb',cta:'Utforska jobb'}] as const).map(item=><div key={item.tab} className="bg-white border rounded-2xl p-5 space-y-3">
               <h2 className="font-bold text-lg">{item.title}</h2><p>{item.text}</p>

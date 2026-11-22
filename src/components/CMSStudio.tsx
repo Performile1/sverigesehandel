@@ -1,3 +1,4 @@
+import { CommerceEditor } from './CommerceEditor';
 import { ABOUT_CONTENT } from '../../shared/portalContent';
 import { MemberGovernancePanel } from './MemberGovernancePanel';
 import { InsightPostsEditor } from './InsightPostsEditor';
@@ -781,6 +782,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
     { id: 'partners', label: 'Tech & Partners', icon: Layers, count: store.partners.length },
     { id: 'logistics', label: '3PL & 4PL', icon: Warehouse, count: (store.logisticsProviders || []).length },
     { id: 'paketindex', label: 'Paketindex & Marknad', icon: BarChart3 },
+    { id: 'commerce', label: 'Startguide & Köp/sälj', icon: FileText, count: (store.saleListings||[]).filter(r=>r.status==='pending').length },
     { id: 'insights', label: 'Blogg & Insikter', icon: FileText, count: (store.insightPosts || []).length },
     { id: 'news', label: 'Nyheter', icon: Newspaper, count: (store.news || []).length },
     { id: 'events', label: 'Event & Mässor', icon: Calendar, count: store.events.length },
@@ -3091,6 +3093,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
 
           {section === 'members' && <MemberGovernancePanel store={store} onRefresh={onRefresh} />}
 
+          {section === 'commerce' && <CommerceEditor store={store} onRefresh={onRefresh}/>}
           {section === 'insights' && <InsightPostsEditor posts={store.insightPosts || []} onRefresh={onRefresh} />}
 
           {section === 'firebase' && <CmsFirebasePanel store={store} onRefresh={onRefresh} />}

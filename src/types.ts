@@ -515,6 +515,7 @@ export interface ContactFormConfig {
 }
 
 export interface ContactMessage {
+  authorUid?: string;
   assignedStaffUid?: string;
   id: string;
   name: string;
@@ -648,6 +649,9 @@ export interface MapPoint {
 }
 
 export interface CMSStore {
+  startGuide?: GuideChapter[];
+  saleListings?: SaleListing[];
+  publicSaleListings?: PublicSaleListing[];
   staffProfiles?: StaffProfile[];
   memberGovernance?: MemberGovernance;
   communitySettings?: CommunitySettings;
@@ -755,6 +759,8 @@ export interface DiscoveredRecruiterCandidate {
 }
 
 export type PortalTab =
+  | 'starta'
+  | 'kop-salj'
   | 'om'
   | 'marknad'
   | 'nyheter'
@@ -768,6 +774,7 @@ export type PortalTab =
   | 'kontakt';
 
 export type CMSSection =
+  | 'commerce'
   | 'members'
   | 'insights'
   | 'firebase'
@@ -901,3 +908,22 @@ export interface MyStaffProfile {
   profile: StaffProfile | null;
   identity: { uid: string; email: string; admin: boolean };
 }
+
+export interface GuideChapter {
+  id: string; title: string; summary: string; body: string; checklist: string[];
+  targetTab: 'partners' | '3pl' | 'ehandlare' | 'kontakt' | 'jobb';
+  sourceUrl: string; reviewedDate: string; order: number; status: PublishStatus;
+}
+export type SaleCategory = 'brand' | 'webshop' | 'stock';
+export interface SaleDetails {
+  title: string; category: SaleCategory; description: string; included: string;
+  location: string; priceLabel: string; quantity: string; condition: string;
+}
+export interface SaleListing extends SaleDetails {
+  id: string; status: 'pending' | 'draft' | 'published' | 'rejected';
+  availability: 'available' | 'discussions' | 'sold';
+  sellerUid: string; sellerEmail: string; sellerName: string;
+  authorityConfirmed: boolean; publicContentConfirmed: boolean;
+  internalNotes: string; reviewedBy: string; reviewedAt: string; createdAt: string; updatedAt: string;
+}
+export type PublicSaleListing = SaleDetails & Pick<SaleListing,'id'|'availability'|'updatedAt'>;

@@ -23,6 +23,17 @@ const route = (handler: RequestHandler): RequestHandler => (req, res, next) => {
   Promise.resolve(handler(req, res, next)).catch(next);
 };
 
+// Domain errors from these new flows contain no provider errors or private payloads.
+const commerceRoute = (handler:RequestHandler):RequestHandler => route(async(req,res,next)=>{
+  try { await handler(req,res,next); }
+  catch(error) {
+    const status=(error as {status?:number})?.status;
+    const messages:Record<number,string>={400:'Kontrollera obligatoriska fält, längder, datum och granskningsbekräftelser.',403:'Åtkomst nekad.',404:'Annonsen finns inte eller är inte tillgänglig.',409:'Referensen används redan av en annan förfrågan. Kontakta redaktionen.',413:'Lagringen eller inkorgen är full. Inga äldre poster har raderats. Kontakta redaktionen.',429:'Du har nått gränsen för väntande annonser eller dagens intresseförfrågningar.'};
+    if(status&&messages[status]){res.status(status).json({error:messages[status]});return;}
+    throw error;
+  }
+});
+
 // These member actions require verified login; all editorial writes and AI calls require admin.
 const isMemberCommentRoute = (path: string) => /^\/api\/community\/threads\/[^/]+\/comments$/.test(path);
 const isMemberMessageReadRoute = (path: string) => /^\/api\/community\/messages\/[^/]+\/read$/.test(path);
@@ -32,8 +43,9 @@ const isCompanyMemberRoute = (method: string, path: string) => (method === 'GET'
 
 const isMemberSubmission = (method: string, path: string) => isCompanyMemberRoute(method, path) || (
   (method === 'POST' && (
-    ['/api/contact', '/api/community/threads', '/api/community/members', '/api/community/messages'].includes(path) ||
+    ['/api/sales/submissions', '/api/contact', '/api/community/threads', '/api/community/members', '/api/community/messages'].includes(path) ||
     /^\/api\/community\/threads\/[^/]+\/upvote$/.test(path) ||
+    /^\/api\/sales\/[^/]+\/inquiries$/.test(path) ||
     isMemberCommentRoute(path)
   )) ||
   (method === 'GET' && ['/api/community/directory', '/api/community/messages'].includes(path)) ||
@@ -349,6 +361,11 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     }
     res.json({ deleted: true });
   }));
+
+  app.put('/api/start-guide/:id', commerceRoute(async(req,res)=>{res.json(await store.saveGuideChapter(res.locals.cmsIdentity,{...req.body,id:req.params.id}));}));
+  app.post('/api/sales/submissions', commerceRoute(async(req,res)=>{res.status(201).json(await store.submitSaleListing(res.locals.cmsIdentity,req.body));}));
+  app.put('/api/sales/:id', commerceRoute(async(req,res)=>{res.json(await store.reviewSaleListing(res.locals.cmsIdentity,req.params.id,req.body));}));
+  app.post('/api/sales/:id/inquiries', commerceRoute(async(req,res)=>{res.json(await store.inquireSaleListing(res.locals.cmsIdentity,req.params.id,req.body));}));
 
   app.put('/api/insights/:id', route(async (req, res) => {
     res.json(await store.upsertInsightPost({ ...req.body, id: req.params.id }));

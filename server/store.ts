@@ -1,3 +1,6 @@
+import { INITIAL_START_GUIDE } from '../shared/startGuide.ts';
+import { validChapter, validGuide, saleDetails, validSaleListings } from '../shared/commerce.ts';
+import type { GuideChapter, SaleListing } from '../src/types.ts';
 import type { UserInvitation } from './userInvitation.ts';
 import { parseCmsUserInput } from './cmsUsers.ts';
 import type { ResolvedCmsUser } from './cmsUsers.ts';
@@ -419,6 +422,8 @@ function ensureStoreFile(): CMSStore {
       mapPoints: Array.isArray(parsed.mapPoints) ? parsed.mapPoints : [],
       paketindexArchive: upgradedRaw.paketindexArchive,
       insightPosts: upgradedRaw.insightPosts,
+      startGuide: upgradedRaw.startGuide,
+      saleListings: upgradedRaw.saleListings,
       memberGovernance: upgradedRaw.memberGovernance,
       staffProfiles: upgradedRaw.staffProfiles,
       orderBenchmarks:
@@ -2273,4 +2278,61 @@ export function markUserInvitationAccepted(actor:CmsIdentity,uid:string,startedA
   const member=store.communityMembers.find((m)=>m.authorUid===uid);
   if(!member?.invitation||member.invitation.startedAt!==startedAt)throw Object.assign(new Error('Inbjudningsstatus ändrad.'),{status:409});
   member.invitation.acceptedAt=new Date().toISOString();saveStore(store);return {ok:true};
+}
+
+function commerceActor(actor:CmsIdentity,admin=false):asserts actor is CmsIdentity & {email:string} {
+  if(!actor?.verified||!actor.email||!actor.uid||(admin&&!actor.admin)||isBlocked(ensureStoreFile().memberGovernance,actor.uid))
+    throw Object.assign(new Error('Verifierad behörighet krävs.'),{status:403});
+}
+function saveCommerce(store:CMSStore) {
+  if(Buffer.byteLength(JSON.stringify(store),'utf8')>890000)throw Object.assign(new Error('CMS är fullt. Ingen post har raderats. Kontakta administratören.'),{status:413});
+  saveStore(store);
+}
+export function saveGuideChapter(actor:CmsIdentity,input:unknown) {
+  commerceActor(actor,true);
+  if(!validChapter(input))throw Object.assign(new Error('Kontrollera guidens texter, datum, länk och checklista.'),{status:400});
+  const store=structuredClone(ensureStoreFile());const rows=store.startGuide??structuredClone(INITIAL_START_GUIDE);
+  const c:GuideChapter={id:input.id,title:input.title,summary:input.summary,body:input.body,checklist:[...input.checklist],targetTab:input.targetTab,sourceUrl:input.sourceUrl,reviewedDate:input.reviewedDate,order:input.order,status:input.status};
+  const i=rows.findIndex(r=>r.id===c.id);if(i<0)rows.push(c);else rows[i]=c;
+  if(!validGuide(rows))throw Object.assign(new Error('Högst 25 unika guidekapitel tillåts.'),{status:400});
+  store.startGuide=rows;saveCommerce(store);return c;
+}
+export function submitSaleListing(actor:CmsIdentity,input:unknown) {
+  commerceActor(actor);const details=saleDetails(input);const v=input as Record<string,unknown>|null;
+  if(!details||typeof v?.requestId!=='string'||!/^sale-[a-zA-Z0-9-]{1,80}$/.test(v.requestId)||v?.authorityConfirmed!==true||v?.publicContentConfirmed!==true||typeof v?.sellerName!=='string'||!v.sellerName.trim()||v.sellerName.length>100)
+    throw Object.assign(new Error('Fyll i alla annonsuppgifter och bekräfta behörighet samt att texten kan publiceras.'),{status:400});
+  const store=structuredClone(ensureStoreFile());const now=new Date().toISOString();const rows=store.saleListings??[];
+  const existing=rows.find(r=>r.id===v.requestId);
+  if(existing){if(existing.sellerUid!==actor.uid)throw Object.assign(new Error('Annonsreferensen används redan.'),{status:409});return {id:existing.id,status:existing.status};}
+  if(rows.filter(r=>r.sellerUid===actor.uid&&r.status==='pending').length>=3)throw Object.assign(new Error('Du har redan tre annonsförslag som väntar på granskning.'),{status:429});
+  const row:SaleListing={...details,id:v.requestId as string,sellerUid:actor.uid,sellerEmail:actor.email,sellerName:v.sellerName.trim(),
+    authorityConfirmed:true,publicContentConfirmed:true,status:'pending',availability:'available',internalNotes:'',reviewedBy:'',reviewedAt:'',createdAt:now,updatedAt:now};
+  rows.push(row);if(!validSaleListings(rows))throw Object.assign(new Error('Annonsregistret är fullt. Kontakta redaktionen; inga äldre annonser har raderats.'),{status:413});
+  store.saleListings=rows;saveCommerce(store);return {id:row.id,status:row.status};
+}
+export function reviewSaleListing(actor:CmsIdentity,id:string,input:unknown) {
+  commerceActor(actor,true);const store=structuredClone(ensureStoreFile());const row=store.saleListings?.find(r=>r.id===id);
+  if(!row)throw Object.assign(new Error('Annonsen hittades inte.'),{status:404});
+  const details=saleDetails(input);const v=input as Record<string,unknown>|null;
+  if(!details||!['draft','published','rejected'].includes(String(v?.status))||!['available','discussions','sold'].includes(String(v?.availability))||
+    typeof v?.internalNotes!=='string'||v.internalNotes.length>2000||(v.status==='published'&&v.reviewConfirmed!==true))
+    throw Object.assign(new Error('Kontrollera annonsen och bekräfta redaktionell granskning före publicering.'),{status:400});
+  Object.assign(row,details,{status:v.status,availability:v.availability,internalNotes:v.internalNotes,reviewedBy:actor.uid,reviewedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+  if(!validSaleListings(store.saleListings))throw Object.assign(new Error('Ogiltig annons.'),{status:400});
+  saveCommerce(store);return {id:row.id,status:row.status};
+}
+export function inquireSaleListing(actor:CmsIdentity,id:string,input:unknown) {
+  commerceActor(actor);const store=structuredClone(ensureStoreFile());const row=store.saleListings?.find(r=>r.id===id&&r.status==='published'&&r.availability!=='sold');
+  if(!row)throw Object.assign(new Error('Annonsen är inte tillgänglig för intresseförfrågningar.'),{status:404});
+  const v=input as Record<string,unknown>|null;
+  if(typeof v?.name!=='string'||!v.name.trim()||v.name.length>100||typeof v?.message!=='string'||!v.message.trim()||v.message.length>3000||typeof v?.requestId!=='string'||!/^inq-[a-zA-Z0-9-]{1,80}$/.test(v.requestId))
+    throw Object.assign(new Error('Ange namn och meddelande.'),{status:400});
+  // Idempotent submit within this inbox. No client email, routing or listing title trusted.
+  const existing=store.contactMessages.find(m=>m.id===v.requestId);
+  if(existing){if(existing.authorUid!==actor.uid||existing.adSlot!==id)throw Object.assign(new Error('Förfrågnings-ID används redan.'),{status:409});return {ok:true};}
+  if(store.contactMessages.filter(m=>m.authorUid===actor.uid&&m.topic.startsWith('Köp & sälj:')&&m.createdAt.slice(0,10)===new Date().toISOString().slice(0,10)).length>=10)throw Object.assign(new Error('Du har nått dagens gräns för intresseförfrågningar.'),{status:429});
+  if(store.contactMessages.length>=300)throw Object.assign(new Error('Inkorgen är full. Kontakta redaktionen via kontaktsidan.'),{status:413});
+  store.contactMessages.unshift({id:v.requestId,name:v.name.trim(),email:actor.email,authorUid:actor.uid,topic:`Köp & sälj: ${row.title}`,adSlot:id,
+    message:v.message.trim(),submissionType:'other',routingMode:'self',status:'new',createdAt:new Date().toISOString()});
+  saveCommerce(store);return {ok:true};
 }

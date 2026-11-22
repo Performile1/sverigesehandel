@@ -1,3 +1,6 @@
+import { publicSaleListing } from '../shared/commerce';
+import { StartGuideView } from './components/StartGuideView';
+import { MarketplaceView } from './components/MarketplaceView';
 import { AboutView } from './components/AboutView';
 import { visibleCommunityThreads } from '../shared/memberGovernance';
 import { CompanyWorkspace } from './components/CompanyWorkspace';
@@ -24,6 +27,8 @@ import { ThreePlView } from './components/ThreePlView';
 import type { CMSStore, JobRoleCategory, Merchant, PortalTab, TechPartner } from './types';
 
 const TAB_TITLES: Record<PortalTab, string> = {
+  starta: 'Starta e-handel – guide & checklista | sverigesehandel.se',
+  'kop-salj': 'Köpa & sälja varumärke, webshop och varulager | sverigesehandel.se',
   om: 'Om Sveriges E-handel | sverigesehandel.se',
   marknad: 'Sveriges E-handel – Marknadsdata, ECDB, Statista & Tech | sverigesehandel.se',
   nyheter: 'E-handelsnyheter – Temu, Nya Butiker & SaaS i Sverige & Europa | sverigesehandel.se',
@@ -39,7 +44,7 @@ const TAB_TITLES: Record<PortalTab, string> = {
 
 function getInitialTab(): PortalTab {
   if (typeof window === 'undefined') return 'marknad';
-  const hash = window.location.hash.replace('#', '').toLowerCase() as PortalTab;
+  const hash = window.location.hash.replace('#', '').split('/')[0].toLowerCase() as PortalTab;
   return hash && hash in TAB_TITLES ? hash : 'marknad';
 }
 
@@ -137,6 +142,8 @@ export default function App() {
   useEffect(() => {
     if (authError) notify(authError);
   }, [authError, notify]);
+
+  useEffect(()=>{const sync=()=>{setActiveTab(getInitialTab());setMode('portal');};window.addEventListener('hashchange',sync);return()=>window.removeEventListener('hashchange',sync);},[]);
 
   function handleNavigate(tab: PortalTab, searchQuery?: string) {
     setInitialSearch(searchQuery || '');
@@ -510,6 +517,8 @@ export default function App() {
                 onNotify={notify}
               />
             )}
+            {activeTab === 'starta' && <StartGuideView chapters={store.startGuide||[]} onNavigate={handleNavigate}/>}
+            {activeTab === 'kop-salj' && <MarketplaceView onSubmitted={()=>void fetchStore()} listings={store.publicSaleListings || (isAdmin ? (store.saleListings||[]).filter(r=>r.status==='published').map(publicSaleListing) : [])}/>}
             {activeTab === 'om' && <AboutView copy={store.pageContent?.om} onNavigate={handleNavigate}/>}
             {activeTab === 'kontakt' && (
               <KontaktView

@@ -1,3 +1,5 @@
+import { publicSaleListing } from '../shared/commerce.ts';
+import { INITIAL_START_GUIDE } from '../shared/startGuide.ts';
 import { companyInboxAvailable } from './memberGovernance.ts';
 import { DEFAULT_COMMUNITY_SETTINGS } from '../shared/memberGovernance.ts';
 import { INITIAL_INSIGHT_POSTS } from '../shared/insightPosts.ts';
@@ -33,6 +35,9 @@ export function publicStore(store: CMSStore, admin = false): CMSStore {
     };
   }
   const result = structuredClone(store);
+  result.startGuide=(result.startGuide??INITIAL_START_GUIDE).filter(c=>c.status==='published');
+  result.publicSaleListings=(store.saleListings??[]).filter(r=>r.status==='published').map(publicSaleListing);
+  delete result.saleListings;
   delete result.staffProfiles;
   delete result.memberGovernance;
   result.communitySettings = { ...(store.memberGovernance?.settings ?? DEFAULT_COMMUNITY_SETTINGS) };
