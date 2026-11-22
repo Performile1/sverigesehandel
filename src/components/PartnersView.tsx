@@ -1,4 +1,4 @@
-import { CompanyDirectoryLinks } from './CompanyDirectoryLinks';
+import { CompanyDirectoryLinks, CompanyPageLink } from './CompanyDirectoryLinks';
 import { PageZone } from './PageLayout';
 import { CmsPublicImage } from './CmsPublicImage';
 import { useMemo, useState } from 'react';
@@ -592,6 +592,7 @@ export function PartnersView({
                         </td>
                         {sideBySideActors.map((actor) => (
                           <td key={actor.id} className="py-3 px-3 align-top space-y-1.5">
+                            <CompanyPageLink type="partner" entityId={actor.id}/>
                             <div>
                               <a
                                 href={getWebsiteHref(actor)}
@@ -1039,6 +1040,7 @@ export function PartnersView({
                       )}
                     </div>
 
+                    <CompanyPageLink type="partner" entityId={p.id}/>
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                       <button
                         type="button"
