@@ -1,22 +1,24 @@
 import { useState } from 'react';
 import type { CMSStore, GuideChapter, SaleListing, SaleDetails } from '../types';
 import { INITIAL_START_GUIDE } from '../../shared/startGuide';
-import { SALE_AVAILABILITY } from '../../shared/commerce';
+import { SALE_AVAILABILITY, SALE_INTENTS } from '../../shared/commerce';
 import { api } from '../api';
-import { SaleFields, commerceButton as button, commerceField as field } from './MarketplaceView';
+import { SaleFields, blankSale, commerceButton as button, commerceField as field } from './MarketplaceView';
 const blank:GuideChapter={id:'',title:'',summary:'',body:'',checklist:[],targetTab:'partners',sourceUrl:'',reviewedDate:'',order:10,status:'draft'};
 export function CommerceEditor({store,onRefresh}:{store:CMSStore;onRefresh:()=>Promise<void>}) {
-  const [guideId,setGuideId]=useState('new');const [saleId,setSaleId]=useState('');
+  const [guideId,setGuideId]=useState('new');const [saleId,setSaleId]=useState('');const [creating,setCreating]=useState(false);
   const guide=store.startGuide??INITIAL_START_GUIDE;const chapter=guide.find(c=>c.id===guideId);const sales=store.saleListings??[];const sale=sales.find(c=>c.id===saleId);
   return <section className="space-y-6">
     <div className="border bg-white rounded-2xl p-5 space-y-4"><h2 className="text-2xl font-bold">Starta e-handel – guide</h2><p>Redigera kapitel, checklista, källa och granskningsdatum. Spara som utkast för att avpublicera utan att radera innehåll. Partnerknappen är en kataloglänk, inte en sponsrad rekommendation.</p>
       <label>Välj kapitel<select className={field} value={chapter?.id||'new'} onChange={e=>setGuideId(e.target.value)}><option value="new">Nytt kapitel</option>{[...guide].sort((a,b)=>a.order-b.order).map(c=><option key={c.id} value={c.id}>{c.order+1}. {c.title} · {c.status}</option>)}</select></label>
       <GuideForm key={chapter?JSON.stringify(chapter):'new'} initial={chapter||blank} onSave={async c=>{await api.saveGuideChapter(c);await onRefresh();setGuideId(c.id);}}/>
     </div>
-    <div className="border bg-white rounded-2xl p-5 space-y-4"><h2 className="text-2xl font-bold">Köp & sälj – annonsgranskning</h2><p>Förslag och säljaruppgifter är privata tills publicering. Kontrollera säljarens rätt att företräda affären och vad som får visas. Publicering är inte en garanti om äganderätt, pris eller kvalitet. Ingen betalning, dokumentöverföring eller automatisk mejlförmedling ingår.</p>
-      <label>Välj annons ({sales.filter(c=>c.status==='pending').length} väntande)<select className={field} value={sale?.id||''} onChange={e=>setSaleId(e.target.value)}><option value="">Välj förslag</option>{sales.map(c=><option key={c.id} value={c.id}>{c.status} · {c.title}</option>)}</select></label>
+    <div className="border bg-white rounded-2xl p-5 space-y-4"><h2 className="text-2xl font-bold">Köp & sälj – annonsgranskning</h2><p>Förslag är privata tills publicering. Kontaktuppgifter förblir privata även efter publicering. Kontrollera annonsörens rätt att företräda affären och vad som får visas. Publicering är inte en garanti om äganderätt, pris eller kvalitet. Ingen betalning, dokumentöverföring eller automatisk mejlförmedling ingår.</p>
+      <button type="button" className={button} onClick={()=>setCreating(p=>!p)}>{creating?'Stäng nytt annonsformulär':'Skapa köp- eller säljannons'}</button>
+      {creating&&<CreateCmsSaleForm onCreated={async id=>{setSaleId(id);setCreating(false);await onRefresh();}}/>}
+      <label>Välj annons ({sales.filter(c=>c.status==='pending').length} väntande)<select className={field} value={sale?.id||''} onChange={e=>setSaleId(e.target.value)}><option value="">Välj förslag</option>{sales.map(c=><option key={c.id} value={c.id}>{SALE_INTENTS[c.intent??'sell']} · {c.status} · {c.title}</option>)}</select></label>
       {sale&&<SaleReview key={JSON.stringify(sale)} initial={sale} onSave={async input=>{await api.reviewSaleListing(sale.id,input);await onRefresh();}}/>}
-      <p className="text-sm">Intresseförfrågningar finns i CMS → Formulär & Intro med ämne ”Köp & sälj”. De visas inte för andra medlemmar eller i företagsinkorgar. Sålda/avpublicerade annonser tar inte emot nya intresseförfrågningar.</p>
+      <p className="text-sm">Intresseförfrågningar finns i CMS → Formulär & Intro med ämne ”Köp & sälj”. De visas inte för andra medlemmar eller i företagsinkorgar. Avslutade/avpublicerade annonser tar inte emot nya intresseförfrågningar.</p>
     </div>
   </section>;
 }
@@ -40,13 +42,40 @@ function GuideForm({initial,onSave}:{initial:GuideChapter;onSave:(c:GuideChapter
 function SaleReview({initial,onSave}:{initial:SaleListing;onSave:(input:unknown)=>Promise<void>}) {
   const [draft,setDraft]=useState<SaleDetails>(initial);const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
   return <form className="space-y-3" onSubmit={async e=>{e.preventDefault();if(busy)return;const f=new FormData(e.currentTarget);setBusy(true);setMessage('');try{await onSave({...draft,status:String(f.get('status')),availability:String(f.get('availability')),internalNotes:String(f.get('notes')),reviewConfirmed:f.get('review')==='on'});setMessage('Granskningsbeslut sparat.');}catch(err){setMessage((err as Error).message);}finally{setBusy(false);}}}>
-    <p className="bg-slate-100 p-3 rounded-xl text-sm">Privat säljarkontakt: {initial.sellerName} · {initial.sellerEmail}<br/>Referens: {initial.id}<br/>Behörighetsförsäkran från säljaren: {initial.authorityConfirmed?'Ja':'Nej'} · Uppgifter godkända som offentliga av säljaren: {initial.publicContentConfirmed?'Ja':'Nej'}<br/>Senaste beslut: {initial.reviewedAt||'Inte granskat'} · {initial.reviewedBy||'–'}</p>
+    <p className="bg-slate-100 p-3 rounded-xl text-sm">Privat annonskontakt: {initial.sellerName} · {initial.sellerEmail}<br/>{initial.origin==='cms'?`Skapad i CMS av ${initial.createdByUid}; kontaktadressen är inte verifierad genom registreringen.`:'Inlämnad från verifierat användarkonto.'}<br/>Referens: {initial.id}<br/>Uppdrag / behörighet bekräftad: {initial.authorityConfirmed?'Ja':'Nej'} · Offentliga fält godkända av annonsören: {initial.publicContentConfirmed?'Ja':'Nej'}<br/>Senaste beslut: {initial.reviewedAt||'Inte granskat'} · {initial.reviewedBy||'–'}</p>
     <fieldset disabled={busy} className="space-y-3"><SaleFields draft={draft} onChange={setDraft}/>
       <label className="block">Privata handläggningsanteckningar<textarea name="notes" className={field} maxLength={2000} defaultValue={initial.internalNotes}/></label>
       <label className="block">Annonsstatus<select name="status" className={field} defaultValue={initial.status==='pending'?'draft':initial.status}><option value="draft">Utkast / avpublicerad</option><option value="published">Publicerad</option><option value="rejected">Avslagen</option></select></label>
       <label className="block">Affärsstatus<select name="availability" className={field} defaultValue={initial.availability}>{Object.entries(SALE_AVAILABILITY).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
-      <label className="flex gap-2"><input name="review" type="checkbox"/>Jag har granskat annonsen, säljarens uppgivna behörighet och att fälten får publiceras. Krävs vid varje publicering.</label>
+      <label className="flex gap-2"><input name="review" type="checkbox"/>Jag har granskat annonsen, annonsörens uppgivna behörighet och att fälten får publiceras. Krävs vid varje publicering.</label>
       <button className={button}>Spara granskningsbeslut</button>
     </fieldset>{message&&<p role="status">{message}</p>}
+  </form>;
+}
+
+export function CreateCmsSaleForm({onCreated}:{onCreated:(id:string)=>Promise<void>}) {
+  const [draft,setDraft]=useState<SaleDetails>({...blankSale,intent:'sell'});
+  const [status,setStatus]=useState<'draft'|'published'>('draft');const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
+  const [requestId]=useState(()=>`sale-${crypto.randomUUID()}`);const [createdId,setCreatedId]=useState('');
+  if(createdId)return <div role="status" className="p-3 border rounded-lg">Annonsen är sparad med referens {createdId}. {message}<button type="button" className={button} onClick={()=>{void onCreated(createdId).catch(()=>setMessage('Kunde inte uppdatera CMS. Ladda om och välj den sparade annonsen.'));}}>Öppna sparad annons</button></div>;
+  return <form className="space-y-3 border rounded-xl p-4" onSubmit={async e=>{
+    e.preventDefault();if(busy)return;const f=new FormData(e.currentTarget);setBusy(true);setMessage('');
+    try{const result=await api.createCmsSaleListing({...draft,requestId,sellerName:String(f.get('contactName')),sellerEmail:String(f.get('contactEmail')),
+      internalNotes:String(f.get('notes')),status,authorityConfirmed:f.get('authority')==='on',publicContentConfirmed:f.get('publicContent')==='on',reviewConfirmed:f.get('review')==='on'});
+      setCreatedId(result.id);try{await onCreated(result.id);}catch{setMessage('Annonsen är sparad men CMS kunde inte uppdateras. Ladda om – skapa inte en ny kopia.');}
+    }catch(err){setMessage((err as Error).message);}finally{setBusy(false);}
+  }}>
+    <h3 className="text-lg font-bold">Skapa köp- eller säljannons i CMS</h3>
+    <p className="text-sm">Registrera annonsörens kontakt på uppdrag. Uppgifterna hålls privata. En angiven e-postadress verifieras inte och ger inget konto eller företagsbehörighet. Inget mejl skickas automatiskt.</p>
+    <fieldset disabled={busy} className="space-y-3"><SaleFields draft={draft} onChange={setDraft}/>
+      <label className="block">Annonsörens kontaktperson (privat)<input className={field} name="contactName" required maxLength={100}/></label>
+      <label className="block">Annonsörens e-post (privat, ej kontoverifiering)<input className={field} name="contactEmail" type="email" required maxLength={160}/></label>
+      <label className="block">Interna anteckningar<textarea className={field} name="notes" maxLength={2000}/></label>
+      <label className="flex gap-2"><input name="authority" type="checkbox" required/>Jag har annonsörens uppdrag och har kontrollerat att personen får företräda erbjudandet eller köpförfrågan.</label>
+      <label className="flex gap-2"><input name="publicContent" type="checkbox" required/>Annonsören har godkänt de offentliga fälten. De innehåller inga kundregister eller konfidentiella/personliga uppgifter.</label>
+      <label className="block">Spara som<select className={field} value={status} onChange={e=>setStatus(e.target.value as typeof status)}><option value="draft">Utkast – inte offentligt</option><option value="published">Publicerad</option></select></label>
+      {status==='published'&&<label className="flex gap-2"><input name="review" type="checkbox" required/>Jag har redaktionellt granskat annonsen och godkänner publicering.</label>}
+      <button className={button}>{busy?'Sparar…':status==='published'?'Godkänn och publicera annons':'Spara annonsutkast'}</button>
+    </fieldset>{message&&<p role="alert">{message} Referens: {requestId}. Kontrollera sparat läge före nytt förslag vid osäkert svar.</p>}
   </form>;
 }

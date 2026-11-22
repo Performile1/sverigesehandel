@@ -1,3 +1,4 @@
+import { normalizeLoginEmail } from '../shared/authOptions.ts';
 import { INITIAL_START_GUIDE } from '../shared/startGuide.ts';
 import { validChapter, validGuide, saleDetails, validSaleListings } from '../shared/commerce.ts';
 import type { GuideChapter, SaleListing } from '../src/types.ts';
@@ -2303,11 +2304,31 @@ export function submitSaleListing(actor:CmsIdentity,input:unknown) {
     throw Object.assign(new Error('Fyll i alla annonsuppgifter och bekräfta behörighet samt att texten kan publiceras.'),{status:400});
   const store=structuredClone(ensureStoreFile());const now=new Date().toISOString();const rows=store.saleListings??[];
   const existing=rows.find(r=>r.id===v.requestId);
-  if(existing){if(existing.sellerUid!==actor.uid)throw Object.assign(new Error('Annonsreferensen används redan.'),{status:409});return {id:existing.id,status:existing.status};}
+  if(existing){if(existing.origin==='cms'||existing.sellerUid!==actor.uid)throw Object.assign(new Error('Annonsreferensen används redan.'),{status:409});return {id:existing.id,status:existing.status};}
   if(rows.filter(r=>r.sellerUid===actor.uid&&r.status==='pending').length>=3)throw Object.assign(new Error('Du har redan tre annonsförslag som väntar på granskning.'),{status:429});
   const row:SaleListing={...details,id:v.requestId as string,sellerUid:actor.uid,sellerEmail:actor.email,sellerName:v.sellerName.trim(),
     authorityConfirmed:true,publicContentConfirmed:true,status:'pending',availability:'available',internalNotes:'',reviewedBy:'',reviewedAt:'',createdAt:now,updatedAt:now};
   rows.push(row);if(!validSaleListings(rows))throw Object.assign(new Error('Annonsregistret är fullt. Kontakta redaktionen; inga äldre annonser har raderats.'),{status:413});
+  store.saleListings=rows;saveCommerce(store);return {id:row.id,status:row.status};
+}
+export function createCmsSaleListing(actor:CmsIdentity,input:unknown) {
+  commerceActor(actor,true);
+  const details=saleDetails(input);const v=input as Record<string,unknown>|null;
+  let email='';try{email=normalizeLoginEmail(typeof v?.sellerEmail==='string'?v.sellerEmail:'');}catch{}
+  if(!details||!email||typeof v?.requestId!=='string'||!/^sale-[a-zA-Z0-9-]{1,80}$/.test(v.requestId)||
+    typeof v.sellerName!=='string'||!v.sellerName.trim()||v.sellerName.length>100||v.authorityConfirmed!==true||v.publicContentConfirmed!==true||
+    !['draft','published'].includes(String(v.status))||typeof v.internalNotes!=='string'||v.internalNotes.length>2000||
+    (v.status==='published'&&v.reviewConfirmed!==true))
+    throw Object.assign(new Error('Kontrollera annons, kontaktuppgifter, uppdrag och granskningsbekräftelse.'),{status:400});
+  const store=structuredClone(ensureStoreFile());const rows=store.saleListings??[];
+  const existing=rows.find(r=>r.id===v.requestId);
+  if(existing){if(existing.origin!=='cms'||existing.createdByUid!==actor.uid)throw Object.assign(new Error('Referensen används redan.'),{status:409});return {id:existing.id,status:existing.status};}
+  const now=new Date().toISOString();
+  const row:SaleListing={...details,id:v.requestId,sellerName:v.sellerName.trim(),sellerEmail:email,sellerUid:'',origin:'cms',createdByUid:actor.uid,
+    authorityConfirmed:true,publicContentConfirmed:true,status:v.status as 'draft'|'published',availability:'available',internalNotes:v.internalNotes,
+    reviewedBy:v.status==='published'?actor.uid:'',reviewedAt:v.status==='published'?now:'',createdAt:now,updatedAt:now};
+  rows.push(row);
+  if(!validSaleListings(rows))throw Object.assign(new Error('Annonsregistret är fullt eller ogiltigt. Ingen historik har raderats.'),{status:413});
   store.saleListings=rows;saveCommerce(store);return {id:row.id,status:row.status};
 }
 export function reviewSaleListing(actor:CmsIdentity,id:string,input:unknown) {

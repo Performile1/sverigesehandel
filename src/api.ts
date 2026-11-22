@@ -81,6 +81,7 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  createCmsSaleListing:(input:SaleDetails&{requestId:string;sellerName:string;sellerEmail:string;authorityConfirmed:boolean;publicContentConfirmed:boolean;reviewConfirmed:boolean;internalNotes:string;status:'draft'|'published'})=>request<{id:string;status:string}>('/api/sales',{method:'POST',body:JSON.stringify(input)}),
   saveGuideChapter:(chapter:GuideChapter)=>request<GuideChapter>(`/api/start-guide/${chapter.id}`,{method:'PUT',body:JSON.stringify(chapter)}),
   submitSaleListing:(input:SaleDetails&{requestId:string;sellerName:string;authorityConfirmed:boolean;publicContentConfirmed:boolean})=>request<{id:string;status:string}>('/api/sales/submissions',{method:'POST',body:JSON.stringify(input)}),
   reviewSaleListing:(id:string,input:unknown)=>request<{id:string;status:string}>(`/api/sales/${id}`,{method:'PUT',body:JSON.stringify(input)}),

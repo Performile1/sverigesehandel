@@ -363,6 +363,7 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   }));
 
   app.put('/api/start-guide/:id', commerceRoute(async(req,res)=>{res.json(await store.saveGuideChapter(res.locals.cmsIdentity,{...req.body,id:req.params.id}));}));
+  app.post('/api/sales', commerceRoute(async(req,res)=>{res.status(201).json(await store.createCmsSaleListing(res.locals.cmsIdentity,req.body));}));
   app.post('/api/sales/submissions', commerceRoute(async(req,res)=>{res.status(201).json(await store.submitSaleListing(res.locals.cmsIdentity,req.body));}));
   app.put('/api/sales/:id', commerceRoute(async(req,res)=>{res.json(await store.reviewSaleListing(res.locals.cmsIdentity,req.params.id,req.body));}));
   app.post('/api/sales/:id/inquiries', commerceRoute(async(req,res)=>{res.json(await store.inquireSaleListing(res.locals.cmsIdentity,req.params.id,req.body));}));
