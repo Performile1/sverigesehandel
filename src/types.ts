@@ -951,9 +951,9 @@ export interface SaleCase {
   dueDate: string; note: string; revision: number; updatedAt: string; updatedBy: string;
 }
 
-export type HomeWidgetId = 'audience' | 'latest-index' | 'index-archive' | 'insights' | 'top-ad' | 'top-form' | 'checkout-cta' | 'mid-ad' | 'bottom-form';
+export type HomeWidgetId = 'audience' | 'latest-index' | 'index-archive' | 'insights' | 'top-ad' | 'top-form' | 'checkout-cta' | 'mid-ad' | 'bottom-form' | 'regions-map' | 'industry-trends' | 'consumer-insights';
 export interface HomeWidgetLayout {
-  version: 1 | 2; revision: number;
+  version: 1 | 2 | 3; revision: number;
   items: Array<{id:HomeWidgetId;enabled:boolean;order:number}>;
 }
 

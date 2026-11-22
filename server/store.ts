@@ -2426,6 +2426,6 @@ export function saveHomeWidgets(actor:CmsIdentity,input:unknown) {
   commerceActor(actor,true);
   if(!validHomeWidgets(input))throw Object.assign(new Error('Ogiltig widgetlayout.'),{status:400});
   const store=structuredClone(ensureStoreFile());editorialConflict(store.homeWidgets,input.revision);
-  const layout:HomeWidgetLayout={version:2,revision:input.revision+1,items:homeWidgetLayout(input).items.map(i=>({id:i.id,enabled:i.enabled,order:i.order}))};
+  const layout:HomeWidgetLayout={version:3,revision:input.revision+1,items:homeWidgetLayout(input).items.map(i=>({id:i.id,enabled:i.enabled,order:i.order}))};
   store.homeWidgets=layout;saveCommerce(store);return layout;
 }
