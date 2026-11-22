@@ -1,3 +1,5 @@
+import { CmsNavigation, CMS_GROUPS } from '../src/components/CmsNavigation.tsx';
+import { publiclyVisible, validLifecycle } from '../shared/editorialLifecycle.ts';
 import { CreateCmsSaleForm } from '../src/components/CommerceEditor.tsx';
 import { INITIAL_START_GUIDE } from '../shared/startGuide.ts';
 import { validGuide, validChapter, validSaleListings, publicSaleListing } from '../shared/commerce.ts';
@@ -114,6 +116,17 @@ const server = app.listen(0, '127.0.0.1');
 await new Promise<void>((resolve) => server.once('listening', resolve));
 const origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 async function request(path: string, method = 'GET', body?: unknown, identity?: string) {
+  if(method==='DELETE'&&path.startsWith('/api/insights/')&&body===undefined)body={};
+  // Existing tests model a freshly loaded editor; explicit revisions bypass this helper.
+  if(body&&typeof body==='object'&&!Object.hasOwn(body,'revision')) {
+    let row:{revision?:number}|undefined;
+    const id=path.split('/').at(-1);
+    if(path.startsWith('/api/insights/'))row=snapshot.insightPosts?.find(p=>p.id===id);
+    if(path.startsWith('/api/start-guide/'))row=snapshot.startGuide?.find(p=>p.id===id);
+    if(method==='PUT'&&/^\/api\/sales\/[^/]+$/.test(path))row=snapshot.saleListings?.find(p=>p.id===id);
+    if(path==='/api/media/image'&&['insight','sale'].includes((body as any).targetType))row=((body as any).targetType==='sale'?snapshot.saleListings:snapshot.insightPosts)?.find(p=>p.id===(body as any).targetId);
+    if(row)body={...body,revision:row.revision??0};
+  }
   return fetch(`${origin}${path}`, { method, headers: {
     'Content-Type': 'application/json', ...(identity ? { Authorization: `Bearer ${identity}` } : {}),
   }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
@@ -246,6 +259,81 @@ try {
   snapshot=beforeCmsFull;
   snapshot.memberGovernance={...emptyGovernance(),blocks:[{uid:'fixture-user',reason:'test',createdAt:new Date().toISOString()}]};
   assert.equal((await request('/api/sales','POST',{...cmsDraft,requestId:'sale-admin-blocked'},'admin-fixture')).status,403);
+  snapshot=structuredClone(currentCommerce);snapshot.saleListings=[{...savedSale,revision:0}];snapshot.editorialHistory=[];
+  const lifeNow='2026-11-22T20:00:00.000Z';
+  assert.ok(publiclyVisible({...savedSale,status:'published'},lifeNow));
+  assert.ok(!publiclyVisible({...savedSale,status:'published',publishAt:'2026-11-23T00:00:00.000Z'},lifeNow));
+  assert.ok(!publiclyVisible({...savedSale,status:'published',expiresAt:lifeNow},lifeNow));
+  assert.ok(!publiclyVisible({...savedSale,status:'published',trashedAt:lifeNow},lifeNow));
+  assert.ok(!validLifecycle({publishAt:'bad'}));assert.ok(!validLifecycle({publishAt:lifeNow,expiresAt:lifeNow}));
+  const edit={...decision,revision:0,title:'New revision title'};
+  assert.equal((await request(`/api/sales/${savedSale.id}`,'PUT',edit,'admin-fixture')).status,200);
+  const firstHistory=(await service.getStore()).editorialHistory![0];assert.equal(firstHistory.before.title,savedSale.title);
+  assert.equal((await request(`/api/sales/${savedSale.id}`,'PUT',edit,'admin-fixture')).status,409);
+  assert.equal((await service.getStore()).saleListings![0].title,'New revision title');
+  const stateUrl=`/api/editorial/sale/${savedSale.id}`;
+  assert.equal((await request(stateUrl,'POST',{revision:1,action:'trash'},'member-two')).status,403);
+  assert.equal((await request(stateUrl,'POST',{revision:1,action:'trash'},'admin-fixture')).status,200);
+  assert.ok((await service.getStore()).saleListings![0].trashedAt);
+  assert.equal(publicStore(await service.getStore()).publicSaleListings!.length,0);
+  assert.equal((await request(stateUrl,'POST',{revision:1,action:'untrash'},'admin-fixture')).status,409);
+  assert.equal((await request(stateUrl,'POST',{revision:2,action:'untrash'},'admin-fixture')).status,200);
+  assert.equal((await service.getStore()).saleListings![0].status,'draft');
+  assert.equal((await request(stateUrl,'POST',{revision:3,action:'restore',versionId:firstHistory.id},'admin-fixture')).status,200);
+  const restoredSale=(await service.getStore()).saleListings![0];assert.equal(restoredSale.title,savedSale.title);assert.equal(restoredSale.status,'draft');assert.equal(restoredSale.revision,4);assert.equal(restoredSale.sellerUid,savedSale.sellerUid);
+  assert.equal(restoredSale.publishAt,'');assert.equal(restoredSale.expiresAt,'');
+  const privateVersionJson=JSON.stringify(publicStore(await service.getStore()));assert.ok(!privateVersionJson.includes(firstHistory.id));
+  assert.equal(publicStore(await service.getStore()).editorialHistory,undefined);
+  const future={...decision,revision:4,publishAt:'2099-01-01T00:00:00.000Z',expiresAt:'2099-02-01T00:00:00.000Z'};
+  assert.equal((await request(`/api/sales/${savedSale.id}`,'PUT',future,'admin-fixture')).status,200);
+  assert.equal(publicStore(await service.getStore()).publicSaleListings!.length,0);
+  assert.equal((await request(`/api/sales/${savedSale.id}/inquiries`,'POST',{...inquiry,requestId:'inq-future'},'member-two')).status,404);
+  const nowRow=(await service.getStore()).saleListings![0];
+  assert.equal((await request(`/api/sales/${savedSale.id}`,'PUT',{...decision,revision:nowRow.revision,expiresAt:'2020-01-01T00:00:00.000Z'},'admin-fixture')).status,200);
+  assert.equal(publicStore(await service.getStore()).publicSaleListings!.length,0);
+  // Gallery uses existing server-validated upload; tests never contact Storage.
+  featureMedia=true;
+  const tinyImage=(await sharp({create:{width:2,height:2,channels:3,background:'white'}}).png().toBuffer()).toString('base64');
+  const galleryRev=(await service.getStore()).saleListings![0].revision!;
+  assert.equal((await request('/api/media/image','POST',{targetType:'sale',targetId:savedSale.id,data:tinyImage,alt:'Product',revision:galleryRev},'admin-fixture')).status,200);
+  const galleryRow=(await service.getStore()).saleListings![0];assert.deepEqual(galleryRow.images,[fixtureImage]);
+  assert.equal((await request(`/api/sales/${savedSale.id}/gallery`,'PUT',{revision:galleryRow.revision,paths:['not-owned']},'admin-fixture')).status,400);
+  assert.equal((await request(`/api/sales/${savedSale.id}/gallery`,'PUT',{revision:galleryRow.revision,paths:[]},'admin-fixture')).status,200);
+  assert.equal((await service.getStore()).saleListings![0].images!.length,0);
+  assert.equal((await request(`/api/sales/${savedSale.id}/gallery`,'PUT',{revision:galleryRow.revision,paths:[]},'admin-fixture')).status,409);
+  featureMedia=false;uploads=0;
+  // Case assignment grants no access. Only CMS-admin may read/write the workflow.
+  snapshot.contactMessages=[contacts[0]];snapshot.saleCases=[];
+  snapshot.staffProfiles=[{uid:'fixture-staff',email:'staff@example.invalid',name:'Staff',phone:'',position:'Support',company:'Fixture',employmentSince:'',expertise:'',photoUrl:'',updatedAt:new Date().toISOString()}];
+  const caseInput={revision:0,assignedUid:'fixture-staff',state:'working',dueDate:'2026-12-01',note:'Private followup'};
+  assert.equal((await request('/api/sale-cases/inq-fixture','PUT',caseInput,'member-two')).status,403);
+  assert.equal((await request('/api/sale-cases/inq-fixture','PUT',{...caseInput,assignedUid:'not-registered'},'admin-fixture')).status,400);
+  assert.equal((await request('/api/sale-cases/inq-fixture','PUT',caseInput,'admin-fixture')).status,200);
+  assert.equal((await request('/api/sale-cases/inq-fixture','PUT',caseInput,'admin-fixture')).status,409);
+  assert.equal(publicStore(await service.getStore()).saleCases,undefined);
+  assert.ok(!JSON.stringify(publicStore(await service.getStore())).includes('Private followup'));
+  assert.ok(validateSnapshot(await service.getStore()));
+  // Guide and insight use the same scheduling/conflict/history contract, not just sale rows.
+  const lifeGuide={...INITIAL_START_GUIDE[0],publishAt:'2099-01-01T00:00:00.000Z',revision:snapshot.startGuide?.find(c=>c.id===INITIAL_START_GUIDE[0].id)?.revision??0};
+  assert.equal((await request(`/api/start-guide/${lifeGuide.id}`,'PUT',lifeGuide,'admin-fixture')).status,200);
+  assert.equal((await request(`/api/start-guide/${lifeGuide.id}`,'PUT',lifeGuide,'admin-fixture')).status,409);
+  assert.ok(!publicStore(await service.getStore()).startGuide!.some(c=>c.id===lifeGuide.id));
+  const lifePost={...INITIAL_INSIGHT_POSTS[0],publishAt:'2099-01-01T00:00:00.000Z',revision:snapshot.insightPosts?.find(c=>c.id===INITIAL_INSIGHT_POSTS[0].id)?.revision??0};
+  assert.equal((await request(`/api/insights/${lifePost.id}`,'PUT',lifePost,'admin-fixture')).status,200);
+  assert.equal((await request(`/api/insights/${lifePost.id}`,'PUT',lifePost,'admin-fixture')).status,409);
+  assert.ok(!publicStore(await service.getStore()).insightPosts!.some(c=>c.id===lifePost.id));
+  assert.ok(validateSnapshot(await service.getStore()));
+  assert.ok(!validateSnapshot({...snapshot,editorialHistory:[{...firstHistory,kind:'unknown'}]}));
+  assert.ok(!validSaleListings([{...savedSale,images:[fixtureImage,fixtureImage]}]));
+  // Full history rejects rather than truncating previously saved versions.
+  snapshot.editorialHistory=Array.from({length:120},(_,n)=>({...firstHistory,id:`history-${n}`}));
+  const beforeHistoryFull=structuredClone(snapshot);
+  assert.equal((await request(stateUrl,'POST',{action:'trash',revision:snapshot.saleListings![0].revision},'admin-fixture')).status,413);
+  assert.deepEqual(snapshot,beforeHistoryFull);
+  const groupIds=CMS_GROUPS.flatMap(g=>g.sections);assert.equal(new Set(groupIds).size,18);
+  assert.equal(groupIds.length,18);
+  const cmsNavHtml=renderToString(createElement(CmsNavigation,{items:groupIds.map(id=>({id,label:id})),active:'commerce',onSelect:()=>{}}));
+  assert.ok(cmsNavHtml.includes('Affärer &amp; möjligheter')&&cmsNavHtml.includes('aria-current="page"'));
   snapshot=restoreCommerce;
   const rawBeforeAbout=structuredClone(snapshot);
   const beforeAbout=structuredClone(await service.getStore());
@@ -677,7 +765,7 @@ try {
   assert.equal(insightImageUpload.status, 200);
   assert.deepEqual((await service.getStore()).insightPosts?.find((p) => p.id === post.id)?.image, fixtureImage);
   assert.equal((await service.getStore()).insightPosts?.find((p) => p.id === post.id)?.body, post.body);
-  await request('/api/insights/insight-fixture', 'PUT', { ...savedPost, title: 'Edited after upload' }, 'admin-fixture');
+  assert.equal((await request('/api/insights/insight-fixture', 'PUT', { ...savedPost, title: 'Edited after upload' }, 'admin-fixture')).status,409,'Stale editor cannot overwrite a newer image revision');
   assert.deepEqual((await service.getStore()).insightPosts?.find((p) => p.id === post.id)?.image, fixtureImage, 'Text edits preserve newer image reference');
   assert.ok(!validateSnapshot({ ...snapshot, insightPosts: [{ ...savedPost, image: null }] }));
 
@@ -685,7 +773,8 @@ try {
   assert.equal((await service.getStore()).insightPosts?.find((p) => p.id === post.id)?.image, undefined);
   featureMedia = false;
   assert.equal((await request('/api/insights/insight-fixture', 'DELETE', undefined, 'admin-fixture')).status, 200);
-  assert.ok(!(await service.getStore()).insightPosts?.some((p) => p.id === post.id));
+  assert.ok((await service.getStore()).insightPosts?.find((p)=>p.id===post.id)?.trashedAt);
+  assert.ok(!publicStore(await service.getStore()).insightPosts?.some(p=>p.id===post.id));
   // Deletions are not resurrected by migration or later edits.
   snapshot.insightPosts = [];
   await service.upsertMerchant({ name: 'Insight preservation fixture' });

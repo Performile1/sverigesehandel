@@ -367,3 +367,14 @@ are not auto-verified, provisioned as Auth users or given company rights. CMS
 creator UID and contact data stay private. Buy/sell intent is shown and filterable
 in the portal; legacy ads remain selling listings. See
 [workflow and remaining CMS gaps](docs/cms-annonskapande.md).
+
+## Grouped CMS and editorial workflows
+
+The CMS menu now groups all previous sections into five collapsible categories
+with menu search. **Historik, papperskorg & ärenden** adds private version restore,
+soft deletion and sale-inquiry assignment/follow-up. Sale ads, start-guide
+chapters and insights enforce optimistic revision checks and publication windows
+on the server; other older editorial forms are not versioned by this change.
+Sale galleries support five existing Firebase-validated images, preserving files
+and prior references. No Firebase service or MFA requirement is activated.
+See [scope, limits, tests and remaining deployment gates](docs/cms-arbetsfloden.md).

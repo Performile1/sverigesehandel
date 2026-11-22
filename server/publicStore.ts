@@ -1,3 +1,4 @@
+import { publiclyVisible } from '../shared/editorialLifecycle.ts';
 import { publicSaleListing } from '../shared/commerce.ts';
 import { INITIAL_START_GUIDE } from '../shared/startGuide.ts';
 import { companyInboxAvailable } from './memberGovernance.ts';
@@ -35,13 +36,15 @@ export function publicStore(store: CMSStore, admin = false): CMSStore {
     };
   }
   const result = structuredClone(store);
-  result.startGuide=(result.startGuide??INITIAL_START_GUIDE).filter(c=>c.status==='published');
-  result.publicSaleListings=(store.saleListings??[]).filter(r=>r.status==='published').map(publicSaleListing);
+  result.startGuide=(result.startGuide??INITIAL_START_GUIDE).filter(row=>publiclyVisible(row));
+  result.publicSaleListings=(store.saleListings??[]).filter(row=>publiclyVisible(row)).map(publicSaleListing);
   delete result.saleListings;
+  delete result.editorialHistory;
+  delete result.saleCases;
   delete result.staffProfiles;
   delete result.memberGovernance;
   result.communitySettings = { ...(store.memberGovernance?.settings ?? DEFAULT_COMMUNITY_SETTINGS) };
-  result.insightPosts = (result.insightPosts ?? INITIAL_INSIGHT_POSTS).filter((post) => post.status === 'published');
+  result.insightPosts = (result.insightPosts ?? INITIAL_INSIGHT_POSTS).filter(row=>publiclyVisible(row));
   result.paketindexArchive = (result.paketindexArchive || []).filter((row) => row.status === 'published');
   result.mapPoints = (result.mapPoints || []).filter((point) => point.status === 'published');
   result.contactMessages = [];

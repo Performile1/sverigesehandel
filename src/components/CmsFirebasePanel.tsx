@@ -75,7 +75,7 @@ function ImageForm({ enabled, targetType, item, onRefresh }: {
         const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]);
         reader.onerror = () => reject(new Error('Filen kunde inte läsas.')); reader.readAsDataURL(file);
       });
-      await api.uploadImage({ targetType, targetId: item.id, data, alt });
+      await api.uploadImage({ targetType, targetId: item.id, data, alt, revision:(item as {revision?:number}).revision??0 });
       await onRefresh(); setFile(null); setMessage('Bilden sparad.');
     } catch (cause) { setMessage((cause as Error).message); }
     finally { setBusy(false); }
@@ -94,7 +94,7 @@ function ImageForm({ enabled, targetType, item, onRefresh }: {
       {item.image && <button className={buttonClass} disabled={busy} type="button" onClick={async () => {
         if (!window.confirm('Koppla bort bilden? Filen behålls i Storage för säker återställning.')) return;
         setBusy(true); setMessage('');
-        try { await api.detachImage(targetType, item.id); await onRefresh(); setMessage('Bildreferensen borttagen.'); }
+        try { await api.detachImage(targetType, item.id,(item as {revision?:number}).revision??0); await onRefresh(); setMessage('Bildreferensen borttagen.'); }
         catch (cause) { setMessage((cause as Error).message); }
         finally { setBusy(false); }
       }}>Koppla bort bild</button>}

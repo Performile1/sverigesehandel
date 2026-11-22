@@ -1,3 +1,5 @@
+import { CmsNavigation } from './CmsNavigation';
+import { WorkflowPanel } from './WorkflowPanel';
 import { CommerceEditor } from './CommerceEditor';
 import { ABOUT_CONTENT } from '../../shared/portalContent';
 import { MemberGovernancePanel } from './MemberGovernancePanel';
@@ -793,6 +795,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
     { id: 'content', label: 'Annons, Data & Inkorg', icon: MapPin, count: store.adBanners.length + store.contactMessages.length },
     { id: 'firebase', label: 'Firebase: Bilder & Statistik', icon: BarChart3 },
     { id: 'members', label: 'Medlemmar & Community', icon: Users },
+    { id: 'workflow', label: 'Historik, papperskorg & ärenden', icon: Clock },
     { id: 'overview', label: 'Översikt & Backup', icon: Database },
   ];
 
@@ -817,38 +820,8 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
             <div className="text-xs text-slate-400 mt-0.5">Hantera hela katalogen</div>
           </div>
 
-          <nav className="flex flex-wrap lg:flex-col gap-1 pb-1 lg:pb-0">
-            {sidebarItems.map((item) => {
-              const Icon = item.icon;
-              const active = section === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setSection(item.id)}
-                  className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                    active
-                      ? 'bg-[#FECC02] text-[#040B16] font-bold'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-2.5">
-                    <Icon className="w-4 h-4 shrink-0" />
-                    {item.label}
-                  </span>
-                  {typeof item.count === 'number' && (
-                    <span
-                      className={`font-mono text-[11px] tabular-nums ${
-                        active ? 'text-[#040B16]' : 'text-slate-400'
-                      }`}
-                    >
-                      {item.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+          <CmsNavigation items={sidebarItems} active={section} onSelect={setSection}/>
+
         </div>
       </aside>
 
@@ -3093,6 +3066,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
 
           {section === 'members' && <MemberGovernancePanel store={store} onRefresh={onRefresh} />}
 
+          {section === 'workflow' && <WorkflowPanel store={store} onRefresh={onRefresh}/>}
           {section === 'commerce' && <CommerceEditor store={store} onRefresh={onRefresh}/>}
           {section === 'insights' && <InsightPostsEditor posts={store.insightPosts || []} onRefresh={onRefresh} />}
 

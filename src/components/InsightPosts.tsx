@@ -1,3 +1,4 @@
+import { publiclyVisible } from '../../shared/editorialLifecycle';
 import { useState } from 'react';
 import type { InsightPost, PortalTab } from '../types';
 import { ResilientImage } from './ResilientImage';
@@ -11,7 +12,7 @@ const bundled = { checkout, logistics, events };
 export function InsightPosts({ posts, onNavigate, preview = false }: {
   posts: InsightPost[]; onNavigate: (tab: PortalTab) => void; preview?: boolean;
 }) {
-  const visible = [...posts].filter((p) => preview || p.status === 'published').sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+  const visible = [...posts].filter((p) => preview || publiclyVisible(p)).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
   if (!visible.length) return null;
   return <section aria-label="Insikter och artiklar" className="grid grid-cols-1 md:grid-cols-3 gap-6">
     {visible.map((post) => <InsightCard key={post.id + (post.image?.url || post.imageKey)} post={post} onNavigate={onNavigate} preview={preview} />)}

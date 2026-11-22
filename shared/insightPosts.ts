@@ -1,3 +1,4 @@
+import { validLifecycle } from './editorialLifecycle.ts';
 import type { InsightPost } from '../src/types.ts';
 
 export const INSIGHT_TABS = ['marknad', 'nyheter', 'event', 'historia', 'ehandlare', 'partners', '3pl', 'jobb', 'community', 'kontakt', 'om', 'starta', 'kop-salj'] as const;
@@ -25,7 +26,7 @@ export function insightUrl(value: unknown): boolean {
 export function validInsightPost(value: unknown): value is InsightPost {
   if (!value || typeof value !== 'object') return false;
   const p = value as InsightPost;
-  return typeof p.id === 'string' && /^insight-[a-zA-Z0-9-]{1,80}$/.test(p.id) &&
+  return validLifecycle(p) && typeof p.id === 'string' && /^insight-[a-zA-Z0-9-]{1,80}$/.test(p.id) &&
     (['title', 'category', 'excerpt', 'body', 'imageAlt', 'ctaLabel', 'author', 'publishedDate'] as const).every((key) => typeof p[key] === 'string') &&
     Boolean(p.title.trim()) && p.title.length <= 180 && p.category.length <= 100 && p.excerpt.length <= 800 && p.body.length <= 15000 &&
     p.imageAlt.length <= 200 && p.ctaLabel.length <= 100 && p.author.length <= 100 &&

@@ -649,6 +649,8 @@ export interface MapPoint {
 }
 
 export interface CMSStore {
+  editorialHistory?: EditorialVersion[];
+  saleCases?: SaleCase[];
   startGuide?: GuideChapter[];
   saleListings?: SaleListing[];
   publicSaleListings?: PublicSaleListing[];
@@ -774,6 +776,7 @@ export type PortalTab =
   | 'kontakt';
 
 export type CMSSection =
+  | 'workflow'
   | 'commerce'
   | 'members'
   | 'insights'
@@ -846,7 +849,7 @@ export interface SalaryEstimate {
   method: string;
 }
 
-export interface InsightPost {
+export interface InsightPost extends EditorialLifecycle {
   id: string;
   title: string;
   category: string;
@@ -909,7 +912,7 @@ export interface MyStaffProfile {
   identity: { uid: string; email: string; admin: boolean };
 }
 
-export interface GuideChapter {
+export interface GuideChapter extends EditorialLifecycle {
   id: string; title: string; summary: string; body: string; checklist: string[];
   targetTab: 'partners' | '3pl' | 'ehandlare' | 'kontakt' | 'jobb';
   sourceUrl: string; reviewedDate: string; order: number; status: PublishStatus;
@@ -920,7 +923,8 @@ export interface SaleDetails {
   title: string; category: SaleCategory; description: string; included: string;
   location: string; priceLabel: string; quantity: string; condition: string;
 }
-export interface SaleListing extends SaleDetails {
+export interface SaleListing extends SaleDetails, EditorialLifecycle {
+  images?: CmsImage[];
   origin?: 'cms';
   createdByUid?: string;
   id: string; status: 'pending' | 'draft' | 'published' | 'rejected';
@@ -929,4 +933,17 @@ export interface SaleListing extends SaleDetails {
   authorityConfirmed: boolean; publicContentConfirmed: boolean;
   internalNotes: string; reviewedBy: string; reviewedAt: string; createdAt: string; updatedAt: string;
 }
-export type PublicSaleListing = SaleDetails & Pick<SaleListing,'id'|'availability'|'updatedAt'>;
+export type PublicSaleListing = SaleDetails & Pick<SaleListing,'id'|'availability'|'updatedAt'|'images'>;
+
+export interface EditorialLifecycle {
+  revision?: number; publishAt?: string; expiresAt?: string; trashedAt?: string;
+}
+export type EditorialKind = 'sale' | 'guide' | 'insight';
+export interface EditorialVersion {
+  id: string; kind: EditorialKind; targetId: string; actorUid: string; at: string;
+  action: string; before: SaleListing | GuideChapter | InsightPost;
+}
+export interface SaleCase {
+  messageId: string; assignedUid: string; state: 'new'|'working'|'waiting'|'resolved';
+  dueDate: string; note: string; revision: number; updatedAt: string; updatedBy: string;
+}

@@ -1,3 +1,6 @@
+import { editorialConflict, editorialChange, lifecycleInput } from './editorialHistory.ts';
+import { publiclyVisible, validSaleCases, validCmsImage } from '../shared/editorialLifecycle.ts';
+import type { EditorialKind, EditorialLifecycle } from '../src/types.ts';
 import { normalizeLoginEmail } from '../shared/authOptions.ts';
 import { INITIAL_START_GUIDE } from '../shared/startGuide.ts';
 import { validChapter, validGuide, saleDetails, validSaleListings } from '../shared/commerce.ts';
@@ -424,6 +427,8 @@ function ensureStoreFile(): CMSStore {
       paketindexArchive: upgradedRaw.paketindexArchive,
       insightPosts: upgradedRaw.insightPosts,
       startGuide: upgradedRaw.startGuide,
+      editorialHistory: upgradedRaw.editorialHistory,
+      saleCases: upgradedRaw.saleCases,
       saleListings: upgradedRaw.saleListings,
       memberGovernance: upgradedRaw.memberGovernance,
       staffProfiles: upgradedRaw.staffProfiles,
@@ -2086,15 +2091,25 @@ export function updatePageContent(patch: Partial<PageContentMap>): PageContentMa
 }
 
 // Target lookup and assignment run in one snapshot transaction, preserving other edits.
-export function assignCmsImage(type: 'partner' | 'ad' | 'insight', id: string, image: CmsImage | null): boolean {
-  const store = ensureStoreFile();
-  const item = (type === 'partner' ? store.partners : type === 'ad' ? store.adBanners : (store.insightPosts || [])).find((entry) => entry.id === id);
+export function assignCmsImage(type: 'partner' | 'ad' | 'insight' | 'sale', id: string, image: CmsImage | null, revision?:number, actorUid='admin'): boolean {
+  const store = structuredClone(ensureStoreFile());
+  const item = (type === 'partner' ? store.partners : type === 'ad' ? store.adBanners : type==='sale' ? (store.saleListings||[]) : (store.insightPosts || [])).find((entry) => entry.id === id);
   if (!item) return false;
-  if (image) item.image = image;
+  if(type==='sale'||type==='insight') {
+    const row=item as SaleListing|InsightPost;editorialConflict(row,revision??0);
+    if(image&&!validCmsImage(image))throw Object.assign(new Error('Ogiltig bild.'),{status:400});
+    if(type==='sale'&&image&&(row as SaleListing).images?.length===5)throw Object.assign(new Error('Högst fem annonsbilder.'),{status:400});
+    editorialChange(store,type,row,actorUid,'image');row.revision=(row.revision??0)+1;
+    if(type==='sale'){
+      const sale=row as SaleListing;sale.updatedAt=new Date().toISOString();if(image)sale.images=[...(sale.images??[]),image];else sale.images=[];
+      saveCommerce(store);return true;
+    }
+  }
+  if (image) (item as TechPartner).image = image;
   else {
     // Preserve valid alternative text if the bundled image becomes visible again.
-    if ('imageAlt' in item && !item.imageAlt && item.image) item.imageAlt = item.image.alt;
-    delete item.image;
+    if ('imageAlt' in item && !item.imageAlt && (item as InsightPost).image) item.imageAlt = (item as InsightPost).image!.alt;
+    delete (item as InsightPost).image;
   }
   saveStore(store);
   return true;
@@ -2150,12 +2165,14 @@ export function importPaketindexCsv(csv: string, policy: 'reject' | 'skip' | 're
   return { incoming, added, skipped, replaced, totalAfter: rows.length, committed: commit };
 }
 
-export function upsertInsightPost(input: InsightPost): InsightPost {
+export function upsertInsightPost(input: InsightPost, actorUid = 'admin'): InsightPost {
   if (!validInsightPost(input)) throw Object.assign(new Error('Kontrollera rubrik, texter, länk, bildtext, datum och sortering.'), { status: 400 });
-  const store = ensureStoreFile();
+  const store = structuredClone(ensureStoreFile());
   const posts = [...(store.insightPosts ?? structuredClone(INITIAL_INSIGHT_POSTS))];
   const index = posts.findIndex((p) => p.id === input.id);
-  const post: InsightPost = { id: input.id, title: input.title, category: input.category, excerpt: input.excerpt,
+  editorialConflict(posts[index], input.revision??0);
+  editorialChange(store,'insight',posts[index],actorUid,'edit');
+  const post: InsightPost = { ...lifecycleInput(input,posts[index]), id: input.id, title: input.title, category: input.category, excerpt: input.excerpt,
     body: input.body, imageKey: input.imageKey, imageAlt: input.imageAlt, ...(input.image ? { image: input.image } : {}),
     ctaLabel: input.ctaLabel, targetTab: input.targetTab, targetUrl: input.targetUrl, sourceUrl: input.sourceUrl,
     author: input.author, publishedDate: input.publishedDate, theme: input.theme, order: input.order, status: input.status };
@@ -2175,10 +2192,8 @@ export function upsertInsightPost(input: InsightPost): InsightPost {
   }
   store.insightPosts = posts; saveStore(store); return post;
 }
-export function deleteInsightPost(id: string): boolean {
-  const store = ensureStoreFile(); const posts = store.insightPosts ?? structuredClone(INITIAL_INSIGHT_POSTS);
-  if (!posts.some((p) => p.id === id)) return false;
-  store.insightPosts = posts.filter((p) => p.id !== id); saveStore(store); return true;
+export function deleteInsightPost(id:string,revision:unknown,actor:CmsIdentity):boolean {
+  changeEditorialState(actor,'insight',id,{revision,action:'trash'});return true;
 }
 
 export function executeMemberGovernance(actor: CmsIdentity, operation: string, input: unknown) {
@@ -2293,7 +2308,8 @@ export function saveGuideChapter(actor:CmsIdentity,input:unknown) {
   commerceActor(actor,true);
   if(!validChapter(input))throw Object.assign(new Error('Kontrollera guidens texter, datum, länk och checklista.'),{status:400});
   const store=structuredClone(ensureStoreFile());const rows=store.startGuide??structuredClone(INITIAL_START_GUIDE);
-  const c:GuideChapter={id:input.id,title:input.title,summary:input.summary,body:input.body,checklist:[...input.checklist],targetTab:input.targetTab,sourceUrl:input.sourceUrl,reviewedDate:input.reviewedDate,order:input.order,status:input.status};
+  const before=rows.find(r=>r.id===input.id);editorialConflict(before,input.revision??0);editorialChange(store,'guide',before,actor.uid,'edit');
+  const c:GuideChapter={...lifecycleInput(input,before),id:input.id,title:input.title,summary:input.summary,body:input.body,checklist:[...input.checklist],targetTab:input.targetTab,sourceUrl:input.sourceUrl,reviewedDate:input.reviewedDate,order:input.order,status:input.status};
   const i=rows.findIndex(r=>r.id===c.id);if(i<0)rows.push(c);else rows[i]=c;
   if(!validGuide(rows))throw Object.assign(new Error('Högst 25 unika guidekapitel tillåts.'),{status:400});
   store.startGuide=rows;saveCommerce(store);return c;
@@ -2324,7 +2340,7 @@ export function createCmsSaleListing(actor:CmsIdentity,input:unknown) {
   const existing=rows.find(r=>r.id===v.requestId);
   if(existing){if(existing.origin!=='cms'||existing.createdByUid!==actor.uid)throw Object.assign(new Error('Referensen används redan.'),{status:409});return {id:existing.id,status:existing.status};}
   const now=new Date().toISOString();
-  const row:SaleListing={...details,id:v.requestId,sellerName:v.sellerName.trim(),sellerEmail:email,sellerUid:'',origin:'cms',createdByUid:actor.uid,
+  const row:SaleListing={...details,...lifecycleInput(v as EditorialLifecycle),id:v.requestId,sellerName:v.sellerName.trim(),sellerEmail:email,sellerUid:'',origin:'cms',createdByUid:actor.uid,
     authorityConfirmed:true,publicContentConfirmed:true,status:v.status as 'draft'|'published',availability:'available',internalNotes:v.internalNotes,
     reviewedBy:v.status==='published'?actor.uid:'',reviewedAt:v.status==='published'?now:'',createdAt:now,updatedAt:now};
   rows.push(row);
@@ -2338,12 +2354,13 @@ export function reviewSaleListing(actor:CmsIdentity,id:string,input:unknown) {
   if(!details||!['draft','published','rejected'].includes(String(v?.status))||!['available','discussions','sold'].includes(String(v?.availability))||
     typeof v?.internalNotes!=='string'||v.internalNotes.length>2000||(v.status==='published'&&v.reviewConfirmed!==true))
     throw Object.assign(new Error('Kontrollera annonsen och bekräfta redaktionell granskning före publicering.'),{status:400});
-  Object.assign(row,details,{status:v.status,availability:v.availability,internalNotes:v.internalNotes,reviewedBy:actor.uid,reviewedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+  editorialConflict(row,v.revision??0);editorialChange(store,'sale',row,actor.uid,'edit');
+  Object.assign(row,details,lifecycleInput(v as EditorialLifecycle,row),{status:v.status,availability:v.availability,internalNotes:v.internalNotes,reviewedBy:actor.uid,reviewedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
   if(!validSaleListings(store.saleListings))throw Object.assign(new Error('Ogiltig annons.'),{status:400});
   saveCommerce(store);return {id:row.id,status:row.status};
 }
 export function inquireSaleListing(actor:CmsIdentity,id:string,input:unknown) {
-  commerceActor(actor);const store=structuredClone(ensureStoreFile());const row=store.saleListings?.find(r=>r.id===id&&r.status==='published'&&r.availability!=='sold');
+  commerceActor(actor);const store=structuredClone(ensureStoreFile());const row=store.saleListings?.find(r=>r.id===id&&publiclyVisible(r)&&r.availability!=='sold');
   if(!row)throw Object.assign(new Error('Annonsen är inte tillgänglig för intresseförfrågningar.'),{status:404});
   const v=input as Record<string,unknown>|null;
   if(typeof v?.name!=='string'||!v.name.trim()||v.name.length>100||typeof v?.message!=='string'||!v.message.trim()||v.message.length>3000||typeof v?.requestId!=='string'||!/^inq-[a-zA-Z0-9-]{1,80}$/.test(v.requestId))
@@ -2355,5 +2372,48 @@ export function inquireSaleListing(actor:CmsIdentity,id:string,input:unknown) {
   if(store.contactMessages.length>=300)throw Object.assign(new Error('Inkorgen är full. Kontakta redaktionen via kontaktsidan.'),{status:413});
   store.contactMessages.unshift({id:v.requestId,name:v.name.trim(),email:actor.email,authorUid:actor.uid,topic:`Köp & sälj: ${row.title}`,adSlot:id,
     message:v.message.trim(),submissionType:'other',routingMode:'self',status:'new',createdAt:new Date().toISOString()});
+  saveCommerce(store);return {ok:true};
+}
+
+export function changeEditorialState(actor:CmsIdentity,kind:EditorialKind,id:string,input:unknown) {
+  commerceActor(actor,true);const store=structuredClone(ensureStoreFile());
+  const rows=kind==='sale'?store.saleListings:kind==='guide'?store.startGuide:kind==='insight'?store.insightPosts:undefined;
+  const row=rows?.find(r=>r.id===id);if(!row)throw Object.assign(new Error('Posten saknas.'),{status:404});
+  const v=input as {revision?:number;action?:string;versionId?:string};
+  editorialConflict(row,v?.revision??0);
+  if(!['trash','untrash','restore'].includes(v?.action||''))throw Object.assign(new Error('Ogiltig åtgärd.'),{status:400});
+  const before=structuredClone(row);
+  if(v.action==='restore'){
+    const version=store.editorialHistory?.find(h=>h.id===v.versionId&&h.kind===kind&&h.targetId===id);
+    if(!version)throw Object.assign(new Error('Versionen finns inte.'),{status:404});
+    const restored=structuredClone(version.before);
+    // Restore editable content only, never replace current creator/contact identity with old data.
+    if(kind==='sale')Object.assign(restored,{sellerUid:(row as SaleListing).sellerUid,sellerEmail:(row as SaleListing).sellerEmail,sellerName:(row as SaleListing).sellerName,origin:(row as SaleListing).origin,createdByUid:(row as SaleListing).createdByUid});
+    Object.keys(row).forEach(k=>delete (row as unknown as Record<string,unknown>)[k]);Object.assign(row,restored);
+  }
+  editorialChange(store,kind,before,actor.uid,v.action!);
+  row.revision=(before.revision??0)+1;row.status='draft';row.publishAt='';row.expiresAt='';
+  row.trashedAt=v.action==='trash'?new Date().toISOString():'';
+  if(kind==='sale')Object.assign(row,{reviewedBy:actor.uid,reviewedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+  saveCommerce(store);return {ok:true,revision:row.revision};
+}
+export function assignSaleCase(actor:CmsIdentity,id:string,input:unknown) {
+  commerceActor(actor,true);const store=structuredClone(ensureStoreFile());
+  const message=store.contactMessages.find(m=>m.id===id&&m.topic.startsWith('Köp & sälj:')&&m.adSlot);
+  if(!message)throw Object.assign(new Error('Affärsförfrågan saknas.'),{status:404});
+  const v=input as Record<string,unknown>|null;const previous=store.saleCases?.find(c=>c.messageId===id);
+  editorialConflict(previous,v?.revision??0);
+  if(typeof v?.assignedUid!=='string'||(v.assignedUid!==''&&(!store.staffProfiles?.some(p=>p.uid===v.assignedUid)||isBlocked(store.memberGovernance,v.assignedUid))))throw Object.assign(new Error('Välj en registrerad, ej blockerad personalprofil.'),{status:400});
+  const record={messageId:id,assignedUid:v.assignedUid,state:v.state,dueDate:v.dueDate,note:v.note,revision:(previous?.revision??0)+1,updatedAt:new Date().toISOString(),updatedBy:actor.uid};
+  const cases=[...(store.saleCases??[]).filter(c=>c.messageId!==id),record];
+  if(!validSaleCases(cases))throw Object.assign(new Error('Kontrollera ärendestatus, datum och anteckning.'),{status:400});
+  store.saleCases=cases;saveCommerce(store);return {ok:true};
+}
+export function saleImageGallery(actor:CmsIdentity,id:string,input:unknown) {
+  commerceActor(actor,true);const store=structuredClone(ensureStoreFile());const row=store.saleListings?.find(r=>r.id===id);
+  if(!row)throw Object.assign(new Error('Annonsen saknas.'),{status:404});
+  const v=input as {revision?:number;paths?:string[]};editorialConflict(row,v?.revision??0);
+  if(!Array.isArray(v?.paths)||v.paths.length>5||new Set(v.paths).size!==v.paths.length||v.paths.some(p=>!row.images?.some(i=>i.path===p)))throw Object.assign(new Error('Välj endast befintliga bildreferenser i ny ordning.'),{status:400});
+  editorialChange(store,'sale',row,actor.uid,'gallery');row.images=v.paths.map(p=>row.images!.find(i=>i.path===p)!);row.revision=(row.revision??0)+1;row.updatedAt=new Date().toISOString();
   saveCommerce(store);return {ok:true};
 }

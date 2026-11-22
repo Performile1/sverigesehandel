@@ -1,8 +1,9 @@
+import { publiclyVisible } from '../../shared/editorialLifecycle';
 import { useEffect, useState } from 'react';
 import type { GuideChapter, PortalTab } from '../types';
 import { PlainTextDescription } from './JobDescription';
 export function StartGuideView({chapters,onNavigate}:{chapters:GuideChapter[];onNavigate:(tab:PortalTab)=>void}) {
-  const published=chapters.filter(c=>c.status==='published').sort((a,b)=>a.order-b.order||a.id.localeCompare(b.id));
+  const published=chapters.filter(row=>publiclyVisible(row)).sort((a,b)=>a.order-b.order||a.id.localeCompare(b.id));
   const [checked,setChecked]=useState<Record<string,boolean>>({});
   useEffect(()=>{const id=window.location.hash.split('/')[1];if(id)document.getElementById(id)?.scrollIntoView();},[]);
   return <section className="max-w-5xl mx-auto px-5 py-10 space-y-6">

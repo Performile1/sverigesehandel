@@ -1,3 +1,4 @@
+import type { EditorialKind, SaleCase } from './types';
 import type { GuideChapter, SaleDetails } from './types';
 import type { StaffProfile, MyStaffProfile } from './types';
 import type { CompanyWorkspace } from './types';
@@ -81,6 +82,9 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  editorialState:(kind:EditorialKind,id:string,input:{revision:number;action:'trash'|'untrash'|'restore';versionId?:string})=>request<{ok:boolean}>(`/api/editorial/${kind}/${id}`,{method:'POST',body:JSON.stringify(input)}),
+  saveSaleCase:(id:string,input:Partial<SaleCase>)=>request<{ok:boolean}>(`/api/sale-cases/${id}`,{method:'PUT',body:JSON.stringify(input)}),
+  saleGallery:(id:string,revision:number,paths:string[])=>request<{ok:boolean}>(`/api/sales/${id}/gallery`,{method:'PUT',body:JSON.stringify({revision,paths})}),
   createCmsSaleListing:(input:SaleDetails&{requestId:string;sellerName:string;sellerEmail:string;authorityConfirmed:boolean;publicContentConfirmed:boolean;reviewConfirmed:boolean;internalNotes:string;status:'draft'|'published'})=>request<{id:string;status:string}>('/api/sales',{method:'POST',body:JSON.stringify(input)}),
   saveGuideChapter:(chapter:GuideChapter)=>request<GuideChapter>(`/api/start-guide/${chapter.id}`,{method:'PUT',body:JSON.stringify(chapter)}),
   submitSaleListing:(input:SaleDetails&{requestId:string;sellerName:string;authorityConfirmed:boolean;publicContentConfirmed:boolean})=>request<{id:string;status:string}>('/api/sales/submissions',{method:'POST',body:JSON.stringify(input)}),
@@ -97,7 +101,7 @@ export const api = {
   governance: (operation:string,payload:unknown) => request<{ok:boolean}>(`/api/governance/${operation}`,{method:'POST',body:JSON.stringify(payload)}),
   reportCommunity: (payload:{threadId:string;commentId:string;reason:string;detail:string}) => request<{ok:boolean}>('/api/community/reports',{method:'POST',body:JSON.stringify(payload)}),
   saveInsightPost: (post: InsightPost) => request<InsightPost>(`/api/insights/${post.id}`, { method: 'PUT', body: JSON.stringify(post) }),
-  deleteInsightPost: (id: string) => request<{ deleted: boolean }>(`/api/insights/${id}`, { method: 'DELETE' }),
+  deleteInsightPost: (id: string, revision=0) => request<{ deleted: boolean }>(`/api/insights/${id}`, { method: 'DELETE',body:JSON.stringify({revision}) }),
   savePaketindexObservation: (row: PaketindexObservation) => request<PaketindexObservation>('/api/paketindex/archive', { method: 'POST', body: JSON.stringify(row) }),
   deletePaketindexObservation: (key: string) => request<{ deleted: boolean }>('/api/paketindex/archive', { method: 'DELETE', body: JSON.stringify({ key }) }),
   importPaketindexCsv: (csv: string, policy: 'reject' | 'skip' | 'replace', commit: boolean) => request<{
@@ -105,10 +109,10 @@ export const api = {
   }>('/api/paketindex/archive/import', { method: 'POST', body: JSON.stringify({ csv, policy, commit }) }),
   firebaseFeatures: () => request<FirebaseFeatureStatus>('/api/firebase-features'),
   analyticsReport: (days: number) => request<{ enabled: boolean; report?: CmsAnalyticsReport }>(`/api/analytics/report?days=${days}`),
-  uploadImage: (payload: { targetType: 'partner' | 'ad' | 'insight'; targetId: string; data: string; alt: string }) =>
+  uploadImage: (payload: { targetType: 'partner' | 'ad' | 'insight' | 'sale'; targetId: string; data: string; alt: string; revision?:number }) =>
     request<{ image: CmsImage }>('/api/media/image', { method: 'POST', body: JSON.stringify(payload) }),
-  detachImage: (targetType: 'partner' | 'ad' | 'insight', targetId: string) =>
-    request<{ detached: boolean }>('/api/media/image', { method: 'DELETE', body: JSON.stringify({ targetType, targetId }) }),
+  detachImage: (targetType: 'partner' | 'ad' | 'insight'|'sale', targetId: string, revision=0) =>
+    request<{ detached: boolean }>('/api/media/image', { method: 'DELETE', body: JSON.stringify({ targetType, targetId, revision }) }),
   upsertMapPoint: (point: MapPoint) => request<MapPoint>(`/api/map-points/${point.id}`, { method: 'PUT', body: JSON.stringify(point) }),
   deleteMapPoint: (id: string) => request<{ deleted: boolean }>(`/api/map-points/${id}`, { method: 'DELETE' }),
   getStore: () => request<CMSStore>('/api/cms/store'),
