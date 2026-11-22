@@ -11,7 +11,7 @@ interface NavbarProps {
 }
 
 export const NAV_GROUPS: Array<{ label: string; items: Array<{ id: PortalTab; label: string }> }> = [
-  {label:'Insikter',items:[{id:'marknad',label:'Marknad & Paketindex'},{id:'starta',label:'Starta e-handel'},{id:'nyheter',label:'Nyheter'},{id:'historia',label:'E-handelns historia'}]},
+  {label:'Insikter',items:[{id:'marknad',label:'Marknad & Paketindex'},{id:'starta',label:'Starta e-handel'},{id:'nyheter',label:'Nyheter'},{id:'blogg',label:'Blogg & Insikter'},{id:'historia',label:'E-handelns historia'}]},
   {label:'Hitta företag',items:[{id:'ehandlare',label:'E-handlare'},{id:'partners',label:'Partners & transportörer'},{id:'3pl',label:'3PL & 4PL'},{id:'kop-salj',label:'Köpa & sälja'}]},
   {label:'Nätverk & karriär',items:[{id:'community',label:'Community'},{id:'jobb',label:'Jobb'},{id:'event',label:'Event & mässor'}]},
   {label:'Om oss',items:[{id:'om',label:'Om Sveriges E-handel'},{id:'kontakt',label:'Kontakt & annonsering'}]},

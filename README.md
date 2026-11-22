@@ -378,3 +378,19 @@ on the server; other older editorial forms are not versioned by this change.
 Sale galleries support five existing Firebase-validated images, preserving files
 and prior references. No Firebase service or MFA requirement is activated.
 See [scope, limits, tests and remaining deployment gates](docs/cms-arbetsfloden.md).
+
+## Blog page and safe home-widget foundation
+
+`#blogg` reuses existing insightPosts with search/categories and stable hash article
+links (`#blogg/<id>`), without copying stored content. Existing publishing windows,
+trash and admin protection apply. Home shows at most three ordered published posts
+and links to the blog. This is not SSR article routing or complete SEO metadata.
+
+**Innehåll & marknad → Startsida – widgets** controls four allowlisted modules:
+audience cards, latest Paketindex, archive and blog selection. The first three can
+be reordered inside their existing top zone; the blog stays in its editorial zone.
+Other diagrams, map, calculators, ad slots and forms remain untouched. Missing
+settings use the existing order; render-time invalid config falls back safely,
+but invalid database/backup config is rejected rather than silently rewritten.
+Hiding never deletes source content. Admin writes use revision conflict checks.
+See [scope, compatibility and verification gates](docs/blogg-widgets.md).

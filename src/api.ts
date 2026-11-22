@@ -82,6 +82,7 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  saveHomeWidgets:(layout:import('./types').HomeWidgetLayout)=>request<import('./types').HomeWidgetLayout>('/api/home-widgets',{method:'PUT',body:JSON.stringify(layout)}),
   editorialState:(kind:EditorialKind,id:string,input:{revision:number;action:'trash'|'untrash'|'restore';versionId?:string})=>request<{ok:boolean}>(`/api/editorial/${kind}/${id}`,{method:'POST',body:JSON.stringify(input)}),
   saveSaleCase:(id:string,input:Partial<SaleCase>)=>request<{ok:boolean}>(`/api/sale-cases/${id}`,{method:'PUT',body:JSON.stringify(input)}),
   saleGallery:(id:string,revision:number,paths:string[])=>request<{ok:boolean}>(`/api/sales/${id}/gallery`,{method:'PUT',body:JSON.stringify({revision,paths})}),

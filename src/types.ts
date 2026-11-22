@@ -649,6 +649,7 @@ export interface MapPoint {
 }
 
 export interface CMSStore {
+  homeWidgets?: HomeWidgetLayout;
   editorialHistory?: EditorialVersion[];
   saleCases?: SaleCase[];
   startGuide?: GuideChapter[];
@@ -761,6 +762,7 @@ export interface DiscoveredRecruiterCandidate {
 }
 
 export type PortalTab =
+  | 'blogg'
   | 'starta'
   | 'kop-salj'
   | 'om'
@@ -776,6 +778,7 @@ export type PortalTab =
   | 'kontakt';
 
 export type CMSSection =
+  | 'widgets'
   | 'workflow'
   | 'commerce'
   | 'members'
@@ -946,4 +949,10 @@ export interface EditorialVersion {
 export interface SaleCase {
   messageId: string; assignedUid: string; state: 'new'|'working'|'waiting'|'resolved';
   dueDate: string; note: string; revision: number; updatedAt: string; updatedBy: string;
+}
+
+export type HomeWidgetId = 'audience' | 'latest-index' | 'index-archive' | 'insights';
+export interface HomeWidgetLayout {
+  version: 1; revision: number;
+  items: Array<{id:HomeWidgetId;enabled:boolean;order:number}>;
 }

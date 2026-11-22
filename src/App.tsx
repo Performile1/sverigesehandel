@@ -1,3 +1,4 @@
+import { BlogView } from './components/BlogView';
 import { publiclyVisible } from '../shared/editorialLifecycle';
 import { publicSaleListing } from '../shared/commerce';
 import { StartGuideView } from './components/StartGuideView';
@@ -28,6 +29,7 @@ import { ThreePlView } from './components/ThreePlView';
 import type { CMSStore, JobRoleCategory, Merchant, PortalTab, TechPartner } from './types';
 
 const TAB_TITLES: Record<PortalTab, string> = {
+  blogg: 'Blogg & Insikter | sverigesehandel.se',
   starta: 'Starta e-handel – guide & checklista | sverigesehandel.se',
   'kop-salj': 'Köpa & sälja varumärke, webshop och varulager | sverigesehandel.se',
   om: 'Om Sveriges E-handel | sverigesehandel.se',
@@ -151,6 +153,7 @@ export default function App() {
     setActiveTab(tab);
     if (typeof window !== 'undefined' && window.location.hash !== `#${tab}`) {
       window.history.replaceState(null, '', `#${tab}`);
+      if(tab==='blogg')window.dispatchEvent(new HashChangeEvent('hashchange'));
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -276,6 +279,7 @@ export default function App() {
           <>
             {activeTab === 'marknad' && (
               <MarknadView
+                homeWidgets={store.homeWidgets}
                 insightPosts={store.insightPosts}
                 mapPoints={store.mapPoints}
                 merchants={store.merchants}
@@ -518,6 +522,7 @@ export default function App() {
                 onNotify={notify}
               />
             )}
+            {activeTab === 'blogg' && <BlogView posts={store.insightPosts||[]} onNavigate={handleNavigate}/>}
             {activeTab === 'starta' && <StartGuideView chapters={store.startGuide||[]} onNavigate={handleNavigate}/>}
             {activeTab === 'kop-salj' && <MarketplaceView onSubmitted={()=>void fetchStore()} listings={store.publicSaleListings || (isAdmin ? (store.saleListings||[]).filter(row=>publiclyVisible(row)).map(publicSaleListing) : [])}/>}
             {activeTab === 'om' && <AboutView copy={store.pageContent?.om} onNavigate={handleNavigate}/>}
