@@ -329,3 +329,17 @@ exclude draft logistics providers, matching the other catalogs.
 
 The focused CMS check includes legacy read/import, preservation, public filtering
 and server-rendering the market/logistics map with the migrated payload.
+
+## Portal navigation and latest Paketindex
+
+Four menu groups preserve all previous destinations and add `#om`, editable via
+CMS page texts. The home page now starts with audience entry points and the
+latest Paketindex before existing archive/sponsored/deeper content. No CMS
+snapshot or historical source CSV is rewritten by this code change.
+
+The latest card uses a separately source-reviewed Q3 2026 read-only reference
+(Transportföretagen/HUI, source page dated 2026-11-10), unless a newer published
+CMS quarterly total is available. It is **not** a CMS archive import or external
+feed monitor. Comparisons never mix report editions; annual/YTD, survey values
+and drafts cannot become the latest quarterly total. Existing history remains
+available. See [sources, selection rules and prioritized next steps](docs/portal-prioritering.md).

@@ -2072,6 +2072,7 @@ export function updatePageContent(patch: Partial<PageContentMap>): PageContentMa
     jobb: { ...base.jobb, ...(patch.jobb ?? {}) },
     community: { ...base.community, ...(patch.community ?? {}) },
     kontakt: { ...base.kontakt, ...(patch.kontakt ?? {}) },
+    ...(base.om || patch.om ? { om: { ...base.om, ...patch.om } as PageContentMap['om'] } : {}),
   };
   store.pageContent = merged;
   saveStore(store);

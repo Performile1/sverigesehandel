@@ -10,17 +10,27 @@ interface NavbarProps {
   onToggleMode: () => void;
 }
 
-const NAV_ITEMS: Array<{ id: PortalTab; label: string }> = [
-  { id: 'marknad', label: 'Marknad' },
-  { id: 'nyheter', label: 'Nyheter' },
-  { id: 'event', label: 'Event' },
-  { id: 'ehandlare', label: 'E-handlare' },
-  { id: 'partners', label: 'Partners' },
-  { id: '3pl', label: '3PL & 4PL' },
-  { id: 'jobb', label: 'Jobb' },
-  { id: 'community', label: 'Community' },
-  { id: 'kontakt', label: 'Kontakt' },
+export const NAV_GROUPS: Array<{ label: string; items: Array<{ id: PortalTab; label: string }> }> = [
+  {label:'Insikter',items:[{id:'marknad',label:'Marknad & Paketindex'},{id:'nyheter',label:'Nyheter'},{id:'historia',label:'E-handelns historia'}]},
+  {label:'Hitta företag',items:[{id:'ehandlare',label:'E-handlare'},{id:'partners',label:'Partners & transportörer'},{id:'3pl',label:'3PL & 4PL'}]},
+  {label:'Nätverk & karriär',items:[{id:'community',label:'Community'},{id:'jobb',label:'Jobb'},{id:'event',label:'Event & mässor'}]},
+  {label:'Om oss',items:[{id:'om',label:'Om Sveriges E-handel'},{id:'kontakt',label:'Kontakt & annonsering'}]},
 ];
+
+export function GroupedNavigation({activeTab,onSelect}:{activeTab:PortalTab;onSelect:(tab:PortalTab)=>void}) {
+  return <nav aria-label="Huvudmeny" className="flex flex-col xl:flex-row gap-2 xl:gap-4 text-sm">
+    {NAV_GROUPS.map(group=><details key={group.label} className="relative group"
+      onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node|null))e.currentTarget.open=false;}}
+      onKeyDown={e=>{if(e.key==='Escape'){e.currentTarget.open=false;e.currentTarget.querySelector('summary')?.focus();e.stopPropagation();}}}>
+      <summary className={`cursor-pointer rounded-lg p-2 whitespace-nowrap focus-visible:outline-2 focus-visible:outline-yellow-400 ${group.items.some(i=>i.id===activeTab)?'text-[#FECC02]':'text-slate-200'}`}>{group.label}</summary>
+      <div className="xl:absolute xl:top-full xl:left-0 xl:min-w-60 rounded-xl bg-[#040B16] border border-white/15 p-2 shadow-xl z-50">
+        {group.items.map(item=><a key={item.id} href={`#${item.id}`} aria-current={activeTab===item.id?'page':undefined}
+          className={`block rounded-lg p-3 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-yellow-400 ${activeTab===item.id?'text-[#FECC02]':'text-white'}`}
+          onClick={e=>{e.preventDefault();e.currentTarget.closest('details')?.removeAttribute('open');onSelect(item.id);}}>{item.label}</a>)}
+      </div>
+    </details>)}
+  </nav>;
+}
 
 export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -31,7 +41,7 @@ export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarPro
 
   return (
     <header className="sticky top-0 z-40 bg-[#040B16]/95 backdrop-blur-md border-b border-white/10 text-white">
-      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 xl:px-8 h-16 flex items-center justify-between gap-4">
         <a
           href="#marknad"
           onClick={(e) => {
@@ -44,30 +54,7 @@ export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarPro
           sverigesehandel<span className="text-[#FECC02]">.se</span>
         </a>
 
-        <nav className="hidden lg:flex items-center gap-4 xl:gap-5 text-sm font-medium">
-          {NAV_ITEMS.map((item) => {
-            const isActive =
-              mode === 'portal' &&
-              (activeTab === item.id || (activeTab === 'historia' && item.id === 'marknad'));
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  if (mode === 'cms') onToggleMode();
-                  onSelectTab(item.id);
-                }}
-                className={`whitespace-nowrap shrink-0 py-1 border-b-2 transition-colors cursor-pointer ${
-                  isActive
-                    ? 'border-[#FECC02] text-white font-semibold'
-                    : 'border-transparent text-slate-300 hover:text-white hover:border-white/30'
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
+        <div className="hidden xl:block"><GroupedNavigation activeTab={activeTab} onSelect={tab=>{if(mode==='cms')onToggleMode();onSelectTab(tab);}}/></div>
 
         <div className="flex items-center gap-2.5 shrink-0">
           {authReady &&
@@ -108,7 +95,9 @@ export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarPro
           <button
             type="button"
             onClick={() => setMobileOpen((prev) => !prev)}
-            className="lg:hidden p-2 rounded-lg text-slate-200 hover:bg-white/10 shrink-0"
+            className="xl:hidden p-2 rounded-lg text-slate-200 hover:bg-white/10 shrink-0"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
             aria-label={mobileOpen ? 'Stäng meny' : 'Öppna meny'}
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -117,25 +106,8 @@ export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarPro
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden border-t border-white/10 px-4 py-3 space-y-1 bg-[#040B16]">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                if (mode === 'cms') onToggleMode();
-                onSelectTab(item.id);
-                setMobileOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium ${
-                mode === 'portal' && activeTab === item.id
-                  ? 'bg-white/10 text-[#FECC02]'
-                  : 'text-slate-200 hover:bg-white/5'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+        <div id="mobile-navigation" className="xl:hidden max-h-[80vh] overflow-y-auto border-t border-white/10 px-4 py-3 space-y-1 bg-[#040B16]">
+          <GroupedNavigation activeTab={activeTab} onSelect={tab=>{if(mode==='cms')onToggleMode();onSelectTab(tab);setMobileOpen(false);}}/>
           {authReady && (
             <div className="pt-2 mt-2 border-t border-white/10">
               {user ? (

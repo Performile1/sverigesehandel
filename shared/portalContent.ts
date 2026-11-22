@@ -30,3 +30,10 @@ export function validMapPoint(value: unknown): value is MapPoint {
     typeof point.latitude === 'number' && Number.isFinite(point.latitude) && point.latitude >= 55 && point.latitude <= 69.5 &&
     ['draft', 'published'].includes(point.status);
 }
+
+export const ABOUT_CONTENT = {
+  kicker: 'Om sverigesehandel.se',
+  title: 'Vi samlar Sveriges e-handel',
+  subtitle: 'En mötesplats för e-handlare, leverantörer, transportörer och människor som utvecklar svensk e-handel.',
+  body: 'Här kan du utforska marknadsdata, hitta samarbetspartner, upptäcka jobb och event samt utbyta erfarenheter i communityn.\n\nMarknadsdata ska läsas tillsammans med källa, mätperiod och rapportversion. Äldre Paketindexutgåvor bevaras så att förändrade historiska värden inte blandas ihop.\n\nFöretagsuppgifter och redaktionellt innehåll kan behöva rättas. Kontakta redaktionen om du hittar fel eller vill veta mer om en uppgift. Företagsredaktörers ändringsförslag granskas av Sveriges E-handel före publicering.',
+};
