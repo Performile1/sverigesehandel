@@ -1,3 +1,4 @@
+import { CompanyDirectoryLinks } from './CompanyDirectoryLinks';
 import { PageZone } from './PageLayout';
 import { useMemo, useState } from 'react';
 import { ExternalLink, Package, Pencil, Plus, Search, ShieldCheck, Sparkles, Star, TrendingUp } from 'lucide-react';
@@ -107,6 +108,7 @@ export function MerchantsView({
     <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
       <PageZone page="ehandlare" zone="content" widgets={{
 "header": (<div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+        <CompanyDirectoryLinks type="merchant"/>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="font-mono text-xs text-[#10B981] font-semibold">

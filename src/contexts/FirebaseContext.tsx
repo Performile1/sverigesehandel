@@ -89,6 +89,9 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
         try { admin = (await getDoc(doc(db, 'admins', nextUser.uid))).exists(); }
         catch { admin = false; }
       }
+      if(nextUser?.emailVerified&&!admin){
+        try{const token=await nextUser.getIdToken();const response=await fetch('/api/access/me',{headers:{Authorization:`Bearer ${token}`}});if(response.ok){const access=await response.json();admin=Array.isArray(access.roles)&&access.roles.includes('admin');}}catch{admin=false;}
+      }
       if (current !== generation) return;
       setAdmin(admin);
       setAuthReady(true);

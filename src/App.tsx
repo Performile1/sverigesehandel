@@ -1,3 +1,6 @@
+import { CompanyPagesContext } from './components/CompanyDirectoryLinks';
+import { companySlugFromHash } from '../shared/collaboration';
+import { CompanyPageView } from './components/CompanyPageView';
 import { PageLayoutsContext } from './components/PageLayout';
 import { setLayoutPreviewReadOnly } from './api';
 import type { PageLayout } from './types';
@@ -68,6 +71,7 @@ export default function App() {
   const endLayoutPreview=()=>{setLayoutPreviewReadOnly(false);setLayoutPreview(null);setMode('cms');};
   const [mode, setMode] = useState<'portal' | 'cms'>('portal');
   const [activeTab, setActiveTab] = useState<PortalTab>(getInitialTab);
+  const [companySlug,setCompanySlug]=useState(()=>typeof window==='undefined'?null:companySlugFromHash(window.location.hash));
   const [initialSearch, setInitialSearch] = useState<string>('');
   const [selectedAdSlot, setSelectedAdSlot] = useState<string>('');
 
@@ -132,6 +136,8 @@ export default function App() {
     }
   }, []);
 
+  useEffect(()=>{if(authReady&&mode==='portal'&&companySlug)void fetchStore();},[authReady,mode,companySlug,fetchStore]);
+
   useEffect(() => {
     setStore(null);
     setLoading(true);
@@ -144,21 +150,23 @@ export default function App() {
   }, [fetchStore, authReady, user?.uid, isAdmin]);
 
   useEffect(() => {
+    if(mode==='portal'&&companySlug){document.title=`${store?.publicCompanyPages?.find(p=>p.slug===companySlug)?.entityName||'Företagssida'} | Sveriges E-handel`;return;}
     if(mode==='portal'&&activeTab==='blogg')return;
     document.title =
       mode === 'cms'
         ? 'CMS Studio | sverigesehandel.se'
         : TAB_TITLES[activeTab] || TAB_TITLES.marknad;
-  }, [activeTab, mode]);
+  }, [activeTab, mode,companySlug,store?.publicCompanyPages]);
 
   useEffect(() => {
     if (authError) notify(authError);
   }, [authError, notify]);
 
-  useEffect(()=>{const sync=()=>{setActiveTab(getInitialTab());setMode('portal');};window.addEventListener('hashchange',sync);return()=>window.removeEventListener('hashchange',sync);},[]);
+  useEffect(()=>{const sync=()=>{setActiveTab(getInitialTab());setCompanySlug(companySlugFromHash(window.location.hash));setMode('portal');};window.addEventListener('hashchange',sync);return()=>window.removeEventListener('hashchange',sync);},[]);
 
   function handleNavigate(tab: PortalTab, searchQuery?: string) {
     setInitialSearch(searchQuery || '');
+    setCompanySlug(null);
     setActiveTab(tab);
     if (typeof window !== 'undefined' && window.location.hash !== `#${tab}`) {
       window.history.replaceState(null, '', `#${tab}`);
@@ -252,11 +260,12 @@ export default function App() {
   }
 
   return (
+    <CompanyPagesContext.Provider value={store.publicCompanyPages??[]}>
     <PageLayoutsContext.Provider value={{layouts:isAdmin&&layoutPreview?{...store.pageLayouts,[layoutPreview.page]:layoutPreview.layout}:store.pageLayouts,legacyHome:store.homeWidgets}}>
     <div className="min-h-screen flex flex-col bg-[#F4F6F9]">
       <Navbar
         mode={mode}
-        activeTab={activeTab}
+        activeTab={companySlug?(store.publicCompanyPages?.find(p=>p.slug===companySlug)?.entityType==='logistics'?'3pl':store.publicCompanyPages?.find(p=>p.slug===companySlug)?.entityType==='merchant'?'ehandlare':'partners'):activeTab}
         onSelectTab={(tab) => handleNavigate(tab)}
         onToggleMode={() => {if(layoutPreview)endLayoutPreview();else setMode(prev=>prev==='portal'?'cms':'portal');}}
       />
@@ -288,7 +297,7 @@ export default function App() {
               onNotify={notify}
             />
           </CMSAccess>
-        ) : (
+        ) : companySlug ? <CompanyPageView page={store.publicCompanyPages?.find(p=>p.slug===companySlug)}/> : (
           <>
             {activeTab === 'marknad' && (
               <MarknadView
@@ -965,5 +974,6 @@ export default function App() {
       )}
     </div>
     </PageLayoutsContext.Provider>
+    </CompanyPagesContext.Provider>
   );
 }

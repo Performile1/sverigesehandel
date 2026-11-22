@@ -1,3 +1,4 @@
+import { rolesFor } from './collaboration.ts';
 import { invitationConfigured, sendUserInvitation } from './userInvitation.ts';
 import type { InvitationStatus } from './userInvitation.ts';
 import { parseCmsUserInput, resolveCmsUser } from './cmsUsers.ts';
@@ -8,7 +9,7 @@ import type { CmsDataStore } from './firestoreStore.ts';
 import { publicStore } from './publicStore.ts';
 import type { CmsIdentity } from './authPolicy.ts';
 import { upgradeSnapshot, validateSnapshot } from './snapshot.ts';
-import { hasExplicitAdminCredentials } from './firebaseAdmin.ts';
+import { hasExplicitAdminCredentials, cmsFirestore } from './firebaseAdmin.ts';
 import {
   discoverJobsWithAI,
   discoverMerchantsWithAI,
@@ -38,7 +39,7 @@ const commerceRoute = (handler:RequestHandler):RequestHandler => route(async(req
 const isMemberCommentRoute = (path: string) => /^\/api\/community\/threads\/[^/]+\/comments$/.test(path);
 const isMemberMessageReadRoute = (path: string) => /^\/api\/community\/messages\/[^/]+\/read$/.test(path);
 
-const isCompanyMemberRoute = (method: string, path: string) => (method === 'GET' && ['/api/company/workspace','/api/staff/me'].includes(path)) || (method === 'PUT' && path === '/api/staff/me') ||
+const isCompanyMemberRoute = (method: string, path: string) => (method==='GET'&&['/api/access/me','/api/teamspace'].includes(path))||(method==='POST'&&/^\/api\/teamspace\/[a-z-]+$/.test(path))|| (method === 'GET' && ['/api/company/workspace','/api/staff/me'].includes(path)) || (method === 'PUT' && path === '/api/staff/me') ||
   (method === 'POST' && ['/api/company/proposals', '/api/company/inbox/read', '/api/community/reports'].includes(path));
 
 const isMemberSubmission = (method: string, path: string) => isCompanyMemberRoute(method, path) || (
@@ -54,7 +55,7 @@ const isMemberSubmission = (method: string, path: string) => isCompanyMemberRout
 
 export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) => Promise<CmsIdentity>, features = {
   status: firebaseFeatureStatus, upload: uploadCmsImage, report: getCmsAnalytics,
-}, users = { resolve: resolveCmsUser }, invitations = { configured:invitationConfigured, send:sendUserInvitation, sender:()=>process.env.RESEND_FROM_EMAIL?.trim() || '' }) {
+}, users = { resolve: resolveCmsUser }, invitations = { configured:invitationConfigured, send:sendUserInvitation, sender:()=>process.env.RESEND_FROM_EMAIL?.trim() || '' }, protectedAdmin=(uid:string)=>cmsFirestore().doc(`admins/${uid}`).get().then(doc=>doc.exists)) {
   const app = express();
   app.disable('x-powered-by');
   app.use('/api', (_req, res, next) => {
@@ -79,6 +80,8 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
         return;
       }
     }
+    if(identity)identity={...identity,baseAdmin:identity.admin};
+    if(identity?.verified&&!identity.admin){const current=await store.getStore();identity={...identity,admin:rolesFor(current,identity).includes('admin')};}
     const admin = identity?.admin === true;
     res.locals.cmsIdentity = identity;
     res.locals.cmsAdmin = admin;
@@ -90,6 +93,9 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       res.status(authorization ? 403 : 401).json({ error: 'CMS-administratör krävs. Öppna CMS och logga in.' });
       return;
     }
+    if(identity&&path.startsWith('/api/community/')&&(await store.getStore()).collaboration?.communityBlocks.some(b=>b.uid===identity!.uid)){
+      res.status(403).json({error:'Kontot är blockerat från communityfunktioner. Kontakta redaktionen.'});return;
+    }
     if (identity && isBlocked((await store.getStore()).memberGovernance, identity.uid)) {
       res.status(403).json({ error: 'Ditt konto är blockerat i Sveriges E-handel. Kontakta redaktionen.' }); return;
     }
@@ -98,6 +104,17 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   app.use(express.json({ limit: '800kb' }));
 
   // Auth middleware above protects all feature endpoints, including disabled status.
+  app.get('/api/access/me', commerceRoute(async(_req,res)=>{res.json(await store.accessSummary(res.locals.cmsIdentity));}));
+  app.get('/api/teamspace', commerceRoute(async(_req,res)=>{res.json(await store.getAccessWorkspace(res.locals.cmsIdentity));}));
+  app.post('/api/teamspace/:operation', commerceRoute(async(req,res)=>{
+    if(req.params.operation==='community-block'&&!res.locals.cmsAdmin){
+      const access=await store.accessSummary(res.locals.cmsIdentity);
+      if(!access.roles.includes('community-admin')){res.status(403).json({error:'Communityadministratör krävs.'});return;}
+      if(typeof req.body?.uid==='string'&&req.body.uid.length<=128&&!req.body.uid.includes('/')&&await protectedAdmin(req.body.uid)){res.status(403).json({error:'Skyddat administratörskonto. Global admin hanterar detta.'});return;}
+    }
+    if(req.params.operation==='moderate')res.json(await store.moderateAsRole(res.locals.cmsIdentity,req.body?.operation,req.body?.payload));
+    else res.json(await store.executeCollaboration(res.locals.cmsIdentity,req.params.operation,req.body));
+  }));
   app.get('/api/firebase-features', (_req, res) => { res.json(features.status()); });
   app.get('/api/analytics/report', route(async (req, res) => {
     if (!features.status().reportsEnabled) { res.json({ enabled: false }); return; }

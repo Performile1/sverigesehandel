@@ -23,6 +23,7 @@ function audit(g: MemberGovernance, actor: CmsIdentity, action: string, target: 
   g.audit = g.audit.slice(0, 500);
 }
 export function assertCommunityAction(store: CMSStore, uid: string | undefined, action?: keyof MemberGovernance['settings']) {
+  if(store.collaboration?.communityBlocks.some(b=>b.uid===uid))fail('Kontot är blockerat från communityfunktioner.',403);
   if (isBlocked(store.memberGovernance, uid)) fail('Ditt konto är blockerat i Sveriges E-handel. Kontakta redaktionen.', 403);
   const settings = store.memberGovernance?.settings ?? emptyGovernance().settings;
   if (!settings.enabled || (action && !settings[action])) fail('Denna communityfunktion är pausad av Sveriges E-handel.', 403);

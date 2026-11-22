@@ -1,3 +1,4 @@
+import { TeamWorkspace } from './TeamWorkspace';
 import { PageLayoutsEditor } from './PageLayoutsEditor';
 import { CmsNavigation } from './CmsNavigation';
 import { WorkflowPanel } from './WorkflowPanel';
@@ -798,6 +799,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify, onPreviewP
     { id: 'pages', label: 'Sidtexter & Kontakt', icon: FileText },
     { id: 'content', label: 'Annons, Data & Inkorg', icon: MapPin, count: store.adBanners.length + store.contactMessages.length },
     { id: 'firebase', label: 'Firebase: Bilder & Statistik', icon: BarChart3 },
+    { id: 'collaboration', label: 'Roller & företagssidor', icon: Users },
     { id: 'members', label: 'Medlemmar & Community', icon: Users },
     { id: 'workflow', label: 'Historik, papperskorg & ärenden', icon: Clock },
     { id: 'overview', label: 'Översikt & Backup', icon: Database },
@@ -3068,6 +3070,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify, onPreviewP
             />
           )}
 
+          {section === 'collaboration' && <TeamWorkspace/>}
           {section === 'members' && <MemberGovernancePanel store={store} onRefresh={onRefresh} />}
 
           {section === 'widgets' && <PageLayoutsEditor initialDraft={layoutPreviewDraft} store={store} onRefresh={onRefresh} onPreview={onPreviewPageLayout}/>}

@@ -1,6 +1,7 @@
 import { ADMIN_EMAIL } from '../shared/firebaseSettings.ts';
 
 export interface CmsIdentity {
+  baseAdmin?: boolean;
   uid: string;
   email?: string;
   verified: boolean;

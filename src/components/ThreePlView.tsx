@@ -1,3 +1,4 @@
+import { CompanyDirectoryLinks } from './CompanyDirectoryLinks';
 import { PageZone } from './PageLayout';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -251,6 +252,7 @@ export function ThreePlView({
       {/* Dark Hero Header & Filter Controls */}
       <PageZone page="3pl" zone="content" widgets={{
 "header": (<div className="bg-gradient-to-br from-[#040B16] via-[#0A1628] to-[#022C22] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+        <CompanyDirectoryLinks type="logistics"/>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="font-mono text-xs text-[#FECC02] font-semibold">

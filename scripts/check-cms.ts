@@ -1,3 +1,5 @@
+import { emptyCollaboration, validCollaboration, validCompanyContent, validSlug, companySlugFromHash } from '../shared/collaboration.ts';
+import { CompanyPageView } from '../src/components/CompanyPageView.tsx';
 import { toggleSavedSessionInFirestore } from '../src/firebaseSync.ts';
 import { PAGE_WIDGETS, defaultPageLayout, validPageLayout, validPageLayouts } from '../shared/pageLayouts.ts';
 import { setLayoutPreviewReadOnly, api as layoutPreviewApi } from '../src/api.ts';
@@ -105,6 +107,7 @@ let inviteEnabled=false;let inviteSuccess=true;let inviteCalls=0;
 const fixtureImage = { path: 'cms-public/fixture.webp', url: 'https://firebasestorage.googleapis.com/v0/b/fixture/o/cms-public%2Ffixture.webp?alt=media',
   alt: 'Fixture logo', width: 2, height: 2 };
 const app = createCmsApp(service, async (identity) => {
+  if(['role-editor','role-moderator','role-delegate','role-other'].includes(identity))return {uid:identity,email:`${identity}@example.invalid`,verified:true,admin:false};
   if (identity === 'invalid-fixture') throw new Error('Invalid fixture identity');
   if (identity === 'governance-admin') return { uid: 'fixture-admin', email: 'admin@example.invalid', verified: true, admin: true };
   if (identity === 'member-two') {
@@ -118,7 +121,7 @@ const app = createCmsApp(service, async (identity) => {
   report: async (days) => { reportCalls++; if (providerFails) throw new Error('provider-detail-not-for-client'); return { days, timeZone: 'Europe/Stockholm', rows: [
     { page: '/jobb', views: 10, activeUsers: 5, engagementSeconds: 60 },
   ], truncated: false, dataLossFromOtherRow: false, subjectToThresholding: false }; },
-}, {resolve:async(input)=>{userResolveCalls++;if(userResolveFails)throw new Error('private-provider-detail');return {uid:'cms-new-fixture',email:input.email,emailVerified:false,created:userResolveCalls===1};}}, {configured:()=>inviteEnabled,sender:()=> 'Fixture <welcome@example.invalid>',send:async(invite)=>{inviteCalls++;assert.equal(invite.email,'new-user@example.invalid');return inviteSuccess;}});
+}, {resolve:async(input)=>{userResolveCalls++;if(userResolveFails)throw new Error('private-provider-detail');return {uid:'cms-new-fixture',email:input.email,emailVerified:false,created:userResolveCalls===1};}}, {configured:()=>inviteEnabled,sender:()=> 'Fixture <welcome@example.invalid>',send:async(invite)=>{inviteCalls++;assert.equal(invite.email,'new-user@example.invalid');return inviteSuccess;}},async(uid)=>uid==='fixture-user');
 // Ensures the API middleware doesn't intercept local Vite/static routes.
 app.get('/portal-fixture', (_req, res) => { res.send('portal'); });
 const server = app.listen(0, '127.0.0.1');
@@ -141,6 +144,141 @@ async function request(path: string, method = 'GET', body?: unknown, identity?: 
   }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
 }
 try {
+  const beforeTeam=structuredClone(await service.getStore());const rawBeforeTeam=structuredClone(snapshot);
+  snapshot.collaboration=emptyCollaboration();
+  const teamMembers=[{uid:'fixture-user-two',role:'writer'},{uid:'role-editor',role:'editor'},{uid:'role-moderator',role:'community-admin'},{uid:'role-delegate',role:'admin'},{uid:'role-other',role:''}];
+  for(const u of teamMembers)snapshot.communityMembers.push({id:`member-${u.uid}`,authorUid:u.uid,name:u.uid,email:`${u.uid}@example.invalid`,role:'test',city:'Test',createdAt:new Date().toISOString(),verificationStatus:'verified'});
+  assert.equal((await request('/api/teamspace','GET')).status,401);
+  assert.equal((await request('/api/teamspace','GET',undefined,'unverified-fixture')).status,403);
+  assert.equal((await request('/api/teamspace/roles','POST',{uid:'role-editor',roles:['admin'],revision:0},'member-two')).status,403);
+  for(const u of teamMembers.filter(u=>u.role)){const rev=(await service.getStore()).collaboration!.revision;
+    assert.equal((await request('/api/teamspace/roles','POST',{uid:u.uid,roles:[u.role],revision:rev},'admin-fixture')).status,200);
+  }
+  const writerSpace=await(await request('/api/teamspace','GET',undefined,'member-two')).json();assert.deepEqual(writerSpace.roles,['writer']);assert.equal(writerSpace.editorial,null);assert.deepEqual(writerSpace.grants,[]);
+  assert.equal((await request('/api/cms/status','GET',undefined,'role-editor')).status,403);
+  assert.equal((await request('/api/cms/status','GET',undefined,'role-moderator')).status,403);
+  assert.equal((await request('/api/cms/status','GET',undefined,'role-delegate')).status,200);
+  const rawMemberStore=await(await request('/api/cms/store','GET',undefined,'role-editor')).json();assert.equal(rawMemberStore.collaboration,undefined);assert.equal(rawMemberStore.contactMessages.length,0);
+  const draftInput={revision:0,kind:'insight',title:'Writer article fixture',summary:'Intro',body:'## Heading\n\n**Body**',category:'Guide',sourceUrl:'',sourceName:'',date:new Date().toISOString().slice(0,10),state:'review',uid:'forged',status:'published'};
+  const writerDraftResp=await request('/api/teamspace/editorial-save','POST',draftInput,'member-two');assert.equal(writerDraftResp.status,200);const writerDraftId=(await writerDraftResp.json()).id;
+  let teamDraft=(await service.getStore()).collaboration!.drafts.find(d=>d.id===writerDraftId)!;assert.equal(teamDraft.uid,'fixture-user-two');assert.equal(teamDraft.state,'review');
+  assert.ok(!(await service.getStore()).insightPosts!.some(p=>p.id===teamDraft.targetId));
+  assert.equal((await request('/api/teamspace/editorial-publish','POST',{id:teamDraft.id,revision:teamDraft.revision,confirm:true},'member-two')).status,403);
+  assert.equal((await request('/api/teamspace/editorial-save','POST',{...draftInput,id:teamDraft.id,revision:teamDraft.revision},'role-other')).status,403);
+  assert.equal((await request('/api/teamspace/editorial-publish','POST',{id:teamDraft.id,revision:teamDraft.revision,confirm:true},'role-editor')).status,200);
+  const publishedWriter=(await service.getStore()).insightPosts!.find(p=>p.id===teamDraft.targetId)!;assert.equal(publishedWriter.status,'published');assert.equal(publishedWriter.body,draftInput.body);
+  assert.equal((await request('/api/teamspace/editorial-publish','POST',{id:teamDraft.id,revision:teamDraft.revision,confirm:true},'role-editor')).status,409);
+  const editorSpace=await(await request('/api/teamspace','GET',undefined,'role-editor')).json();const editable=editorSpace.editorial.insights.find((p:any)=>p.id===publishedWriter.id);
+  assert.equal((await request('/api/teamspace/editorial-save','POST',{...draftInput,targetId:editable.id,targetHash:'wrong'},'role-editor')).status,409);
+  assert.equal((await request('/api/teamspace/editorial-save','POST',{...draftInput,targetId:editable.id,targetHash:editable.editHash},'role-editor')).status,200);
+  assert.equal((await request('/api/teamspace/editorial-unpublish','POST',{kind:'insight',id:editable.id,hash:editable.editHash},'role-editor')).status,200);
+  const changedDraft=(await service.getStore()).collaboration!.drafts.find(d=>d.targetId===editable.id&&d.state==='review')!;
+  assert.equal((await request('/api/teamspace/editorial-publish','POST',{id:changedDraft.id,revision:changedDraft.revision,confirm:true},'role-editor')).status,409);
+  // Original article-link review policy is still enforced for editors.
+  assert.equal((await request('/api/teamspace/editorial-save','POST',{...draftInput,kind:'news',sourceUrl:'https://publisher.invalid/',sourceName:'Publisher'},'role-editor')).status,200);
+  const newsDraft=(await service.getStore()).collaboration!.drafts.at(-1)!;const beforeNewsFail=structuredClone(snapshot);
+  assert.equal((await request('/api/teamspace/editorial-publish','POST',{id:newsDraft.id,revision:newsDraft.revision,confirm:true,confirmArticleLink:true},'role-editor')).status,400);
+  assert.deepEqual(snapshot,beforeNewsFail,'Failed publication cannot mark draft published or save partial data');
+  const fixedNews={...newsDraft,sourceUrl:'https://publisher.invalid/news/exact-fixture-story',state:'review'};
+  assert.equal((await request('/api/teamspace/editorial-save','POST',fixedNews,'role-editor')).status,200);
+  const publishableNews=(await service.getStore()).collaboration!.drafts.find(d=>d.id===newsDraft.id)!;
+  assert.equal((await request('/api/teamspace/editorial-publish','POST',{id:publishableNews.id,revision:publishableNews.revision,confirm:true,confirmArticleLink:true},'role-editor')).status,200);
+  assert.ok((await service.getStore()).news.find(n=>n.id===publishableNews.targetId)?.linkReviewedAt);
+  const newGuide=await request('/api/teamspace/editorial-save','POST',{...draftInput,kind:'guide',title:'Editor guide fixture'},'role-editor');assert.equal(newGuide.status,200);
+  const newGuideId=(await newGuide.json()).id;const guideDraft=(await service.getStore()).collaboration!.drafts.find(d=>d.id===newGuideId)!;
+  assert.equal((await request('/api/teamspace/editorial-publish','POST',{id:newGuideId,revision:guideDraft.revision,confirm:true},'role-editor')).status,200);
+  assert.equal((await service.getStore()).startGuide!.find(g=>g.id===guideDraft.targetId)!.status,'published');
+
+  // Admin reserves addresses; companies cannot claim slugs or create pages themselves.
+  const company=(await service.getStore()).partners.find(p=>p.status==='published')!;
+  const otherCompany=(await service.getStore()).partners.find(p=>p.status==='published'&&p.id!==company.id)!;
+  assert.ok(!validSlug('partners')&&!validSlug('cms'));assert.equal(companySlugFromHash('#DHL'),'dhl');assert.equal(companySlugFromHash('#blogg/insight-test'),null);
+  let regRev=(await service.getStore()).collaboration!.revision;
+  assert.equal((await request('/api/teamspace/reserve-page','POST',{entityType:'partner',entityId:company.id,slug:'fixture-company',revision:regRev},'member-two')).status,403);
+  assert.equal((await request('/api/teamspace/reserve-page','POST',{entityType:'partner',entityId:company.id,slug:'partners',revision:regRev},'admin-fixture')).status,400);
+  const reserve=await request('/api/teamspace/reserve-page','POST',{entityType:'partner',entityId:company.id,slug:'fixture-company',revision:regRev},'admin-fixture');assert.equal(reserve.status,200);const pageId=(await reserve.json()).id;
+  regRev=(await service.getStore()).collaboration!.revision;
+  assert.equal((await request('/api/teamspace/reserve-page','POST',{entityType:'partner',entityId:otherCompany.id,slug:'fixture-company',revision:regRev},'admin-fixture')).status,409);
+  const linkAt='2020-01-01T00:00:00.000Z';snapshot.memberGovernance={...emptyGovernance(),links:[{id:'page-link',uid:'fixture-user-two',entityType:'partner',entityId:company.id,status:'active',canPropose:true,receiveIntros:true,receiveMessages:true,includeHistory:true,createdAt:linkAt,updatedAt:linkAt}]};
+  const pageContent={title:'Fixture company page',summary:'Our services',widgets:[{id:'widget-text',type:'text',title:'About',body:'## Hello',url:'',alt:'',formId:'',enabled:true},{id:'widget-form',type:'form',title:'Contact us',body:'',url:'',alt:'',formId:'form-lead',enabled:true}],forms:[{id:'form-lead',title:'Become a customer',purpose:'lead',recipientUids:['fixture-user-two'],fields:[{id:'question',label:'Your question',type:'textarea',required:true,options:[]}]}]};
+  assert.ok(validCompanyContent(pageContent));
+  assert.equal((await request('/api/teamspace/page-draft','POST',{id:pageId,revision:0,content:{...pageContent,forms:[{...pageContent.forms[0],recipientUids:['role-other']}]},state:'review'},'member-two')).status,403);
+  assert.ok(!validCompanyContent({...pageContent,widgets:[{...pageContent.widgets[0],type:'private-inbox'}]}));
+  assert.ok(!validCompanyContent({...pageContent,widgets:[{...pageContent.widgets[0],type:'image',url:'https://tracking.invalid/image.png',alt:'Image'}]}));
+
+  assert.equal((await request('/api/teamspace/page-draft','POST',{id:pageId,revision:0,content:pageContent,state:'published'},'member-two')).status,400);
+  assert.equal((await request('/api/teamspace/page-draft','POST',{id:pageId,revision:0,content:pageContent,state:'review'},'role-other')).status,403);
+  assert.equal((await request('/api/teamspace/page-draft','POST',{id:pageId,revision:0,content:pageContent,state:'review'},'member-two')).status,200);
+  assert.ok(!publicStore(await service.getStore()).publicCompanyPages!.some(p=>p.id===pageId));
+  assert.equal((await request('/api/teamspace/page-decision','POST',{id:pageId,revision:1,decision:'publish',confirm:true},'member-two')).status,403);
+  assert.equal((await request('/api/teamspace/page-decision','POST',{id:pageId,revision:1,decision:'publish',confirm:true},'role-editor')).status,403);
+  assert.equal((await request('/api/teamspace/page-decision','POST',{id:pageId,revision:1,decision:'publish',confirm:true},'admin-fixture')).status,200);
+  let companyPublic=publicStore(await service.getStore()).publicCompanyPages!.find(p=>p.id===pageId)!;assert.equal(companyPublic.slug,'fixture-company');assert.ok(!JSON.stringify(companyPublic).includes('recipientUids'));assert.ok(!JSON.stringify(companyPublic).includes('fixture-user-two'));
+  const companyHtml=renderToString(createElement(FirebaseProvider,null,createElement(CompanyPageView,{page:companyPublic})));assert.ok(companyHtml.includes('Fixture company page')&&companyHtml.includes('Logga in'));assert.ok(!companyHtml.includes('fixture-user-two'));
+  assert.equal((await request('/api/teamspace/page-draft','POST',{id:pageId,revision:2,content:{...pageContent,title:'Pending new headline'},state:'review'},'member-two')).status,200);
+  assert.equal(publicStore(await service.getStore()).publicCompanyPages!.find(p=>p.id===pageId)!.content.title,'Fixture company page');
+  assert.equal((await request('/api/teamspace/page-draft','POST',{id:pageId,revision:2,content:pageContent,state:'review'},'member-two')).status,409);
+  const formMessage={id:'request-fixture',pageId,formId:'form-lead',answers:{question:'Private support detail'},confirm:true,email:'forged@example.invalid',uid:'forged'};
+  assert.equal((await request('/api/teamspace/message','POST',formMessage)).status,401);
+  assert.equal((await request('/api/teamspace/message','POST',formMessage,'unverified-fixture')).status,403);
+  assert.equal((await request('/api/teamspace/message','POST',{...formMessage,answers:{unknown:'bad'}},'role-other')).status,400);
+  assert.equal((await request('/api/teamspace/message','POST',formMessage,'role-other')).status,200);
+  assert.equal((await request('/api/teamspace/message','POST',formMessage,'role-other')).status,200);
+  assert.equal((await service.getStore()).collaboration!.messages.length,1);
+  assert.equal((await service.getStore()).collaboration!.messages[0].email,'role-other@example.invalid');
+  const beforeFormPause=structuredClone(snapshot);snapshot.memberGovernance!.settings.messagesEnabled=false;
+  assert.equal((await request('/api/teamspace/message','POST',{...formMessage,id:'request-paused'},'role-other')).status,403);
+  snapshot=beforeFormPause;
+  const privateProjection=publicStore(await service.getStore());assert.equal(privateProjection.collaboration,undefined);
+  assert.ok(!JSON.stringify(privateProjection.publicCompanyPages).includes('baseHash'));
+
+  assert.equal((await(await request('/api/teamspace','GET',undefined,'member-two')).json()).messages.length,1);
+  assert.equal((await(await request('/api/teamspace','GET',undefined,'role-editor')).json()).messages.length,0);
+  assert.equal((await(await request('/api/teamspace','GET',undefined,'role-other')).json()).messages.length,0);
+  const beforeHistoryGate=structuredClone(snapshot);snapshot.memberGovernance!.links[0].includeHistory=false;snapshot.memberGovernance!.links[0].createdAt='2099-01-01T00:00:00.000Z';
+  assert.equal((await(await request('/api/teamspace','GET',undefined,'member-two')).json()).messages.length,0,'New recipient must not see earlier messages without history permission');snapshot=beforeHistoryGate;
+
+  assert.ok(!JSON.stringify(await(await request('/api/cms/store')).json()).includes('Private support detail'));
+  snapshot.memberGovernance!.links[0].status='revoked';
+  assert.equal((await(await request('/api/teamspace','GET',undefined,'member-two')).json()).messages.length,0);
+  assert.equal((await request('/api/teamspace/page-draft','POST',{id:pageId,revision:3,content:pageContent,state:'review'},'member-two')).status,403);
+  assert.equal((await request('/api/teamspace/page-decision','POST',{id:pageId,revision:3,decision:'publish',confirm:true},'admin-fixture')).status,403);
+  snapshot.memberGovernance!.links[0].status='active';
+  assert.equal((await request('/api/teamspace/message-status','POST',{id:'request-fixture',revision:0,state:'working',assignedUid:'role-editor'},'member-two')).status,403);
+  assert.equal((await request('/api/teamspace/message-status','POST',{id:'request-fixture',revision:0,state:'working',assignedUid:'fixture-user-two'},'member-two')).status,200);
+  assert.equal((await request('/api/teamspace/message-status','POST',{id:'request-fixture',revision:0,state:'resolved',assignedUid:''},'member-two')).status,409);
+  assert.equal((await request('/api/teamspace/page-decision','POST',{id:pageId,revision:3,decision:'unpublish'},'admin-fixture')).status,200);
+  assert.equal((await request('/api/teamspace/message','POST',{...formMessage,id:'request-after-unpublish'},'role-other')).status,404);
+  const moderatorSpace=await(await request('/api/teamspace','GET',undefined,'role-moderator')).json();assert.ok(moderatorSpace.moderation);assert.equal(moderatorSpace.editorial,null);assert.deepEqual(moderatorSpace.grants,[]);assert.deepEqual(moderatorSpace.messages,[]);
+  assert.equal((await request('/api/teamspace/moderate','POST',{operation:'link',payload:{}},'role-moderator')).status,403);
+  assert.equal((await request('/api/teamspace/community-block','POST',{uid:'fixture-user',reason:'Not allowed',blocked:true},'role-moderator')).status,403);
+  assert.equal((await request('/api/teamspace/community-block','POST',{uid:'role-other',reason:'Fixture moderation',blocked:true},'role-moderator')).status,200);
+  assert.equal((await request('/api/community/directory','GET',undefined,'role-other')).status,403);
+  assert.equal((await request('/api/teamspace','GET',undefined,'role-other')).status,200,'Community block is not a platform-wide ban');
+  const beforeRejectedMembership=structuredClone(snapshot);snapshot.communityMembers.find(m=>m.authorUid==='role-editor')!.verificationStatus='rejected';
+  assert.equal((await request('/api/teamspace/editorial-save','POST',draftInput,'role-editor')).status,403);
+  snapshot=beforeRejectedMembership;
+  const revokeRevision=(await service.getStore()).collaboration!.revision;
+  assert.equal((await request('/api/teamspace/roles','POST',{uid:'role-editor',roles:[],revision:revokeRevision},'admin-fixture')).status,200);
+  assert.equal((await request('/api/teamspace/editorial-save','POST',draftInput,'role-editor')).status,403);
+  assert.deepEqual((await(await request('/api/teamspace','GET',undefined,'role-editor')).json()).drafts,[]);
+
+  const revokeAdminRevision=(await service.getStore()).collaboration!.revision;
+  assert.equal((await request('/api/teamspace/roles','POST',{uid:'role-delegate',roles:[],revision:revokeAdminRevision},'admin-fixture')).status,200);
+  assert.equal((await request('/api/cms/status','GET',undefined,'role-delegate')).status,403);
+  await assert.rejects(service.executeCollaboration({uid:'role-delegate',email:'role-delegate@example.invalid',verified:true,admin:true,baseAdmin:false},'reserve-page',{entityType:'partner',entityId:otherCompany.id,slug:'revoked-race',revision:(await service.getStore()).collaboration!.revision}),/Admin krävs/);
+
+  assert.equal((await request('/api/cms/status','GET',undefined,'admin-fixture')).status,200,'Original admin policy survives role changes');
+  assert.ok(validCollaboration((await service.getStore()).collaboration));assert.ok(validateSnapshot(await service.getStore()));
+  assert.ok(!validCollaboration({...emptyCollaboration(),pages:[null]}));assert.ok(!validCompanyContent({...pageContent,widgets:[null]}));
+  assert.ok(!validateSnapshot({...snapshot,collaboration:{...snapshot.collaboration!,roles:[{uid:'forged',roles:['superuser'],updatedBy:'fixture',updatedAt:new Date().toISOString()}]}}));
+  const fullAuditSnapshot=structuredClone(snapshot);snapshot.collaboration!.audit=Array.from({length:300},(_,n)=>({id:`audit-${n}`,uid:'fixture-user',action:'test',target:'fixture',at:new Date().toISOString()}));
+  const beforeFullTeamWrite=structuredClone(snapshot);
+  assert.equal((await request('/api/teamspace/reserve-page','POST',{entityType:'partner',entityId:otherCompany.id,slug:'full-audit-fixture',revision:snapshot.collaboration!.revision},'admin-fixture')).status,413);
+  assert.deepEqual(snapshot,beforeFullTeamWrite,'Full audit must not erase history or create a partial company page');snapshot=fullAuditSnapshot;
+
+  assert.deepEqual((await service.getStore()).regions,beforeTeam.regions);assert.deepEqual((await service.getStore()).paketindexArchive,beforeTeam.paketindexArchive);
+  snapshot=rawBeforeTeam;
   const rawBeforePages=structuredClone(snapshot);const beforePages=structuredClone(await service.getStore());
   assert.equal((await request('/api/page-layouts/om','PUT',defaultPageLayout('om'))).status,401);
   assert.equal((await request('/api/page-layouts/om','PUT',defaultPageLayout('om'),'member-two')).status,403);
@@ -483,8 +621,8 @@ try {
   const beforeHistoryFull=structuredClone(snapshot);
   assert.equal((await request(stateUrl,'POST',{action:'trash',revision:snapshot.saleListings![0].revision},'admin-fixture')).status,413);
   assert.deepEqual(snapshot,beforeHistoryFull);
-  const groupIds=CMS_GROUPS.flatMap(g=>g.sections);assert.equal(new Set(groupIds).size,19);
-  assert.equal(groupIds.length,19);
+  const groupIds=CMS_GROUPS.flatMap(g=>g.sections);assert.equal(new Set(groupIds).size,20);
+  assert.equal(groupIds.length,20);
   const cmsNavHtml=renderToString(createElement(CmsNavigation,{items:groupIds.map(id=>({id,label:id})),active:'commerce',onSelect:()=>{}}));
   assert.ok(cmsNavHtml.includes('Affärer &amp; möjligheter')&&cmsNavHtml.includes('aria-current="page"'));
   snapshot=restoreCommerce;
@@ -1351,7 +1489,7 @@ try {
   assert.ok(!publicData.merchants.some((item: { id: string }) => item.id === draftId));
   assert.ok(!publicData.news.some((item: { id: string }) => item.id === draftNewsId));
   assert.equal(snapshot.contactMessages.length, 1, 'Public filtering must not mutate stored data');
-  const beforeDenied = calls;
+  const beforeDenied = calls;const deniedTransactions=transactions;const deniedSnapshot=structuredClone(snapshot);
   for (const [path, method] of [
     ['/api/merchants', 'POST'], ['/api/merchants/item', 'PUT'], ['/api/partners/item', 'DELETE'],
     ['/api/cms/import', 'POST'], ['/api/cms/reset', 'POST'], ['/api/ai/discover', 'POST'],
@@ -1365,7 +1503,8 @@ try {
     assert.equal((await request(path, method, method === 'GET' ? undefined : {})).status, 401, `${method} ${path}`);
     assert.equal((await request(path, method, method === 'GET' ? undefined : {}, 'member-fixture')).status, 403);
   }
-  assert.equal(calls, beforeDenied, 'Denied writes must never reach storage');
+  assert.equal(calls,beforeDenied+21,'Verified non-admin requests read current role grants once per protected request');
+  assert.equal(transactions,deniedTransactions,'Denied requests must not enter write transactions');assert.deepEqual(snapshot,deniedSnapshot);
   assert.equal((await request('/api/cms/status', 'GET', undefined, 'admin-fixture')).status, 200);
   assert.equal((await request('/api/cms/store', 'GET', undefined, 'invalid-fixture')).status, 401);
   const fullData = await (await request('/api/cms/store', 'GET', undefined, 'admin-fixture')).json();

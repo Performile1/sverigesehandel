@@ -1,3 +1,4 @@
+import { publicCompanyPages } from './collaboration.ts';
 import { publiclyVisible } from '../shared/editorialLifecycle.ts';
 import { publicSaleListing } from '../shared/commerce.ts';
 import { INITIAL_START_GUIDE } from '../shared/startGuide.ts';
@@ -18,6 +19,7 @@ export function publicStore(store: CMSStore, admin = false): CMSStore {
   if (admin) {
     return {
       ...store,
+      publicCompanyPages:publicCompanyPages(store),
       communitySettings: { ...(store.memberGovernance?.settings ?? DEFAULT_COMMUNITY_SETTINGS) },
       partners: (store.partners || []).map((p) => ({
         ...p,
@@ -38,6 +40,8 @@ export function publicStore(store: CMSStore, admin = false): CMSStore {
   const result = structuredClone(store);
   result.startGuide=(result.startGuide??INITIAL_START_GUIDE).filter(row=>publiclyVisible(row));
   result.publicSaleListings=(store.saleListings??[]).filter(row=>publiclyVisible(row)).map(publicSaleListing);
+  delete result.collaboration;
+  result.publicCompanyPages=publicCompanyPages(store);
   delete result.saleListings;
   delete result.editorialHistory;
   delete result.saleCases;
