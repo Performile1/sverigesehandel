@@ -408,3 +408,12 @@ Home widgets v2 adds two ad slots, two form slots and the checkout entry to the
 four initial modules, retaining fixed zones and all old v1 enabled/order choices.
 Map, charts and calculators are not rewritten. See
 [security, migration, SEO caveats and tests](docs/textredigerare-widgets-v2.md).
+
+## Widgets v3 – market sections
+
+Three more sections (map/cross-border panel, industry trend charts, consumer
+insights) can now be hidden or reordered within one fixed market zone. Their JSX,
+handlers, state and data computations are preserved. Default layout stays the
+same; existing widget v1/v2 preferences upgrade at render time without mutation
+and persist as v3 only on confirmed admin save. No source data is removed when
+hiding a widget. See [scope, migration and verification](docs/widgets-v3.md).

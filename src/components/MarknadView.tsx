@@ -488,8 +488,9 @@ export function MarknadView({
         />),
         }}/>
 
-        {/* Interactive Sweden Map + Cross-Border */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <HomeWidgetZone layout={homeWidgets} zone="market" widgets={{
+          'regions-map': (
+<div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <SwedenLogisticsMap
             mapPoints={mapPoints}
             regions={regions}
@@ -568,9 +569,9 @@ export function MarknadView({
             </div>
           </div>
         </div>
-
-        {/* Industry Trend Graph (Recharts) */}
-        <section
+          ),
+          'industry-trends': (
+<section
           id="trendgraf"
           className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 scroll-mt-20"
         >
@@ -789,9 +790,9 @@ export function MarknadView({
             </button>
           </div>
         </section>
-
-        {/* Demographics & Consumer Behavior */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8">
+          ),
+          'consumer-insights': (
+<div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
             <div>
               <div className="text-xs font-mono font-semibold text-[#006AA7]">Konsumentinsikt & demografi</div>
@@ -928,6 +929,8 @@ export function MarknadView({
             )}
           </div>
         </div>
+          )
+        }}/>
 
         {/* Order Economics & Shipping Cost Benchmarks */}
         <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">

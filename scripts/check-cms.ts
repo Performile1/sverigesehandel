@@ -170,17 +170,48 @@ try {
   assert.ok(validateSnapshot(await service.getStore()));snapshot=rawPriorRich;
   const legacyWidgets={version:1 as const,revision:4,items:[{id:'audience' as const,enabled:false,order:2},{id:'latest-index' as const,enabled:true,order:1},{id:'index-archive' as const,enabled:false,order:0},{id:'insights' as const,enabled:false,order:3}]};
   assert.ok(validHomeWidgets(legacyWidgets));const expandedWidgets=homeWidgetLayout(legacyWidgets);
-  assert.equal(expandedWidgets.version,2);assert.equal(expandedWidgets.items.length,9);assert.equal(expandedWidgets.revision,4);
+  assert.equal(expandedWidgets.version,3);assert.equal(expandedWidgets.items.length,12);assert.equal(expandedWidgets.revision,4);
   assert.equal(expandedWidgets.items.find(i=>i.id==='audience')!.enabled,false);assert.equal(expandedWidgets.items.find(i=>i.id==='insights')!.enabled,false);
   assert.equal(expandedWidgets.items.find(i=>i.id==='top-ad')!.enabled,true);
   assert.deepEqual(widgetsInZone(legacyWidgets,'top').map(i=>i.id),['latest-index']);
   assert.deepEqual(widgetsInZone(undefined,'support').map(i=>i.id),['top-ad','top-form']);
   assert.deepEqual(widgetsInZone(undefined,'editorial').map(i=>i.id),['checkout-cta','mid-ad','insights']);
   assert.deepEqual(widgetsInZone(undefined,'footer').map(i=>i.id),['bottom-form']);
+  const marketWidgetIds=['regions-map','industry-trends','consumer-insights'];
+  assert.deepEqual(widgetsInZone(undefined,'market').map(i=>i.id),marketWidgetIds);
+  const previousV2={version:2 as const,revision:7,items:DEFAULT_HOME_WIDGETS.items.filter(i=>!marketWidgetIds.includes(i.id)).map((i,order)=>({...i,order,enabled:i.id==='top-form'?false:i.enabled}))};
+  const previousV2Copy=structuredClone(previousV2);
+  assert.ok(validHomeWidgets(previousV2));const migratedV3=homeWidgetLayout(previousV2);
+  assert.equal(migratedV3.version,3);assert.equal(migratedV3.items.length,12);assert.equal(migratedV3.revision,7);
+  assert.equal(migratedV3.items.find(i=>i.id==='top-form')!.enabled,false);
+  assert.deepEqual(widgetsInZone(previousV2,'market').map(i=>i.id),marketWidgetIds);
+  for(const zone of ['top','support','editorial','footer'] as const)assert.deepEqual(widgetsInZone(previousV2,zone),widgetsInZone(migratedV3,zone));
+  assert.deepEqual(previousV2,previousV2Copy,'Render upgrade must never mutate stored layout');
+  const customV2={...previousV2,items:previousV2.items.map(i=>({...i,order:20-i.order}))};
+  const customV3=homeWidgetLayout(customV2);
+  for(const zone of ['top','support','editorial','footer'] as const){
+    const expected=customV2.items.filter(i=>widgetsInZone(previousV2,zone).some(old=>old.id===i.id)).filter(i=>i.enabled).sort((a,b)=>a.order-b.order).map(i=>i.id);
+    assert.deepEqual(widgetsInZone(customV3,zone).map(i=>i.id),expected,`Preserve customized v2 order: ${zone}`);
+  }
+
+  const marketNodes={'regions-map':createElement('section',null,'Map fixture'),'industry-trends':createElement('section',null,'Trend fixture'),'consumer-insights':createElement('section',null,'Consumer fixture')};
+  const marketDefault=renderToString(createElement(HomeWidgetZone,{layout:undefined,zone:'market',widgets:marketNodes}));
+  assert.equal(marketDefault,renderToString(createElement(HomeWidgetZone,{layout:previousV2,zone:'market',widgets:marketNodes})));
+  const movedMarket={...structuredClone(DEFAULT_HOME_WIDGETS),items:DEFAULT_HOME_WIDGETS.items.map(i=>i.id==='regions-map'?{...i,order:7}:i.id==='consumer-insights'?{...i,order:5}:i)};
+  assert.ok(validHomeWidgets(movedMarket));assert.deepEqual(widgetsInZone(movedMarket,'market').map(i=>i.id),['consumer-insights','industry-trends','regions-map']);
+  const hiddenMarketConfig={...structuredClone(DEFAULT_HOME_WIDGETS),items:DEFAULT_HOME_WIDGETS.items.map(i=>({...i,enabled:!marketWidgetIds.includes(i.id)}))};
+  assert.equal(renderToString(createElement(HomeWidgetZone,{layout:hiddenMarketConfig,zone:'market',widgets:marketNodes})),'');
+
   const beforeLegacyLayout=structuredClone(snapshot);snapshot.homeWidgets=legacyWidgets;
   assert.equal((await request('/api/home-widgets','PUT',legacyWidgets,'admin-fixture')).status,200);
-  assert.equal((await service.getStore()).homeWidgets!.version,2);
+  assert.equal((await service.getStore()).homeWidgets!.version,3);
   assert.equal((await service.getStore()).homeWidgets!.items.find(i=>i.id==='audience')!.enabled,false);
+  snapshot=structuredClone(beforeLegacyLayout);snapshot.homeWidgets=previousV2;
+  assert.equal((await request('/api/home-widgets','PUT',previousV2,'admin-fixture')).status,200);
+  assert.equal((await service.getStore()).homeWidgets!.version,3);
+  assert.equal((await service.getStore()).homeWidgets!.items.find(i=>i.id==='top-form')!.enabled,false);
+  assert.deepEqual((await service.getStore()).merchants,(upgradeSnapshot(beforeLegacyLayout) as typeof snapshot).merchants);
+  assert.deepEqual((await service.getStore()).regions,(upgradeSnapshot(beforeLegacyLayout) as typeof snapshot).regions);
   snapshot=beforeLegacyLayout;
   const beforeWidgets=structuredClone(await service.getStore());const rawBeforeWidgets=structuredClone(snapshot);
   assert.ok(validHomeWidgets(DEFAULT_HOME_WIDGETS));
@@ -1184,7 +1215,13 @@ try {
   assert.ok(!hiddenMarketHtml.includes('Jag vill starta e-handel'));
   assert.ok(!hiddenMarketHtml.includes('Senaste tillgängliga Paketindex'));
   assert.ok(!hiddenMarketHtml.includes('Paketindex – periodarkiv'));
-  for(const label of ['Svensk e-handelstillväxt','Marginalkalkylator','Regioner','Jobb &amp; Karriär'])assert.ok(hiddenMarketHtml.includes(label),`Non-widget area preserved: ${label}`);
+  assert.ok(!hiddenMarketHtml.includes('Vem handlar vad – och hur vill svensken betala?'));
+  assert.ok(!hiddenMarketHtml.includes('Sveriges e-handelsregioner &amp; 3PL-logistiknav'));
+  assert.ok(!hiddenMarketHtml.includes('Svensk e-handelstillväxt'));
+  assert.ok(marketHtml.indexOf('Sveriges e-handelsregioner')<marketHtml.indexOf('Svensk e-handelstillväxt'));
+  assert.ok(marketHtml.indexOf('Svensk e-handelstillväxt')<marketHtml.indexOf('Vem handlar vad'));
+
+  for(const label of ['Marginalkalkylator','Jobb &amp; Karriär'])assert.ok(hiddenMarketHtml.includes(label),`Non-widget area preserved: ${label}`);
 
   const newsHtml = renderToString(createElement(NewsView, {
     news: visible.news,

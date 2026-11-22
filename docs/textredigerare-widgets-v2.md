@@ -1,5 +1,8 @@
 # Textredigerare, metadata och widgets – etapp 2
 
+Tredje widgetetappen beskrivs i `widgets-v3.md`. Detta dokument beskriver
+redigeraren och den ursprungliga niomoduls-etappen.
+
 ## Vad redigeraren är
 
 En gemensam **Markdown-baserad textredigerare med verktygsrad och förhandsvisning**,
