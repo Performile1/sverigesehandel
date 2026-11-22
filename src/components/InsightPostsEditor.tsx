@@ -1,3 +1,6 @@
+import { ContentEditor } from './ContentEditor';
+import { ContentMetadataFields } from './ContentMetadataFields';
+import { cleanContentMetadata } from '../../shared/contentFormat';
 import { PublicationFields } from './PublicationFields';
 import { useState } from 'react';
 import type { InsightPost } from '../types';
@@ -29,7 +32,7 @@ function PostForm({ initial, onSave, onDelete }: { initial: InsightPost; onSave:
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   const update = <K extends keyof InsightPost>(key: K, value: InsightPost[K]) => setDraft((prev) => ({ ...prev, [key]: value }));
   return <form className="space-y-3 text-sm" onSubmit={async (event) => {
-    event.preventDefault(); const post = { ...draft, id: draft.id || `insight-${crypto.randomUUID()}` };
+    event.preventDefault(); const post = cleanContentMetadata({ ...draft, id: draft.id || `insight-${crypto.randomUUID()}` });
     if (!validInsightPost(post)) { setMessage('Kontrollera rubrik, längder, bildtext, HTTPS-länk, datum och knappmål.'); return; }
     setBusy(true); setMessage('');
     try { await onSave(post); setMessage('Inlägget sparat.'); }
@@ -39,8 +42,8 @@ function PostForm({ initial, onSave, onDelete }: { initial: InsightPost; onSave:
     <label className="block">Rubrik<input className={field} maxLength={180} required value={draft.title} onChange={(e) => update('title', e.target.value)} /></label>
     <label className="block">Kategori / etikett<input className={field} maxLength={100} value={draft.category} onChange={(e) => update('category', e.target.value)} /></label>
     <label className="block">Ingress<textarea className={field} rows={3} maxLength={800} value={draft.excerpt} onChange={(e) => update('excerpt', e.target.value)} /></label>
-    <label className="block">Fulltext<textarea className={field} rows={10} maxLength={15000} value={draft.body} onChange={(e) => update('body', e.target.value)} /></label>
-    <p className="text-xs text-slate-600">Tom rad ger stycke. Börja punktlistor med - eller •. Ren text, ingen HTML eller script.</p>
+    <ContentEditor label="Fulltext" value={draft.body} format={draft.contentFormat} maxLength={15000} onChange={(body,formatted)=>setDraft(p=>({...p,body,...(formatted?{contentFormat:'markdown' as const}:{})}))}/>
+    <ContentMetadataFields value={draft} onChange={v=>setDraft(p=>({...p,...v}))}/>
     <div className="grid sm:grid-cols-2 gap-3">
       <label>Författare<input className={field} maxLength={100} value={draft.author} onChange={(e) => update('author', e.target.value)} /></label>
       <label>Visningsdatum<input className={field} type="date" value={draft.publishedDate} onChange={(e) => update('publishedDate', e.target.value)} /></label>

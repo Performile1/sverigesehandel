@@ -394,3 +394,17 @@ settings use the existing order; render-time invalid config falls back safely,
 but invalid database/backup config is rejected rather than silently rewritten.
 Hiding never deletes source content. Admin writes use revision conflict checks.
 See [scope, compatibility and verification gates](docs/blogg-widgets.md).
+
+## Formatting editor and widgets v2
+
+Blog bodies, start-guide chapters and buy/sell listing descriptions now have a
+shared Markdown toolbar and safe React preview (H2–H4, strong/em, lists, sections,
+HTTPS links, public Firebase image references). **Not a full WYSIWYG editor.**
+Old text is not interpreted as Markdown without an explicit format flag. SEO
+fields/tags are separate; blog metadata is client-side only, not new SSR article
+routes or guaranteed search/social metadata. Existing upload configuration stays.
+
+Home widgets v2 adds two ad slots, two form slots and the checkout entry to the
+four initial modules, retaining fixed zones and all old v1 enabled/order choices.
+Map, charts and calculators are not rewritten. See
+[security, migration, SEO caveats and tests](docs/textredigerare-widgets-v2.md).

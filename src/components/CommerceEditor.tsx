@@ -1,4 +1,7 @@
-import { PlainTextDescription } from './JobDescription';
+import { ContentEditor } from './ContentEditor';
+import { ContentMetadataFields } from './ContentMetadataFields';
+import { cleanContentMetadata } from '../../shared/contentFormat';
+import { ContentText } from './ContentText';
 import { PublicationFields } from './PublicationFields';
 import { SaleGalleryEditor } from './SaleGalleryEditor';
 import { useState } from 'react';
@@ -29,18 +32,19 @@ export function CommerceEditor({store,onRefresh}:{store:CMSStore;onRefresh:()=>P
 }
 function GuideForm({initial,onSave}:{initial:GuideChapter;onSave:(c:GuideChapter)=>Promise<void>}) {
   const [draft,setDraft]=useState(initial);const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');const [newId]=useState(()=>`guide-${crypto.randomUUID()}`);
-  return <form className="space-y-3 text-sm" onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy(true);setMessage('');try{await onSave({...draft,checklist:draft.checklist.map(c=>c.trim()).filter(Boolean),id:draft.id||newId});setMessage('Guiden sparad.');}catch(err){setMessage((err as Error).message);}finally{setBusy(false);}}}>
+  return <form className="space-y-3 text-sm" onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy(true);setMessage('');try{await onSave({...cleanContentMetadata(draft),checklist:draft.checklist.map(c=>c.trim()).filter(Boolean),id:draft.id||newId});setMessage('Guiden sparad.');}catch(err){setMessage((err as Error).message);}finally{setBusy(false);}}}>
     <fieldset disabled={busy} className="space-y-3">
       <label className="block">Rubrik<input required maxLength={180} className={field} value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label>
       <label className="block">Ingress<textarea required maxLength={600} className={field} value={draft.summary} onChange={e=>setDraft({...draft,summary:e.target.value})}/></label>
-      <label className="block">Brödtext (ren text, stycken och punktlistor)<textarea required rows={8} maxLength={12000} className={field} value={draft.body} onChange={e=>setDraft({...draft,body:e.target.value})}/></label>
+      <ContentEditor label="Brödtext" value={draft.body} format={draft.contentFormat} maxLength={12000} required onChange={(body,formatted)=>setDraft(p=>({...p,body,...(formatted?{contentFormat:'markdown' as const}:{})}))}/>
+      <ContentMetadataFields value={draft} onChange={v=>setDraft(p=>({...p,...v}))}/>
       <label className="block">Checklista (en punkt per rad, högst 20)<textarea rows={5} className={field} value={draft.checklist.join('\n')} onChange={e=>setDraft({...draft,checklist:e.target.value.split('\n')})}/></label>
       <label className="block">Katalog / kontaktmål<select className={field} value={draft.targetTab} onChange={e=>setDraft({...draft,targetTab:e.target.value as GuideChapter['targetTab']})}>{['partners','3pl','ehandlare','kontakt','jobb'].map(t=><option key={t}>{t}</option>)}</select></label>
       <label className="block">Källa / vidare läsning (HTTPS)<input className={field} type="url" value={draft.sourceUrl} onChange={e=>setDraft({...draft,sourceUrl:e.target.value})}/></label>
       <label className="block">Senast redaktionellt granskad (krävs för publicering)<input className={field} type="date" value={draft.reviewedDate} onChange={e=>setDraft({...draft,reviewedDate:e.target.value})}/></label>
       <label className="block">Ordning<input className={field} type="number" min={0} max={1000} value={draft.order} onChange={e=>setDraft({...draft,order:Number(e.target.value)})}/></label>
       <label className="block">Status<select className={field} value={draft.status} onChange={e=>setDraft({...draft,status:e.target.value as GuideChapter['status']})}><option value="draft">Utkast</option><option value="published">Publicerad</option></select></label>
-      <details className="border rounded-lg p-3"><summary>Förhandsvisa kapiteltext</summary><h3 className="font-bold">{draft.title}</h3><p>{draft.summary}</p><PlainTextDescription text={draft.body}/></details>
+      <details className="border rounded-lg p-3"><summary>Förhandsvisa kapiteltext</summary><h3 className="font-bold">{draft.title}</h3><p>{draft.summary}</p><ContentText text={draft.body} format={draft.contentFormat}/></details>
       <PublicationFields value={draft} onChange={v=>setDraft(p=>({...p,...v}))}/>
       <button className={button}>Spara kapitel</button>
     </fieldset>{message&&<p role="status">{message}</p>}
@@ -48,7 +52,7 @@ function GuideForm({initial,onSave}:{initial:GuideChapter;onSave:(c:GuideChapter
 }
 function SaleReview({initial,onSave}:{initial:SaleListing;onSave:(input:unknown)=>Promise<void>}) {
   const [draft,setDraft]=useState<SaleDetails & import('../types').EditorialLifecycle>(initial);const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
-  return <form className="space-y-3" onSubmit={async e=>{e.preventDefault();if(busy)return;const f=new FormData(e.currentTarget);setBusy(true);setMessage('');try{await onSave({...draft,status:String(f.get('status')),availability:String(f.get('availability')),internalNotes:String(f.get('notes')),reviewConfirmed:f.get('review')==='on'});setMessage('Granskningsbeslut sparat.');}catch(err){setMessage((err as Error).message);}finally{setBusy(false);}}}>
+  return <form className="space-y-3" onSubmit={async e=>{e.preventDefault();if(busy)return;const f=new FormData(e.currentTarget);setBusy(true);setMessage('');try{await onSave({...cleanContentMetadata(draft),status:String(f.get('status')),availability:String(f.get('availability')),internalNotes:String(f.get('notes')),reviewConfirmed:f.get('review')==='on'});setMessage('Granskningsbeslut sparat.');}catch(err){setMessage((err as Error).message);}finally{setBusy(false);}}}>
     <p className="bg-slate-100 p-3 rounded-xl text-sm">Privat annonskontakt: {initial.sellerName} · {initial.sellerEmail}<br/>{initial.origin==='cms'?`Skapad i CMS av ${initial.createdByUid}; kontaktadressen är inte verifierad genom registreringen.`:'Inlämnad från verifierat användarkonto.'}<br/>Referens: {initial.id}<br/>Uppdrag / behörighet bekräftad: {initial.authorityConfirmed?'Ja':'Nej'} · Offentliga fält godkända av annonsören: {initial.publicContentConfirmed?'Ja':'Nej'}<br/>Senaste beslut: {initial.reviewedAt||'Inte granskat'} · {initial.reviewedBy||'–'}</p>
     <fieldset disabled={busy} className="space-y-3"><SaleFields draft={draft} onChange={setDraft}/>
       <label className="block">Privata handläggningsanteckningar<textarea name="notes" className={field} maxLength={2000} defaultValue={initial.internalNotes}/></label>
@@ -56,20 +60,20 @@ function SaleReview({initial,onSave}:{initial:SaleListing;onSave:(input:unknown)
       <label className="block">Affärsstatus<select name="availability" className={field} defaultValue={initial.availability}>{Object.entries(SALE_AVAILABILITY).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
       <label className="flex gap-2"><input name="review" type="checkbox"/>Jag har granskat annonsen, annonsörens uppgivna behörighet och att fälten får publiceras. Krävs vid varje publicering.</label>
       <PublicationFields value={draft} onChange={v=>setDraft(p=>({...p,...v}))}/>
-      <details className="border rounded-lg p-3"><summary>Förhandsvisa offentlig annonstext</summary><h3 className="font-bold">{draft.title}</h3><p>{draft.priceLabel} · {draft.location}</p><PlainTextDescription text={draft.description}/><PlainTextDescription text={draft.included}/></details>
+      <details className="border rounded-lg p-3"><summary>Förhandsvisa offentlig annonstext</summary><h3 className="font-bold">{draft.title}</h3><p>{draft.priceLabel} · {draft.location}</p><ContentText text={draft.description} format={draft.contentFormat}/><ContentText text={draft.included} format={draft.contentFormat}/></details>
       <button className={button}>Spara granskningsbeslut</button>
     </fieldset>{message&&<p role="status">{message}</p>}
   </form>;
 }
 
 export function CreateCmsSaleForm({initial,onCreated}:{initial?:SaleDetails;onCreated:(id:string)=>Promise<void>}) {
-  const [draft,setDraft]=useState<SaleDetails>(initial?{title:initial.title,description:initial.description,included:initial.included,category:initial.category,location:initial.location,priceLabel:initial.priceLabel,quantity:initial.quantity,condition:initial.condition,intent:initial.intent??'sell'}:{...blankSale,intent:'sell'});
+  const [draft,setDraft]=useState<SaleDetails>(initial?{contentFormat:initial.contentFormat,seoTitle:initial.seoTitle,seoDescription:initial.seoDescription,tags:initial.tags,title:initial.title,description:initial.description,included:initial.included,category:initial.category,location:initial.location,priceLabel:initial.priceLabel,quantity:initial.quantity,condition:initial.condition,intent:initial.intent??'sell'}:{...blankSale,intent:'sell'});
   const [status,setStatus]=useState<'draft'|'published'>('draft');const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
   const [requestId]=useState(()=>`sale-${crypto.randomUUID()}`);const [createdId,setCreatedId]=useState('');
   if(createdId)return <div role="status" className="p-3 border rounded-lg">Annonsen är sparad med referens {createdId}. {message}<button type="button" className={button} onClick={()=>{void onCreated(createdId).catch(()=>setMessage('Kunde inte uppdatera CMS. Ladda om och välj den sparade annonsen.'));}}>Öppna sparad annons</button></div>;
   return <form className="space-y-3 border rounded-xl p-4" onSubmit={async e=>{
     e.preventDefault();if(busy)return;const f=new FormData(e.currentTarget);setBusy(true);setMessage('');
-    try{const result=await api.createCmsSaleListing({...draft,requestId,sellerName:String(f.get('contactName')),sellerEmail:String(f.get('contactEmail')),
+    try{const result=await api.createCmsSaleListing({...cleanContentMetadata(draft),requestId,sellerName:String(f.get('contactName')),sellerEmail:String(f.get('contactEmail')),
       internalNotes:String(f.get('notes')),status,authorityConfirmed:f.get('authority')==='on',publicContentConfirmed:f.get('publicContent')==='on',reviewConfirmed:f.get('review')==='on'});
       setCreatedId(result.id);try{await onCreated(result.id);}catch{setMessage('Annonsen är sparad men CMS kunde inte uppdateras. Ladda om – skapa inte en ny kopia.');}
     }catch(err){setMessage((err as Error).message);}finally{setBusy(false);}

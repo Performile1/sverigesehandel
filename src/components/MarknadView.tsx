@@ -471,22 +471,22 @@ export function MarknadView({
           'latest-index': <LatestPaketindex rows={paketindexArchive} showArchiveLink={widgetsInZone(homeWidgets,'top').some(w=>w.id==='index-archive')}/>,
           'index-archive': <PaketindexArchive rows={paketindexArchive}/>,
         }}/>
-        {/* Top Sponsored Banner (D-Congress 2027) */}
-        <AdBannerSlot
+        <HomeWidgetZone layout={homeWidgets} zone="support" widgets={{
+          'top-ad': (<AdBannerSlot
           banners={adBanners}
           placement="marknad-top"
           onNavigate={onNavigate}
           onBookSlot={onBookAdSlot}
-        />
-
-        <PageFormSlot
+        />),
+          'top-form': (<PageFormSlot
           forms={contactForms}
           page="marknad"
           position="top"
           adBanners={adBanners}
           onSubmitted={onFormSubmitted}
           onNotify={onNotify}
-        />
+        />),
+        }}/>
 
         {/* Interactive Sweden Map + Cross-Border */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -2664,17 +2664,10 @@ export function MarknadView({
           </section>
         )}
 
-        {/* Checkoutstrategi.se Dedicated CTA + Open Ad Holder */}
-        <CheckoutStrategyCTA />
-
-        <AdBannerSlot
-          banners={adBanners}
-          placement="marknad-mid"
-          onNavigate={onNavigate}
-          onBookSlot={onBookAdSlot}
-        />
-
-        <HomeWidgetZone layout={homeWidgets} zone="editorial" widgets={{insights:<div className="space-y-4">
+        <HomeWidgetZone layout={homeWidgets} zone="editorial" widgets={{
+          'checkout-cta': <CheckoutStrategyCTA/>,
+          'mid-ad': <AdBannerSlot banners={adBanners} placement="marknad-mid" onNavigate={onNavigate} onBookSlot={onBookAdSlot}/>,
+          insights:<div className="space-y-4">
           <div className="flex flex-wrap justify-between gap-3"><h2 className="text-2xl font-bold">Blogg & Insikter</h2><button type="button" className="underline text-blue-800" onClick={()=>onNavigate('blogg')}>Alla inlägg →</button></div>
           <InsightPosts posts={[...insightPosts].filter(p=>publiclyVisible(p)).sort((a,b)=>a.order-b.order||a.id.localeCompare(b.id)).slice(0,3)} onNavigate={onNavigate}/>
         </div>}}/>
@@ -2721,14 +2714,14 @@ export function MarknadView({
           </div>
         </div>
 
-        <PageFormSlot
+        <HomeWidgetZone layout={homeWidgets} zone="footer" widgets={{'bottom-form':(<PageFormSlot
           forms={contactForms}
           page="marknad"
           position="bottom"
           adBanners={adBanners}
           onSubmitted={onFormSubmitted}
           onNotify={onNotify}
-        />
+        />)}}/>
       </div>
     </div>
   );
