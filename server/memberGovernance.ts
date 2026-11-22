@@ -76,7 +76,8 @@ export function runGovernance(store: CMSStore, actor: CmsIdentity, operation: st
     const status = input.status === 'revoked' ? 'revoked' : input.status === 'active' ? 'active' : fail('Ogiltig status.');
     const bools = ['canPropose','receiveIntros','receiveMessages','includeHistory'] as const;
     if (!bools.every((k) => typeof input[k] === 'boolean')) fail('Ange behörighetsinställningar.');
-    const link: CompanyMemberLink = { id: previous?.id || randomUUID(), uid, entityType: type, entityId: id, status,
+    if(previous?.verificationClaimId&&status==='active'&&store.collaboration?.verification?.claims.find(c=>c.id===previous.verificationClaimId)?.state!=='approved')fail('Verifieringen är återkallad. Ny granskning krävs.',403);
+    const link: CompanyMemberLink = { verificationClaimId:previous?.verificationClaimId,verifiedEmail:previous?.verifiedEmail,id: previous?.id || randomUUID(), uid, entityType: type, entityId: id, status,
       canPropose: input.canPropose, receiveIntros: input.receiveIntros, receiveMessages: input.receiveMessages, includeHistory: input.includeHistory,
       createdAt: previous?.status === 'active' && bools.every((key) => previous[key] === input[key]) ? previous.createdAt : now, updatedAt: now };
     g.links = g.links.filter((l) => l.id !== link.id); g.links.push(link); audit(g, actor, 'company-link-' + status, link.id);

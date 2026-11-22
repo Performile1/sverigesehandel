@@ -1,7 +1,9 @@
+import { TotpEnrollment } from './TotpEnrollment';
 import { useEffect, useRef, useState } from 'react';
 import type { User } from 'firebase/auth';
 
 export interface SignInDialogProps {
+  mfa?:{factors:Array<{uid:string;name:string}>;onComplete:(uid:string,code:string)=>Promise<void>;onCancel:()=>void};
   busy:boolean; error:string|null; emailEnabled:boolean; facebookEnabled:boolean; linkedinEnabled:boolean;
   pendingEmailLink:boolean; user:User|null;
   onClose:()=>void; onGoogle:()=>void; onGoogleRedirect:()=>void;
@@ -11,11 +13,14 @@ export interface SignInDialogProps {
 }
 export function SignInDialog(p:SignInDialogProps) {
   const ref=useRef<HTMLDialogElement>(null);
+  const [mfaCode,setMfaCode]=useState('');const [factor,setFactor]=useState('');
   const [email,setEmail]=useState('');const [notice,setNotice]=useState('');const [cooldown,setCooldown]=useState(0);
   useEffect(()=>{
     const old=document.activeElement as HTMLElement|null;ref.current?.showModal();
     return()=>{ref.current?.close();old?.focus();};
   },[]);
+  const mfaFactorIds=p.mfa?.factors.map(f=>f.uid).join('|')??'';
+  useEffect(()=>{setMfaCode('');setFactor('');},[mfaFactorIds]);
   useEffect(()=>{if(!cooldown)return;const timer=setTimeout(()=>setCooldown(cooldown-1),1000);return()=>clearTimeout(timer);},[cooldown]);
   return <dialog ref={ref} aria-labelledby="signin-title" className="m-auto p-0 rounded-2xl border border-slate-200 w-[90vw] max-w-md max-h-[90vh] backdrop:bg-slate-950/70"
     onCancel={(e)=>{if(p.busy)e.preventDefault();else p.onClose();}}>
@@ -26,6 +31,11 @@ export function SignInDialog(p:SignInDialogProps) {
       {notice&&<p role="status" className="p-3 rounded-lg bg-blue-50 text-blue-900 text-sm">{notice}</p>}
       {p.user&&<p className="text-sm">Nuvarande konto: {p.user.email}. {p.user.emailVerified?'Verifierad adress.':'Adressen är ännu inte verifierad.'}</p>}
       {p.user&&!p.user.email&&<p role="status" className="text-sm text-amber-800">Leverantören lämnade ingen e-postadress. Använd e-postinloggning eller kontakta administratören; inget konto får medlemsåtkomst utan verifierad adress.</p>}
+      {p.mfa?<form className="space-y-3" onSubmit={async e=>{e.preventDefault();if(p.busy)return;await p.mfa!.onComplete(factor||p.mfa!.factors[0]?.uid||'',mfaCode);setMfaCode('');}}>
+        <h3 className="font-bold">Ange kod från autentiseringsappen</h3>
+        {!p.mfa.factors.length?<p role="alert">Ingen TOTP-faktor tillgänglig. Kontakta administratören; inget annat faktorskydd kringgås.</p>:<><label>Autentiseringsapp<select className="block border rounded p-2 w-full" value={factor||p.mfa.factors[0].uid} onChange={e=>setFactor(e.target.value)}>{p.mfa.factors.map(f=><option value={f.uid} key={f.uid}>{f.name}</option>)}</select></label><input aria-label="2FA-kod" className="block border rounded p-2 w-full" value={mfaCode} onChange={e=>setMfaCode(e.target.value.replace(/\D/g,'').slice(0,6))} required pattern="[0-9]{6}" inputMode="numeric" autoComplete="one-time-code"/><button disabled={p.busy} className="border rounded p-2">Verifiera och logga in</button></>}
+        <button type="button" disabled={p.busy} onClick={()=>{setMfaCode('');p.mfa!.onCancel();}}>Avbryt 2FA-inloggning</button>
+      </form>:<>
       {p.pendingEmailLink?<p className="text-sm">Skriv adressen som länken skickades till, även om du öppnat den på en annan enhet. Slutför bara en länk som du själv begärt. Detta kan byta nuvarande inloggade konto.</p>:<div className="space-y-2">
         <button className="w-full p-3 rounded-xl bg-slate-900 text-white disabled:opacity-50" disabled={p.busy} onClick={p.onGoogle}>Fortsätt med Google</button>
         <button className="w-full p-2 border rounded-xl text-sm" disabled={p.busy} onClick={p.onGoogleRedirect}>Google via omdirigering</button>
@@ -46,6 +56,8 @@ export function SignInDialog(p:SignInDialogProps) {
         <button className="w-full p-2 border rounded-lg" disabled={p.busy||cooldown>0||!p.user.email} onClick={async()=>{if(await p.onVerify()){setNotice('Firebase har accepterat begäran om verifieringsmejl. Öppna mejlet och uppdatera verifieringen nedan.');setCooldown(60);}}}>Skicka verifieringsmejl till mitt konto</button>
         <button className="w-full p-2 border rounded-lg" disabled={p.busy} onClick={()=>void p.onReload()}>Jag har verifierat – uppdatera status</button>
       </div>}
+      {p.user?.emailVerified&&import.meta.env.VITE_FIREBASE_TOTP_ENABLED==='true'&&<TotpEnrollment/>}
+      </>}
     </div>
   </dialog>;
 }

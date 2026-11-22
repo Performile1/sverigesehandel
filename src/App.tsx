@@ -241,6 +241,7 @@ export default function App() {
             >
               Försök igen
             </button>
+            <button type="button" onClick={requestSignIn} className="border rounded-xl px-4 py-2">Logga in på nytt / 2FA</button>
             {user && (
               <button
                 type="button"

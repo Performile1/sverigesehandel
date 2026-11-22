@@ -1,3 +1,7 @@
+import { completeTotpChallenge } from '../shared/totpChallenge.ts';
+import { requireTotp } from '../server/mfaPolicy.ts';
+import { normalizedCompanyDomain, emailMatchesCompanyDomain, validCompanyVerification } from '../shared/companyVerification.ts';
+import { CompanyVerificationPanel } from '../src/components/CompanyVerificationPanel.tsx';
 import { createAndVerifyCompanyPages } from '../src/components/companyPageCreation.ts';
 import { CompanyPagesPanel, companyPagePreview } from '../src/components/CompanyPagesPanel.tsx';
 import { CompanyPagesContext, CompanyPageLink } from '../src/components/CompanyDirectoryLinks.tsx';
@@ -106,10 +110,12 @@ let reportCalls = 0;
 let providerFails = false;
 let userResolveCalls=0;
 let userResolveFails=false;
+let claimantLookupFails=false;let claimantDisabled=false;let claimantTotp=true;let claimantEmail='staff@verified.example';
 let inviteEnabled=false;let inviteSuccess=true;let inviteCalls=0;
 const fixtureImage = { path: 'cms-public/fixture.webp', url: 'https://firebasestorage.googleapis.com/v0/b/fixture/o/cms-public%2Ffixture.webp?alt=media',
   alt: 'Fixture logo', width: 2, height: 2 };
 const app = createCmsApp(service, async (identity) => {
+  if(identity.startsWith('security-'))return {uid:identity==='security-admin'?'security-admin':'security-member',email:identity==='security-admin'?'security-admin@example.invalid':identity==='security-email-change'?'changed@verified.example':'staff@verified.example',verified:true,admin:identity==='security-admin',mfaFactor:identity==='security-no-mfa'?undefined:'totp',authTime:identity==='security-stale'?1:Math.floor(Date.now()/1000)};
   if(['role-editor','role-moderator','role-delegate','role-other'].includes(identity))return {uid:identity,email:`${identity}@example.invalid`,verified:true,admin:false};
   if (identity === 'invalid-fixture') throw new Error('Invalid fixture identity');
   if (identity === 'governance-admin') return { uid: 'fixture-admin', email: 'admin@example.invalid', verified: true, admin: true };
@@ -124,7 +130,7 @@ const app = createCmsApp(service, async (identity) => {
   report: async (days) => { reportCalls++; if (providerFails) throw new Error('provider-detail-not-for-client'); return { days, timeZone: 'Europe/Stockholm', rows: [
     { page: '/jobb', views: 10, activeUsers: 5, engagementSeconds: 60 },
   ], truncated: false, dataLossFromOtherRow: false, subjectToThresholding: false }; },
-}, {resolve:async(input)=>{userResolveCalls++;if(userResolveFails)throw new Error('private-provider-detail');return {uid:'cms-new-fixture',email:input.email,emailVerified:false,created:userResolveCalls===1};}}, {configured:()=>inviteEnabled,sender:()=> 'Fixture <welcome@example.invalid>',send:async(invite)=>{inviteCalls++;assert.equal(invite.email,'new-user@example.invalid');return inviteSuccess;}},async(uid)=>uid==='fixture-user');
+}, {resolve:async(input)=>{userResolveCalls++;if(userResolveFails)throw new Error('private-provider-detail');return {uid:'cms-new-fixture',email:input.email,emailVerified:false,created:userResolveCalls===1};}}, {configured:()=>inviteEnabled,sender:()=> 'Fixture <welcome@example.invalid>',send:async(invite)=>{inviteCalls++;assert.equal(invite.email,'new-user@example.invalid');return inviteSuccess;}},async(uid)=>uid==='fixture-user',async(uid)=>{if(claimantLookupFails)throw new Error('Private provider fault');return {uid,email:claimantEmail,verified:true,disabled:claimantDisabled,totpEnrolled:claimantTotp};});
 // Ensures the API middleware doesn't intercept local Vite/static routes.
 app.get('/portal-fixture', (_req, res) => { res.send('portal'); });
 const server = app.listen(0, '127.0.0.1');
@@ -335,6 +341,75 @@ try {
   await assert.rejects(createAndVerifyCompanyPages(0,async()=>{throw new Error('Skrivning nekad');},async()=>freshCreation.workspace),/Skrivning nekad/);
   await assert.rejects(createAndVerifyCompanyPages(0,async()=>({ok:true,starterPages:savedSummary}),async()=>{throw new Error('Återläsning misslyckades');}),/Återläsning misslyckades/);
   const emptyList=renderToString(createElement(CompanyPagesPanel,{data:{...freshCreation.workspace,pages:[]},admin:true,reload:async()=>{}}));assert.ok(emptyList.includes('Inga företagssidor sparade ännu'));
+  const beforeVerificationTests=structuredClone(snapshot);
+  const oldTotpFlag=process.env.FIREBASE_TOTP_ENABLED,oldMfaFlag=process.env.REQUIRE_PRIVILEGED_MFA;
+  delete process.env.REQUIRE_PRIVILEGED_MFA;
+  assert.equal(normalizedCompanyDomain(' Klarna.com '),'klarna.com');
+  for(const bad of ['https://klarna.com','klarna.com/','*.klarna.com','klarna.com@evil.test','klarna.com:443','-bad.example'])assert.equal(normalizedCompanyDomain(bad),null);
+  assert.ok(emailMatchesCompanyDomain('STAFF@Klarna.com',['klarna.com']));assert.ok(!emailMatchesCompanyDomain('staff@evil-klarna.com',['klarna.com']));assert.ok(!emailMatchesCompanyDomain('staff@sub.klarna.com',['klarna.com']));
+  const mfaActor={uid:'security-member',email:'staff@verified.example',verified:true,admin:false,mfaFactor:'totp',authTime:Math.floor(Date.now()/1000)};
+  assert.doesNotThrow(()=>requireTotp(mfaActor,true));assert.throws(()=>requireTotp({...mfaActor,mfaFactor:undefined}));assert.throws(()=>requireTotp({...mfaActor,authTime:1},true));assert.throws(()=>requireTotp({...mfaActor,mfaFactor:'sms'},true));
+  const identityMfa=await resolveCmsIdentity({uid:'safe',email:'staff@verified.example',email_verified:true,auth_time:mfaActor.authTime,firebase:{sign_in_second_factor:'totp'}},async()=>false);assert.equal(identityMfa.mfaFactor,'totp');
+  snapshot.communityMembers.push({id:'security-member',authorUid:'security-member',name:'Test employee',email:'staff@verified.example',role:'Test',city:'Test',verificationStatus:'verified',createdAt:new Date().toISOString()});
+  const targetPage=snapshot.collaboration!.pages.find(p=>p.slug==='dhl')!;
+  const claimBody={entityType:'partner',entityId:targetPage.entityId,name:'Employee',position:'Manager',registrationNumber:'TEST-123',address:'Test Address',reason:'Manual company authorisation must be checked',confirm:true,email:'attacker@another.example',mfaFactor:'totp'};
+  delete process.env.FIREBASE_TOTP_ENABLED;
+  assert.equal((await request('/api/teamspace/claim-submit','POST',claimBody,'security-member')).status,403);
+  process.env.FIREBASE_TOTP_ENABLED='true';
+  assert.equal((await request('/api/teamspace/claim-submit','POST',claimBody,'security-no-mfa')).status,403);
+  assert.equal((await request('/api/teamspace/claim-submit','POST',claimBody,'security-stale')).status,403);
+  assert.equal((await request('/api/teamspace/claim-submit','POST',claimBody,'security-member')).status,200);
+  let claim=snapshot.collaboration!.verification!.claims.at(-1)!;const claimId=claim.id;
+  assert.equal(claim.email,'staff@verified.example');assert.equal(claim.uid,'security-member');assert.equal(claim.state,'pending');
+  assert.ok(!snapshot.memberGovernance?.links.some(l=>l.verificationClaimId===claim.id));
+  assert.equal((await request('/api/teamspace/claim-submit','POST',claimBody,'security-member')).status,409);
+  assert.equal((await request('/api/teamspace/claim-decision','POST',{id:claim.id,revision:0,decision:'approve',confirm:true,note:'Review',confirmAuthority:true,confirmHandover:true},'security-member')).status,403);
+  const policyBody={revision:snapshot.collaboration!.revision,entityType:'partner',entityId:targetPage.entityId,domains:['verified.example'],registrationNumber:'TEST-123',address:'Test Address',confirm:true};
+  assert.equal((await request('/api/teamspace/verification-policy','POST',policyBody,'admin-fixture')).status,403);
+  assert.equal((await request('/api/teamspace/verification-policy','POST',policyBody,'security-admin')).status,200);
+  const claimDecision={id:claimId,revision:0,decision:'approve',confirm:true,confirmAuthority:true,confirmHandover:true,note:'Independent authority check completed'};
+  const beforeSelfApproval=structuredClone(snapshot);snapshot.collaboration!.verification!.claims.find(c=>c.id===claimId)!.uid='security-admin';
+  assert.equal((await request('/api/teamspace/claim-decision','POST',claimDecision,'security-admin')).status,403);snapshot=beforeSelfApproval;
+  const beforeProviderError=structuredClone(snapshot);claimantLookupFails=true;
+  assert.equal((await request('/api/teamspace/claim-decision','POST',claimDecision,'security-admin')).status,503);assert.deepEqual(snapshot,beforeProviderError);claimantLookupFails=false;
+  claimantTotp=false;assert.equal((await request('/api/teamspace/claim-decision','POST',claimDecision,'security-admin')).status,403);claimantTotp=true;
+  claimantDisabled=true;assert.equal((await request('/api/teamspace/claim-decision','POST',claimDecision,'security-admin')).status,403);claimantDisabled=false;
+  claimantEmail='different@verified.example';assert.equal((await request('/api/teamspace/claim-decision','POST',claimDecision,'security-admin')).status,403);claimantEmail='staff@verified.example';
+  assert.equal((await request('/api/teamspace/claim-decision','POST',{...claimDecision,confirmAuthority:false},'security-admin')).status,400);
+  assert.equal((await request('/api/teamspace/claim-decision','POST',claimDecision,'security-admin')).status,200);
+  claim=snapshot.collaboration!.verification!.claims.find(c=>c.id===claimId)!;assert.equal(claim.state,'approved');
+  const verifiedLink=snapshot.memberGovernance!.links.find(l=>l.id===claim.linkId)!;
+  assert.ok(verifiedLink.canPropose);assert.equal(verifiedLink.receiveIntros,false);assert.equal(verifiedLink.receiveMessages,false);assert.equal(verifiedLink.includeHistory,false);
+  assert.equal(snapshot.collaboration!.pages.find(p=>p.id===targetPage.id)!.responsibleUid,'security-member');assert.equal(snapshot.collaboration!.pages.find(p=>p.id===targetPage.id)!.managedByPlatform,false);
+  assert.equal((await request('/api/teamspace','GET',undefined,'security-member')).status,200);
+  assert.equal((await request('/api/teamspace','GET',undefined,'security-no-mfa')).status,403);
+  assert.equal((await request('/api/company/workspace','GET',undefined,'security-email-change')).status,403);
+  const claimsWorkspace=await(await request('/api/teamspace','GET',undefined,'security-admin')).json();
+  const claimsHtml=renderToString(createElement(FirebaseProvider,null,createElement(CompanyVerificationPanel,{data:claimsWorkspace,reload:async()=>{}})));
+  assert.ok(claimsHtml.includes('Återkalla och återta förvaltning')&&claimsHtml.includes('företrädarrätt'));
+  const disabledClaimsHtml=renderToString(createElement(FirebaseProvider,null,createElement(CompanyVerificationPanel,{data:{...claimsWorkspace,mfa:{enabled:false,required:false,verified:false}},reload:async()=>{}})));
+  assert.ok(disabledClaimsHtml.includes('Förberett men avstängt')&&disabledClaimsHtml.includes('fieldset disabled'));
+  const ordinaryView=await(await request('/api/teamspace','GET',undefined,'role-other')).json();assert.deepEqual(ordinaryView.verification.claims,[]);assert.deepEqual(ordinaryView.verification.policies,[]);
+  assert.ok(!JSON.stringify(publicStore(snapshot)).includes('mfaVerifiedAt'));assert.ok(!JSON.stringify(publicStore(snapshot)).includes('verificationClaimId'));
+  assert.ok(validCompanyVerification(snapshot.collaboration!.verification));assert.ok(validateSnapshot(snapshot));
+  const legacyLinkInput={memberId:'security-member',entityType:'partner',entityId:targetPage.entityId,status:'active',canPropose:true,receiveIntros:false,receiveMessages:false,includeHistory:false};
+  assert.equal((await request('/api/governance/link','POST',legacyLinkInput,'security-admin')).status,200);
+  assert.equal(snapshot.memberGovernance!.links.find(l=>l.id===verifiedLink.id)!.verifiedEmail,'staff@verified.example');assert.equal(snapshot.memberGovernance!.links.find(l=>l.id===verifiedLink.id)!.verificationClaimId,claimId);
+  const beforeRevoke=structuredClone(snapshot);
+  assert.equal((await request('/api/teamspace/claim-decision','POST',{id:claimId,revision:1,decision:'revoke',confirm:true,note:'Authorisation ended'},'security-admin')).status,200);
+  assert.equal(snapshot.memberGovernance!.links.find(l=>l.id===verifiedLink.id)!.status,'revoked');assert.equal(snapshot.collaboration!.pages.find(p=>p.id===targetPage.id)!.managedByPlatform,true);
+  assert.equal((await(await request('/api/teamspace','GET',undefined,'security-member')).json()).pages.some((p:any)=>p.id===targetPage.id),false);
+  assert.equal((await request('/api/governance/link','POST',legacyLinkInput,'security-admin')).status,403);
+  // Domain mismatch stays manual; changing a submitted value never auto-grants access.
+  snapshot=beforeRevoke;snapshot.collaboration!.verification!.claims[0].state='pending';snapshot.collaboration!.verification!.claims[0].revision=0;snapshot.collaboration!.verification!.claims[0].registrationNumber='DIFFERENT';snapshot.memberGovernance!.links=snapshot.memberGovernance!.links.filter(l=>l.id!==verifiedLink.id);snapshot.collaboration!.pages.find(p=>p.id===targetPage.id)!.managedByPlatform=true;
+  assert.equal((await request('/api/teamspace/claim-decision','POST',claimDecision,'security-admin')).status,400);
+  assert.equal((await request('/api/teamspace/claim-decision','POST',{...claimDecision,confirmException:true},'security-admin')).status,200);
+  process.env.REQUIRE_PRIVILEGED_MFA='true';
+  assert.equal((await request('/api/cms/store','GET',undefined,'admin-fixture')).status,403);assert.equal((await request('/api/cms/status','GET',undefined,'admin-fixture')).status,403);
+  assert.equal((await request('/api/cms/store','GET',undefined,'security-admin')).status,200);assert.equal((await request('/api/access/me','GET',undefined,'admin-fixture')).status,200);
+  if(oldTotpFlag===undefined)delete process.env.FIREBASE_TOTP_ENABLED;else process.env.FIREBASE_TOTP_ENABLED=oldTotpFlag;
+  if(oldMfaFlag===undefined)delete process.env.REQUIRE_PRIVILEGED_MFA;else process.env.REQUIRE_PRIVILEGED_MFA=oldMfaFlag;
+  snapshot=beforeVerificationTests;
   snapshot=rawBeforeTeam;
   const rawBeforePages=structuredClone(snapshot);const beforePages=structuredClone(await service.getStore());
   assert.equal((await request('/api/page-layouts/om','PUT',defaultPageLayout('om'))).status,401);
@@ -764,6 +839,15 @@ try {
   const callbackDialogHtml=renderToString(createElement(SignInDialog,{...dialogProps,pendingEmailLink:true}));
   assert.ok(callbackDialogHtml.includes('Slutför e-postinloggning')&&callbackDialogHtml.includes('Verifiera adress och logga in'));
   assert.ok(!callbackDialogHtml.includes('Fortsätt med Google'));
+  let totpResolves=0;const resolveTotp=async(uid:string,code:string)=>{totpResolves++;assert.equal(uid,'totp-id');assert.equal(code,'123456');return 'sdk-verified';};
+  assert.equal(await completeTotpChallenge([{uid:'totp-id',factorId:'totp'}],'totp-id','123456',resolveTotp),'sdk-verified');
+  await assert.rejects(completeTotpChallenge([{uid:'totp-id',factorId:'sms'}],'totp-id','123456',resolveTotp));
+  await assert.rejects(completeTotpChallenge([{uid:'totp-id',factorId:'totp'}],'forged-id','123456',resolveTotp));
+  await assert.rejects(completeTotpChallenge([{uid:'totp-id',factorId:'totp'}],'totp-id','abc',resolveTotp));assert.equal(totpResolves,1);
+  await assert.rejects(completeTotpChallenge([{uid:'totp-id',factorId:'totp'}],'totp-id','123456',async()=>{throw new Error('SDK rejected code');}),/SDK rejected/);
+  const mfaDialogHtml=renderToString(createElement(SignInDialog,{...dialogProps,mfa:{factors:[{uid:'totp-id',name:'My authenticator'}],onCancel:()=>{},onComplete:async()=>{}}}));
+  assert.ok(mfaDialogHtml.includes('2FA-kod')&&mfaDialogHtml.includes('My authenticator'));assert.ok(!mfaDialogHtml.includes('Fortsätt med Google')&&!mfaDialogHtml.includes('Registrera / logga in med e-postlänk'));
+
   // Editorial regression checks: real API routes + transactional readback, no external fetches.
   const editorialSnapshot = structuredClone(snapshot);
   const validArticle = 'https://publisher.invalid/news/one-story';
