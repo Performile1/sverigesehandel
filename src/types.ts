@@ -852,7 +852,7 @@ export interface SalaryEstimate {
   method: string;
 }
 
-export interface InsightPost extends EditorialLifecycle {
+export interface InsightPost extends EditorialLifecycle, ContentMetadata {
   id: string;
   title: string;
   category: string;
@@ -915,13 +915,13 @@ export interface MyStaffProfile {
   identity: { uid: string; email: string; admin: boolean };
 }
 
-export interface GuideChapter extends EditorialLifecycle {
+export interface GuideChapter extends EditorialLifecycle, ContentMetadata {
   id: string; title: string; summary: string; body: string; checklist: string[];
   targetTab: 'partners' | '3pl' | 'ehandlare' | 'kontakt' | 'jobb';
   sourceUrl: string; reviewedDate: string; order: number; status: PublishStatus;
 }
 export type SaleCategory = 'brand' | 'webshop' | 'stock';
-export interface SaleDetails {
+export interface SaleDetails extends ContentMetadata {
   intent?: 'buy' | 'sell';
   title: string; category: SaleCategory; description: string; included: string;
   location: string; priceLabel: string; quantity: string; condition: string;
@@ -951,8 +951,12 @@ export interface SaleCase {
   dueDate: string; note: string; revision: number; updatedAt: string; updatedBy: string;
 }
 
-export type HomeWidgetId = 'audience' | 'latest-index' | 'index-archive' | 'insights';
+export type HomeWidgetId = 'audience' | 'latest-index' | 'index-archive' | 'insights' | 'top-ad' | 'top-form' | 'checkout-cta' | 'mid-ad' | 'bottom-form';
 export interface HomeWidgetLayout {
-  version: 1; revision: number;
+  version: 1 | 2; revision: number;
   items: Array<{id:HomeWidgetId;enabled:boolean;order:number}>;
+}
+
+export interface ContentMetadata {
+  contentFormat?: 'markdown'; seoTitle?: string; seoDescription?: string; tags?: string[];
 }

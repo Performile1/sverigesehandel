@@ -1,4 +1,5 @@
-import { validHomeWidgets } from '../shared/homeWidgets.ts';
+import { contentMetadata } from '../shared/contentFormat.ts';
+import { validHomeWidgets, homeWidgetLayout } from '../shared/homeWidgets.ts';
 import type { HomeWidgetLayout } from '../src/types.ts';
 import { editorialConflict, editorialChange, lifecycleInput } from './editorialHistory.ts';
 import { publiclyVisible, validSaleCases, validCmsImage } from '../shared/editorialLifecycle.ts';
@@ -2175,7 +2176,7 @@ export function upsertInsightPost(input: InsightPost, actorUid = 'admin'): Insig
   const index = posts.findIndex((p) => p.id === input.id);
   editorialConflict(posts[index], input.revision??0);
   editorialChange(store,'insight',posts[index],actorUid,'edit');
-  const post: InsightPost = { ...lifecycleInput(input,posts[index]), id: input.id, title: input.title, category: input.category, excerpt: input.excerpt,
+  const post: InsightPost = { ...contentMetadata(input),...lifecycleInput(input,posts[index]), id: input.id, title: input.title, category: input.category, excerpt: input.excerpt,
     body: input.body, imageKey: input.imageKey, imageAlt: input.imageAlt, ...(input.image ? { image: input.image } : {}),
     ctaLabel: input.ctaLabel, targetTab: input.targetTab, targetUrl: input.targetUrl, sourceUrl: input.sourceUrl,
     author: input.author, publishedDate: input.publishedDate, theme: input.theme, order: input.order, status: input.status };
@@ -2312,7 +2313,7 @@ export function saveGuideChapter(actor:CmsIdentity,input:unknown) {
   if(!validChapter(input))throw Object.assign(new Error('Kontrollera guidens texter, datum, länk och checklista.'),{status:400});
   const store=structuredClone(ensureStoreFile());const rows=store.startGuide??structuredClone(INITIAL_START_GUIDE);
   const before=rows.find(r=>r.id===input.id);editorialConflict(before,input.revision??0);editorialChange(store,'guide',before,actor.uid,'edit');
-  const c:GuideChapter={...lifecycleInput(input,before),id:input.id,title:input.title,summary:input.summary,body:input.body,checklist:[...input.checklist],targetTab:input.targetTab,sourceUrl:input.sourceUrl,reviewedDate:input.reviewedDate,order:input.order,status:input.status};
+  const c:GuideChapter={...contentMetadata(input),...lifecycleInput(input,before),id:input.id,title:input.title,summary:input.summary,body:input.body,checklist:[...input.checklist],targetTab:input.targetTab,sourceUrl:input.sourceUrl,reviewedDate:input.reviewedDate,order:input.order,status:input.status};
   const i=rows.findIndex(r=>r.id===c.id);if(i<0)rows.push(c);else rows[i]=c;
   if(!validGuide(rows))throw Object.assign(new Error('Högst 25 unika guidekapitel tillåts.'),{status:400});
   store.startGuide=rows;saveCommerce(store);return c;
@@ -2425,6 +2426,6 @@ export function saveHomeWidgets(actor:CmsIdentity,input:unknown) {
   commerceActor(actor,true);
   if(!validHomeWidgets(input))throw Object.assign(new Error('Ogiltig widgetlayout.'),{status:400});
   const store=structuredClone(ensureStoreFile());editorialConflict(store.homeWidgets,input.revision);
-  const layout:HomeWidgetLayout={version:1,revision:input.revision+1,items:input.items.map(i=>({id:i.id,enabled:i.enabled,order:i.order}))};
+  const layout:HomeWidgetLayout={version:2,revision:input.revision+1,items:homeWidgetLayout(input).items.map(i=>({id:i.id,enabled:i.enabled,order:i.order}))};
   store.homeWidgets=layout;saveCommerce(store);return layout;
 }

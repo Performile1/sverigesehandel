@@ -136,6 +136,7 @@ export default function App() {
   }, [fetchStore, authReady, user?.uid, isAdmin]);
 
   useEffect(() => {
+    if(mode==='portal'&&activeTab==='blogg')return;
     document.title =
       mode === 'cms'
         ? 'CMS Studio | sverigesehandel.se'

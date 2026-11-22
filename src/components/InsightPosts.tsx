@@ -1,8 +1,8 @@
+import { ContentText } from './ContentText';
 import { publiclyVisible } from '../../shared/editorialLifecycle';
 import { useState } from 'react';
 import type { InsightPost, PortalTab } from '../types';
 import { ResilientImage } from './ResilientImage';
-import { PlainTextDescription } from './JobDescription';
 import { insightUrl } from '../../shared/insightPosts';
 import checkout from '../assets/images/checkout_mobile_payment_1795029384663.jpg';
 import logistics from '../assets/images/nordic_green_logistics_1795029385111.jpg';
@@ -34,7 +34,7 @@ function InsightCard({ post, onNavigate, preview, onOpenArticle }: { post: Insig
         {onOpenArticle?<a className={`block mt-3 text-sm font-bold underline ${action}`} href={`#blogg/${post.id}`} onClick={e=>{e.preventDefault();onOpenArticle(post.id);}}>Läs inlägget →</a>:post.body && <div className="mt-3">
           <button type="button" className={`text-sm font-bold underline cursor-pointer ${action}`} aria-expanded={open} aria-controls={`insight-body-${post.id}`}
             onClick={() => setOpen(!open)}>{open ? 'Stäng artikeln' : 'Läs hela artikeln'}</button>
-          {open && <div id={`insight-body-${post.id}`} className="mt-3 p-4 rounded-xl bg-white text-slate-800 border border-slate-200 break-words"><PlainTextDescription text={post.body} /></div>}
+          {open && <div id={`insight-body-${post.id}`} className="mt-3 p-4 rounded-xl bg-white text-slate-800 border border-slate-200 break-words"><ContentText text={post.body} format={post.contentFormat} /></div>}
         </div>}
       </div>
       <div className="space-y-2">

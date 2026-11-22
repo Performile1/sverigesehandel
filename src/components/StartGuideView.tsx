@@ -1,7 +1,7 @@
+import { ContentText } from './ContentText';
 import { publiclyVisible } from '../../shared/editorialLifecycle';
 import { useEffect, useState } from 'react';
 import type { GuideChapter, PortalTab } from '../types';
-import { PlainTextDescription } from './JobDescription';
 export function StartGuideView({chapters,onNavigate}:{chapters:GuideChapter[];onNavigate:(tab:PortalTab)=>void}) {
   const published=chapters.filter(row=>publiclyVisible(row)).sort((a,b)=>a.order-b.order||a.id.localeCompare(b.id));
   const [checked,setChecked]=useState<Record<string,boolean>>({});
@@ -13,7 +13,7 @@ export function StartGuideView({chapters,onNavigate}:{chapters:GuideChapter[];on
     <nav aria-label="Guidens kapitel" className="grid sm:grid-cols-2 gap-2">{published.map((c,i)=><a className="underline text-blue-800" key={c.id} href={`#starta/${c.id}`} onClick={e=>{e.preventDefault();window.history.replaceState(null,'',`#starta/${c.id}`);document.getElementById(c.id)?.scrollIntoView({behavior:'smooth'});}}>{i+1}. {c.title}</a>)}</nav>
     {!published.length&&<p>Inga guidekapitel är publicerade ännu.</p>}
     {published.map((c,i)=><article id={c.id} key={c.id} className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
-      <h2 className="text-xl font-bold">{i+1}. {c.title}</h2><p className="font-medium">{c.summary}</p><PlainTextDescription text={c.body}/>
+      <h2 className="text-xl font-bold">{i+1}. {c.title}</h2>{c.tags?.length?<p className="text-xs">{c.tags.join(' · ')}</p>:null}<p className="font-medium">{c.summary}</p><ContentText text={c.body} format={c.contentFormat}/>
       <fieldset className="space-y-2"><legend className="font-semibold mb-2">Din checklista</legend>{c.checklist.map((item,n)=>{const key=`${c.id}-${n}`;return <label key={key} className="flex gap-3 items-start"><input type="checkbox" className="mt-1" checked={Boolean(checked[key])} onChange={e=>setChecked(p=>({...p,[key]:e.target.checked}))}/><span>{item}</span></label>;})}</fieldset>
       <p className="text-xs text-slate-600">Senast redaktionellt granskad: {c.reviewedDate}. {c.sourceUrl&&<a href={c.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">Källa / vidare läsning</a>}</p>
       <div className="flex gap-4 flex-wrap"><button className="bg-[#006AA7] text-white px-4 py-2 rounded-lg" onClick={()=>onNavigate(c.targetTab)}>Hitta stöd och relevanta kontakter</button><a className="underline py-2" href={`#starta/${c.id}`} onClick={e=>{e.preventDefault();window.history.replaceState(null,'',`#starta/${c.id}`);document.getElementById(c.id)?.scrollIntoView({behavior:'smooth'});}}>Länk till kapitlet</a></div>

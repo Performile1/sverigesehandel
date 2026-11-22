@@ -1,5 +1,8 @@
 # Egen bloggsida och säker widgetgrund – etapp 1
 
+Senare nio-moduls-etapp och formateringsredigerare: se `textredigerare-widgets-v2.md`.
+Detta dokument beskriver ursprunglig fyramodulsleverans.
+
 ## Blogg & Insikter
 
 Ny publik sida `#blogg` under **Insikter → Blogg & Insikter**. Den återanvänder

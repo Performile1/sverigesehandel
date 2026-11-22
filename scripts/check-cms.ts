@@ -1,3 +1,6 @@
+import { ContentText } from '../src/components/ContentText.tsx';
+import { ContentEditor } from '../src/components/ContentEditor.tsx';
+import { contentUrl, inlineParts, validContentMetadata, cleanContentMetadata } from '../shared/contentFormat.ts';
 import { DEFAULT_HOME_WIDGETS, validHomeWidgets, homeWidgetLayout, widgetsInZone } from '../shared/homeWidgets.ts';
 import { HomeWidgetZone } from '../src/components/HomeWidgetZone.tsx';
 import { BlogView } from '../src/components/BlogView.tsx';
@@ -135,6 +138,50 @@ async function request(path: string, method = 'GET', body?: unknown, identity?: 
   }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
 }
 try {
+  const richText='# This becomes H2\n\n## Heading\n\nA **bold** and *italic* [safe](https://example.org/page) text.\n\n- First\n- Second\n\n1. One\n2. Two\n\n---\n\n![Product](https://firebasestorage.googleapis.com/v0/b/fixture/o/image.webp?alt=media)\n\n<script>alert(1)</script>\n\n[bad](javascript:alert)';
+  const richHtml=renderToString(createElement(ContentText,{text:richText,format:'markdown'}));
+  for(const marker of ['<h2','<strong>bold</strong>','<em>italic</em>','<ul','<ol','<hr','alt="Product"','href="https://example.org/page"'])assert.ok(richHtml.includes(marker));
+  assert.ok(!richHtml.includes('<h1'));assert.ok(!richHtml.includes('<script>'));assert.ok(!richHtml.includes('href="javascript:'));
+  assert.equal(contentUrl('javascript:alert(1)'),null);assert.equal(contentUrl('data:text/html,bad'),null);assert.equal(contentUrl('https://user:pass@example.org'),null);
+  assert.equal(contentUrl('https://tracking.example/image.png',true),null);assert.equal(contentUrl('//example.org'),null);
+  const legacyRich=renderToString(createElement(ContentText,{text:'## Literal **text**'}));
+  assert.ok(!legacyRich.includes('<h2')&&!legacyRich.includes('<strong>'));
+  assert.ok(inlineParts('[x](https://example.org)').some(p=>p.kind==='link'));
+  assert.ok(!validContentMetadata({tags:Array.from({length:16},(_,n)=>String(n))}));
+  assert.ok(!validContentMetadata({seoDescription:'x'.repeat(181)}));
+  assert.deepEqual(cleanContentMetadata({tags:['one','','one',' two ']}).tags,['one','two']);
+  const editorHtml=renderToString(createElement(ContentEditor,{label:'Text',value:'',onChange:()=>{},maxLength:15000}));
+  assert.ok(editorHtml.includes('H2')&&editorHtml.includes('Kursiv')&&editorHtml.includes('Bildreferens')&&editorHtml.includes('Visa'));
+  const priorRich=structuredClone(await service.getStore());const rawPriorRich=structuredClone(snapshot);
+  const richPost={...INITIAL_INSIGHT_POSTS[0],id:'insight-rich-test',contentFormat:'markdown' as const,body:richText,seoTitle:'SEO title',seoDescription:'SEO summary',tags:['guide','checkout']};
+  assert.equal((await request(`/api/insights/${richPost.id}`,'PUT',richPost,'admin-fixture')).status,200);
+  const richSaved=(await service.getStore()).insightPosts!.find(p=>p.id===richPost.id)!;
+  assert.equal(richSaved.contentFormat,'markdown');assert.equal(richSaved.seoTitle,'SEO title');assert.deepEqual(richSaved.tags,['guide','checkout']);
+  assert.equal((await request(`/api/insights/${richPost.id}`,'PUT',{...richSaved,seoTitle:'x'.repeat(81)},'admin-fixture')).status,400);
+  const richGuide={...INITIAL_START_GUIDE[0],body:richText,contentFormat:'markdown' as const,seoTitle:'Guide title',tags:['start']};
+  assert.equal((await request(`/api/start-guide/${richGuide.id}`,'PUT',richGuide,'admin-fixture')).status,200);
+  assert.equal((await service.getStore()).startGuide!.find(c=>c.id===richGuide.id)!.contentFormat,'markdown');
+  const richSale={title:'Rich listing',intent:'sell',category:'stock',description:richText,included:'**Products**, no private data',location:'Fixture',priceLabel:'100 SEK',quantity:'10',condition:'New',requestId:'sale-rich-metadata',sellerName:'Fixture editor',sellerEmail:'fixture@example.invalid',status:'draft',internalNotes:'',reviewConfirmed:false,authorityConfirmed:true,publicContentConfirmed:true,contentFormat:'markdown',seoTitle:'Sale title',seoDescription:'Sale description',tags:['stock']};
+  assert.equal((await request('/api/sales','POST',richSale,'admin-fixture')).status,201);
+  const richSaleSaved=(await service.getStore()).saleListings!.find(s=>s.id==='sale-rich-metadata')!;
+  assert.equal(richSaleSaved.contentFormat,'markdown');assert.equal(richSaleSaved.seoTitle,'Sale title');assert.deepEqual(richSaleSaved.tags,['stock']);
+  assert.equal((await request('/api/sales','POST',{...richSale,requestId:'sale-bad-tags',tags:['x'.repeat(41)]},'admin-fixture')).status,400);
+  assert.deepEqual((await service.getStore()).merchants,priorRich.merchants);
+  assert.ok(validateSnapshot(await service.getStore()));snapshot=rawPriorRich;
+  const legacyWidgets={version:1 as const,revision:4,items:[{id:'audience' as const,enabled:false,order:2},{id:'latest-index' as const,enabled:true,order:1},{id:'index-archive' as const,enabled:false,order:0},{id:'insights' as const,enabled:false,order:3}]};
+  assert.ok(validHomeWidgets(legacyWidgets));const expandedWidgets=homeWidgetLayout(legacyWidgets);
+  assert.equal(expandedWidgets.version,2);assert.equal(expandedWidgets.items.length,9);assert.equal(expandedWidgets.revision,4);
+  assert.equal(expandedWidgets.items.find(i=>i.id==='audience')!.enabled,false);assert.equal(expandedWidgets.items.find(i=>i.id==='insights')!.enabled,false);
+  assert.equal(expandedWidgets.items.find(i=>i.id==='top-ad')!.enabled,true);
+  assert.deepEqual(widgetsInZone(legacyWidgets,'top').map(i=>i.id),['latest-index']);
+  assert.deepEqual(widgetsInZone(undefined,'support').map(i=>i.id),['top-ad','top-form']);
+  assert.deepEqual(widgetsInZone(undefined,'editorial').map(i=>i.id),['checkout-cta','mid-ad','insights']);
+  assert.deepEqual(widgetsInZone(undefined,'footer').map(i=>i.id),['bottom-form']);
+  const beforeLegacyLayout=structuredClone(snapshot);snapshot.homeWidgets=legacyWidgets;
+  assert.equal((await request('/api/home-widgets','PUT',legacyWidgets,'admin-fixture')).status,200);
+  assert.equal((await service.getStore()).homeWidgets!.version,2);
+  assert.equal((await service.getStore()).homeWidgets!.items.find(i=>i.id==='audience')!.enabled,false);
+  snapshot=beforeLegacyLayout;
   const beforeWidgets=structuredClone(await service.getStore());const rawBeforeWidgets=structuredClone(snapshot);
   assert.ok(validHomeWidgets(DEFAULT_HOME_WIDGETS));
   assert.deepEqual(homeWidgetLayout(undefined),DEFAULT_HOME_WIDGETS);
@@ -163,7 +210,7 @@ try {
   const hiddenZone=renderToString(createElement(HomeWidgetZone,{layout:hiddenLayout,zone:'top',widgets:fakeWidgetNodes}));
   assert.ok(!hiddenZone.includes('Latest fixture')&&hiddenZone.includes('Archive fixture'));
   assert.equal(widgetsInZone({version:'bad'},'top').length,3);
-  const reversed={...structuredClone(DEFAULT_HOME_WIDGETS),items:DEFAULT_HOME_WIDGETS.items.map(i=>({...i,order:3-i.order}))};
+  const reversed={...structuredClone(DEFAULT_HOME_WIDGETS),items:DEFAULT_HOME_WIDGETS.items.map(i=>({...i,order:DEFAULT_HOME_WIDGETS.items.length-1-i.order}))};
   assert.ok(widgetsInZone(reversed,'top')[0].id==='index-archive');
   const widgetBlogPosts=[{...INITIAL_INSIGHT_POSTS[0],id:'insight-blog-visible',title:'Visible blog fixture'},
     {...INITIAL_INSIGHT_POSTS[0],id:'insight-blog-draft',status:'draft' as const,title:'Secret draft title'},
