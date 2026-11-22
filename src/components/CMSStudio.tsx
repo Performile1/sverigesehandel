@@ -1,4 +1,4 @@
-import { HomeWidgetsEditor } from './HomeWidgetsEditor';
+import { PageLayoutsEditor } from './PageLayoutsEditor';
 import { CmsNavigation } from './CmsNavigation';
 import { WorkflowPanel } from './WorkflowPanel';
 import { CommerceEditor } from './CommerceEditor';
@@ -71,6 +71,8 @@ import type {
 } from '../types';
 
 interface CMSStudioProps {
+  layoutPreviewDraft?:{page:import('../types').PortalTab;layout:import('../types').PageLayout};
+  onPreviewPageLayout?:(page:import('../types').PortalTab,layout:import('../types').PageLayout)=>void;
   store: CMSStore;
   onRefresh: () => Promise<void>;
   onOpenEditor: (mode: 'merchant' | 'partner', item?: Merchant | TechPartner) => void;
@@ -196,9 +198,9 @@ const JOB_ROLE_OPTIONS: JobRoleCategory[] = [
   'Merchandising & CX',
 ];
 
-export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudioProps) {
+export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify, onPreviewPageLayout, layoutPreviewDraft }: CMSStudioProps) {
   const { user, isAdmin, signingIn, requestSignIn } = useFirebase();
-  const [section, setSection] = useState<CMSSection>('discover');
+  const [section, setSection] = useState<CMSSection>(layoutPreviewDraft?'widgets':'discover');
 
   // Table Filters
   const [merchantSearch, setMerchantSearch] = useState('');
@@ -792,7 +794,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
     { id: 'timeline', label: 'Historia (Tidslinje)', icon: Clock, count: store.timeline.length },
     { id: 'jobs', label: 'Jobb & Rekrytering', icon: Briefcase, count: store.jobs.length + store.recruitmentSites.length },
     { id: 'forms', label: 'Formulär & Intro', icon: ClipboardList, count: (store.contactForms || []).length },
-    { id: 'widgets', label: 'Startsida – widgets', icon: Layers },
+    { id: 'widgets', label: 'Sidor & layout', icon: Layers },
     { id: 'pages', label: 'Sidtexter & Kontakt', icon: FileText },
     { id: 'content', label: 'Annons, Data & Inkorg', icon: MapPin, count: store.adBanners.length + store.contactMessages.length },
     { id: 'firebase', label: 'Firebase: Bilder & Statistik', icon: BarChart3 },
@@ -3068,7 +3070,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
 
           {section === 'members' && <MemberGovernancePanel store={store} onRefresh={onRefresh} />}
 
-          {section === 'widgets' && <HomeWidgetsEditor key={store.homeWidgets?.revision??0} layout={store.homeWidgets} onRefresh={onRefresh}/>}
+          {section === 'widgets' && <PageLayoutsEditor initialDraft={layoutPreviewDraft} store={store} onRefresh={onRefresh} onPreview={onPreviewPageLayout}/>}
           {section === 'workflow' && <WorkflowPanel store={store} onRefresh={onRefresh}/>}
           {section === 'commerce' && <CommerceEditor store={store} onRefresh={onRefresh}/>}
           {section === 'insights' && <InsightPostsEditor posts={store.insightPosts || []} onRefresh={onRefresh} />}

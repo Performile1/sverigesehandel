@@ -1,4 +1,4 @@
-import { widgetsInZone } from '../../shared/homeWidgets';
+import { PageZone, usePageWidgetEnabled } from './PageLayout';
 import { HomeWidgetZone } from './HomeWidgetZone';
 import { publiclyVisible } from '../../shared/editorialLifecycle';
 import { LatestPaketindex } from './LatestPaketindex';
@@ -350,11 +350,13 @@ export function MarknadView({
     { country: 'Storbritannien & USA', pct: '12%', width: '32%', color: 'bg-slate-400' },
   ];
 
+  const archiveWidgetEnabled=usePageWidgetEnabled('marknad','index-archive',homeWidgets);
   const latestIndex = latestPaketindex(paketindexArchive);
   return (
     <div>
       {/* Hero Section */}
-      <section className="bg-[#040B16] text-white hero-grid-bg border-b border-white/10">
+      <PageZone page="marknad" zone="hero" widgets={{
+"hero": (<section className="bg-[#040B16] text-white hero-grid-bg border-b border-white/10">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
             <div className="lg:col-span-7 flex flex-col justify-center space-y-6">
@@ -454,7 +456,8 @@ export function MarknadView({
             </div>
           </div>
         </div>
-      </section>
+      </section>)
+}}/>
 
       {/* Main Content */}
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -468,7 +471,7 @@ export function MarknadView({
               <button className="mt-auto min-h-16 w-full flex items-center justify-center bg-[#006AA7] text-white rounded-lg px-4 py-2" onClick={()=>onNavigate(item.tab)}>{item.cta} →</button>
             </div>)}
         </section>),
-          'latest-index': <LatestPaketindex rows={paketindexArchive} showArchiveLink={widgetsInZone(homeWidgets,'top').some(w=>w.id==='index-archive')}/>,
+          'latest-index': <LatestPaketindex rows={paketindexArchive} showArchiveLink={archiveWidgetEnabled}/>,
           'index-archive': <PaketindexArchive rows={paketindexArchive}/>,
         }}/>
         <HomeWidgetZone layout={homeWidgets} zone="support" widgets={{
@@ -933,7 +936,8 @@ export function MarknadView({
         }}/>
 
         {/* Order Economics & Shipping Cost Benchmarks */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
+        <PageZone page="marknad" zone="analysis" widgets={{
+"economics": (<div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100">
             <div>
               <div className="text-xs font-mono font-semibold text-[#059669]">
@@ -1770,10 +1774,8 @@ export function MarknadView({
               </div>
             );
           })()}
-        </div>
-
-        {/* Delivery Timing, Reception Preferences, Density & Carrier Coverage */}
-        <div
+        </div>),
+"coverage": (<div
           id="hemleverans-densitet"
           className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 scroll-mt-20"
         >
@@ -2237,10 +2239,8 @@ export function MarknadView({
               </div>
             </div>
           )}
-        </div>
-
-        {/* Swedish & EU E-commerce Legislation & Compliance */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
+        </div>),
+"laws": (<div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100">
             <div>
               <div className="text-xs font-mono font-semibold text-[#059669] inline-flex items-center gap-1.5">
@@ -2315,19 +2315,16 @@ export function MarknadView({
                 </article>
               ))}
           </div>
-        </div>
-
-        <PageFormSlot
+        </div>),
+"mid-form": (<PageFormSlot
           forms={contactForms}
           page="marknad"
           position="mid"
           adBanners={adBanners}
           onSubmitted={onFormSubmitted}
           onNotify={onNotify}
-        />
-
-        {/* Market & Tech Intelligence (ECDB, Statista, BuiltWith, Wappalyzer, Tembi, HUI Research, Paketindex) */}
-        {intelligenceSources.length > 0 && (() => {
+        />),
+"intelligence": (intelligenceSources.length > 0 && (() => {
           const activeSource =
             intelligenceSources.find((s) => s.id === selectedSourceId) ||
             intelligenceSources[0];
@@ -2501,11 +2498,8 @@ export function MarknadView({
               </div>
             </section>
           );
-        })()}
-
-        {/* Äldre Paketindexsammanfattning bevaras; senaste rapport och arkiv finns överst. */}
-
-        {paketindex && (
+        })()),
+"legacy-index": (paketindex && (
           <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
             <p className="text-sm bg-amber-50 p-3 rounded-lg">Historiskt sammanfattningsunderlag – inte den senaste rapporten. Innehållet bevaras; aktuell Paketindexperiod visas överst på sidan.</p>
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100">
@@ -2665,7 +2659,8 @@ export function MarknadView({
               {paketindex.updatedNote}
             </div>
           </section>
-        )}
+        ))
+}}/>
 
         <HomeWidgetZone layout={homeWidgets} zone="editorial" widgets={{
           'checkout-cta': <CheckoutStrategyCTA/>,
@@ -2677,7 +2672,8 @@ export function MarknadView({
 
 
         {/* Quick Navigation Strip to Jobb & Historia */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <PageZone page="marknad" zone="links" widgets={{
+"quick-links": (<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="text-xs font-mono font-semibold text-[#059669]">Karriär & rekrytering</div>
@@ -2715,7 +2711,8 @@ export function MarknadView({
               Se tidslinjen &rarr;
             </button>
           </div>
-        </div>
+        </div>)
+}}/>
 
         <HomeWidgetZone layout={homeWidgets} zone="footer" widgets={{'bottom-form':(<PageFormSlot
           forms={contactForms}

@@ -1,5 +1,8 @@
 # Widgets etapp 3 – marknadsytan
 
+Senare gemensamt layoutsystem för alla publika sidor: se `alla-sidor-widgets.md`.
+Detta dokument beskriver den tidigare startsidesetappen.
+
 ## Leverans
 
 CMS → Innehåll & marknad → Startsida – widgets får tre tillåtna widgettyper:

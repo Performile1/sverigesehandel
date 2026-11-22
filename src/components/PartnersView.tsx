@@ -1,3 +1,4 @@
+import { PageZone } from './PageLayout';
 import { CmsPublicImage } from './CmsPublicImage';
 import { useMemo, useState } from 'react';
 import { Columns3, ExternalLink, LayoutGrid, Pencil, Plus, Search, Sparkles, Users } from 'lucide-react';
@@ -164,7 +165,8 @@ export function PartnersView({
 
   return (
     <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
-      <div className="bg-gradient-to-br from-[#040B16] via-[#0A1628] to-[#022C22] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+      <PageZone page="partners" zone="content" widgets={{
+"header": (<div className="bg-gradient-to-br from-[#040B16] via-[#0A1628] to-[#022C22] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="font-mono text-xs text-[#FECC02] font-semibold">
@@ -289,26 +291,22 @@ export function PartnersView({
             </div>
           </div>
         )}
-      </div>
-
-      <AdBannerSlot
+      </div>),
+"ad": (<AdBannerSlot
         banners={adBanners}
         placement="partners-top"
         onNavigate={onNavigate}
         onBookSlot={onBookAdSlot}
-      />
-
-      <PageFormSlot
+      />),
+"top-form": (<PageFormSlot
         forms={contactForms}
         page="partners"
         position="top"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
-
-      {/* COMPARISON MODE */}
-      {viewMode === 'compare' && (
+      />),
+"comparison": (viewMode === 'compare' && (
         <div className="space-y-6">
           <CheckoutStrategyCTA compact />
           <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5">
@@ -917,10 +915,8 @@ export function PartnersView({
             </div>
           </div>
         </div>
-      )}
-
-      {/* CATALOG MODE */}
-      {viewMode === 'catalog' && (
+      )),
+"catalog": (viewMode === 'catalog' && (
         <>
           {filtered.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-4">
@@ -1077,25 +1073,24 @@ export function PartnersView({
             </div>
           )}
         </>
-      )}
-
-      <PageFormSlot
+      )),
+"mid-form": (<PageFormSlot
         forms={contactForms}
         page="partners"
         position="mid"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
-
-      <PageFormSlot
+      />),
+"bottom-form": (<PageFormSlot
         forms={contactForms}
         page="partners"
         position="bottom"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
+      />)
+}}/>
     </div>
   );
 }

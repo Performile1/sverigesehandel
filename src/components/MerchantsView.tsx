@@ -1,3 +1,4 @@
+import { PageZone } from './PageLayout';
 import { useMemo, useState } from 'react';
 import { ExternalLink, Package, Pencil, Plus, Search, ShieldCheck, Sparkles, Star, TrendingUp } from 'lucide-react';
 import type {
@@ -104,7 +105,8 @@ export function MerchantsView({
 
   return (
     <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
-      <div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+      <PageZone page="ehandlare" zone="content" widgets={{
+"header": (<div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="font-mono text-xs text-[#10B981] font-semibold">
@@ -189,34 +191,30 @@ export function MerchantsView({
             <option value="name">Sortera: A–Ö</option>
           </select>
         </div>
-      </div>
-
-      <AdBannerSlot
+      </div>),
+"ad": (<AdBannerSlot
         banners={adBanners}
         placement="ehandlare-top"
         onNavigate={onNavigate}
         onBookSlot={onBookAdSlot}
-      />
-
-      <PageFormSlot
+      />),
+"top-form": (<PageFormSlot
         forms={contactForms}
         page="ehandlare"
         position="top"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
-
-      <PageFormSlot
+      />),
+"mid-form": (<PageFormSlot
         forms={contactForms}
         page="ehandlare"
         position="mid"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
-
-      {filtered.length === 0 ? (
+      />),
+"catalog": (filtered.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-4">
           <p className="text-slate-600 text-sm">
             Inga e-handlare i katalogen matchade "{search}". Vill du söka webben och importera dem direkt?
@@ -354,16 +352,16 @@ export function MerchantsView({
             );
           })}
         </div>
-      )}
-
-      <PageFormSlot
+      )),
+"bottom-form": (<PageFormSlot
         forms={contactForms}
         page="ehandlare"
         position="bottom"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
+      />)
+}}/>
     </div>
   );
 }

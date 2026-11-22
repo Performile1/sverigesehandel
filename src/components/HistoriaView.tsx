@@ -1,3 +1,4 @@
+import { PageZone } from './PageLayout';
 import { useState } from 'react';
 import { Star } from 'lucide-react';
 import type { AdBanner, ContactFormConfig, PageCopyBlock, TimelineMilestone } from '../types';
@@ -28,7 +29,8 @@ export function HistoriaView({
 
   return (
     <div>
-      <section className="bg-[#040B16] text-white hero-grid-bg border-b border-white/10 py-12">
+      <PageZone page="historia" zone="hero" widgets={{
+"header": (<section className="bg-[#040B16] text-white hero-grid-bg border-b border-white/10 py-12">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-7 space-y-4">
@@ -118,19 +120,20 @@ export function HistoriaView({
             </div>
           </div>
         </div>
-      </section>
+      </section>)
+}}/>
 
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
-        <PageFormSlot
+        <PageZone page="historia" zone="content" widgets={{
+"top-form": (<PageFormSlot
           forms={contactForms}
           page="historia"
           position="top"
           adBanners={adBanners}
           onSubmitted={onFormSubmitted}
           onNotify={onNotify}
-        />
-
-        <div className="inline-flex flex-wrap gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200">
+        />),
+"filters": (<div className="inline-flex flex-wrap gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200">
           {(
             [
               ['all', 'Alla epoker (1994–2027)'],
@@ -153,18 +156,16 @@ export function HistoriaView({
               {label}
             </button>
           ))}
-        </div>
-
-        <PageFormSlot
+        </div>),
+"mid-form": (<PageFormSlot
           forms={contactForms}
           page="historia"
           position="mid"
           adBanners={adBanners}
           onSubmitted={onFormSubmitted}
           onNotify={onNotify}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        />),
+"timeline": (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((item) => (
             <div
               key={item.id}
@@ -183,16 +184,16 @@ export function HistoriaView({
               </div>
             </div>
           ))}
-        </div>
-
-        <PageFormSlot
+        </div>),
+"bottom-form": (<PageFormSlot
           forms={contactForms}
           page="historia"
           position="bottom"
           adBanners={adBanners}
           onSubmitted={onFormSubmitted}
           onNotify={onNotify}
-        />
+        />)
+}}/>
       </div>
     </div>
   );

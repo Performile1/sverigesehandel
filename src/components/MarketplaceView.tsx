@@ -1,3 +1,4 @@
+import { PageZone } from './PageLayout';
 import { ContentEditor } from './ContentEditor';
 import { ContentMetadataFields } from './ContentMetadataFields';
 import { ContentText } from './ContentText';
@@ -25,19 +26,21 @@ export function MarketplaceView({listings,onSubmitted}:{listings:PublicSaleListi
   const {user,requestSignIn}=useFirebase();const [category,setCategory]=useState('all');const [intent,setIntent]=useState('all');const [query,setQuery]=useState('');
   const visible=listings.filter(r=>(intent==='all'||(r.intent??'sell')===intent)&&(category==='all'||r.category===category)&&[r.title,r.description,r.location,...(r.tags??[])].join(' ').toLocaleLowerCase('sv-SE').includes(query.trim().toLocaleLowerCase('sv-SE')));
   return <section className="max-w-5xl mx-auto px-5 py-10 space-y-6">
-    <h1 className="text-3xl font-bold">Köpa & sälja e-handel</h1><p className="text-lg">Köp, sälj eller efterlys varumärken, webshoppar och varulager. Alla annonser granskas före publicering.</p>
-    <p className="bg-amber-50 border rounded-xl p-4 text-sm">Annonsuppgifter kommer från annonsören. Redaktionellt godkänd publicering innebär inte verifierad äganderätt, värdering eller garanti. Gör egen granskning av avtal, rättigheter och vad som ingår. Portalen hanterar inte betalning eller överlåtelse. Dela aldrig kundregister, inloggningar eller konfidentiella dokument här.</p>
-    <div className="grid sm:grid-cols-3 gap-3"><label>Annons<select className={commerceField} value={intent} onChange={e=>setIntent(e.target.value)}><option value="all">Köpes & säljes</option>{Object.entries(SALE_INTENTS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label><label>Sök annonser<input className={commerceField} value={query} onChange={e=>setQuery(e.target.value)}/></label><label>Typ<select className={commerceField} value={category} onChange={e=>setCategory(e.target.value)}><option value="all">Alla typer</option>{Object.entries(SALE_CATEGORIES).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label></div>
+    <PageZone page="kop-salj" zone="content" widgets={{
+"header": (<><h1 className="text-3xl font-bold">Köpa & sälja e-handel</h1><p className="text-lg">Köp, sälj eller efterlys varumärken, webshoppar och varulager. Alla annonser granskas före publicering.</p></>),
+"notice": (<p className="bg-amber-50 border rounded-xl p-4 text-sm">Annonsuppgifter kommer från annonsören. Redaktionellt godkänd publicering innebär inte verifierad äganderätt, värdering eller garanti. Gör egen granskning av avtal, rättigheter och vad som ingår. Portalen hanterar inte betalning eller överlåtelse. Dela aldrig kundregister, inloggningar eller konfidentiella dokument här.</p>),
+"catalog": (<><div className="grid sm:grid-cols-3 gap-3"><label>Annons<select className={commerceField} value={intent} onChange={e=>setIntent(e.target.value)}><option value="all">Köpes & säljes</option>{Object.entries(SALE_INTENTS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label><label>Sök annonser<input className={commerceField} value={query} onChange={e=>setQuery(e.target.value)}/></label><label>Typ<select className={commerceField} value={category} onChange={e=>setCategory(e.target.value)}><option value="all">Alla typer</option>{Object.entries(SALE_CATEGORIES).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label></div>
     <p role="status">{visible.length} annonser</p>
     {!visible.length&&<p>Inga publicerade annonser matchar just nu. Du kan lämna ett annonsförslag nedan.</p>}
     {visible.map(row=><article key={row.id} className="border bg-white rounded-2xl p-5 space-y-3"><p className="text-sm text-slate-600">{SALE_INTENTS[row.intent??'sell']} · {SALE_CATEGORIES[row.category]} · {row.location} · {SALE_AVAILABILITY[row.availability]}</p><h2 className="text-xl font-bold">{row.title}</h2><div className="grid sm:grid-cols-2 gap-3">{row.images?.map(image=><CmsPublicImage key={image.path} image={image} kind="banner"/>)}</div><p className="font-bold">{row.priceLabel}</p>{row.tags?.length? <p className="text-xs">{row.tags.join(' · ')}</p>:null}<ContentText text={row.description} format={row.contentFormat}/><h3 className="font-semibold">Erbjuds / efterfrågas</h3><ContentText text={row.included} format={row.contentFormat}/>{row.quantity&&<p>Omfattning: {row.quantity}</p>}{row.condition&&<p>Skick: {row.condition}</p>}
       <p className="text-xs text-slate-500">Uppdaterad {row.updatedAt.slice(0,10)} · Annonsörens uppgifter, inte en verifierad värdering.</p>
       {row.availability==='sold'?<p>Annonsen är avslutad.</p>:user?.emailVerified?<SaleInquiry key={`${row.id}-${user.uid}`} id={row.id}/>:<button className={commerceButton} onClick={requestSignIn}>Logga in för att anmäla intresse</button>}
-    </article>)}
-    <div className="bg-slate-50 border rounded-2xl p-5 space-y-3"><h2 className="text-2xl font-bold">Skapa köp- eller säljannons</h2>
+    </article>)}</>),
+"submission": (<div className="bg-slate-50 border rounded-2xl p-5 space-y-3"><h2 className="text-2xl font-bold">Skapa köp- eller säljannons</h2>
       <p>Alla förslag granskas av Sveriges E-handel före publicering. Endast annonsens uttryckligen offentliga fält visas; kontaktuppgifter hålls i CMS.</p>
       {user?.emailVerified?<SaleSubmission key={user.uid} onSubmitted={onSubmitted}/>:<button className={commerceButton} onClick={requestSignIn}>Registrera / logga in för att lämna annons</button>}
-    </div>
+    </div>)
+}}/>
   </section>;
 }
 function SaleSubmission({onSubmitted}:{onSubmitted?:()=>void}){

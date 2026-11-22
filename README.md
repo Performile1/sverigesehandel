@@ -417,3 +417,22 @@ handlers, state and data computations are preserved. Default layout stays the
 same; existing widget v1/v2 preferences upgrade at render time without mutation
 and persist as v3 only on confirmed admin save. No source data is removed when
 hiding a widget. See [scope, migration and verification](docs/widgets-v3.md).
+
+## Unified public page layouts (review gate)
+
+**Innehåll & marknad → Sidor & layout** now selects any of the 14 public page
+types and controls 95 page-scoped section modules with fixed zones/locked safety
+content. Existing homeWidgets v1/v2/v3 remain preserved and inherited until the
+homepage's first explicit unified-layout save. Other page data is never migrated
+or deleted by layout changes. Private workspaces, signup, admin/AI tools, auth,
+global navigation and footer are not public widgets.
+
+Preview uses the real portal and an unsaved in-memory layout; CMS API writes and
+event-session Firestore writes are blocked in that mode. Publishing requires
+admin confirmation and per-page revision checks. **This is not a sandbox for
+production data**; external links and data reads remain possible. Use isolated
+Auth/database accounts for the manual acceptance gate.
+
+Run `bun run check:page-layouts` for 14 pre/post default markup fixtures plus
+allowlist/lock/order tests. Full CMS/startup/build checks still apply. See
+[coverage, limits, safety boundaries and per-page acceptance matrix](docs/alla-sidor-widgets.md).

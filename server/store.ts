@@ -1,3 +1,5 @@
+import { isPublicPage, validPageLayout } from '../shared/pageLayouts.ts';
+import type { PageLayout } from '../src/types.ts';
 import { contentMetadata } from '../shared/contentFormat.ts';
 import { validHomeWidgets, homeWidgetLayout } from '../shared/homeWidgets.ts';
 import type { HomeWidgetLayout } from '../src/types.ts';
@@ -431,6 +433,7 @@ function ensureStoreFile(): CMSStore {
       insightPosts: upgradedRaw.insightPosts,
       startGuide: upgradedRaw.startGuide,
       homeWidgets: upgradedRaw.homeWidgets,
+      pageLayouts: upgradedRaw.pageLayouts,
       editorialHistory: upgradedRaw.editorialHistory,
       saleCases: upgradedRaw.saleCases,
       saleListings: upgradedRaw.saleListings,
@@ -2425,7 +2428,18 @@ export function saleImageGallery(actor:CmsIdentity,id:string,input:unknown) {
 export function saveHomeWidgets(actor:CmsIdentity,input:unknown) {
   commerceActor(actor,true);
   if(!validHomeWidgets(input))throw Object.assign(new Error('Ogiltig widgetlayout.'),{status:400});
-  const store=structuredClone(ensureStoreFile());editorialConflict(store.homeWidgets,input.revision);
+  const store=structuredClone(ensureStoreFile());
+  if(store.pageLayouts?.marknad)throw Object.assign(new Error('Startsidan hanteras nu i Sidor & layout.'),{status:409});
+  editorialConflict(store.homeWidgets,input.revision);
   const layout:HomeWidgetLayout={version:3,revision:input.revision+1,items:homeWidgetLayout(input).items.map(i=>({id:i.id,enabled:i.enabled,order:i.order}))};
   store.homeWidgets=layout;saveCommerce(store);return layout;
+}
+
+export function savePublicPageLayout(actor:CmsIdentity,page:unknown,input:unknown) {
+  commerceActor(actor,true);
+  if(!isPublicPage(page)||!validPageLayout(page,input))throw Object.assign(new Error('Ogiltig sidlayout eller otillåten sektion.'),{status:400});
+  const store=structuredClone(ensureStoreFile());editorialConflict(store.pageLayouts?.[page],input.revision);
+  if(page==='marknad'&&!store.pageLayouts?.marknad&&(input.legacyHomeRevision??0)!==(store.homeWidgets?.revision??0))throw Object.assign(new Error('Äldre startsidesval har ändrats. Ladda om före layoutkonvertering.'),{status:409});
+  const layout:PageLayout={version:1,revision:input.revision+1,items:input.items.map(i=>({id:i.id,enabled:i.enabled,order:i.order}))};
+  store.pageLayouts={...store.pageLayouts,[page]:layout};saveCommerce(store);return layout;
 }

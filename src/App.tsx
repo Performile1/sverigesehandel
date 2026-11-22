@@ -1,3 +1,6 @@
+import { PageLayoutsContext } from './components/PageLayout';
+import { setLayoutPreviewReadOnly } from './api';
+import type { PageLayout } from './types';
 import { BlogView } from './components/BlogView';
 import { publiclyVisible } from '../shared/editorialLifecycle';
 import { publicSaleListing } from '../shared/commerce';
@@ -58,6 +61,11 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const [layoutPreviewDraft,setLayoutPreviewDraft]=useState<{page:PortalTab;layout:PageLayout}|null>(null);
+  const [layoutPreview,setLayoutPreview]=useState<{page:PortalTab;layout:PageLayout}|null>(null);
+  useEffect(()=>{setLayoutPreview(null);setLayoutPreviewDraft(null);setLayoutPreviewReadOnly(false);},[user?.uid,isAdmin]);
+  useEffect(()=>()=>setLayoutPreviewReadOnly(false),[]);
+  const endLayoutPreview=()=>{setLayoutPreviewReadOnly(false);setLayoutPreview(null);setMode('cms');};
   const [mode, setMode] = useState<'portal' | 'cms'>('portal');
   const [activeTab, setActiveTab] = useState<PortalTab>(getInitialTab);
   const [initialSearch, setInitialSearch] = useState<string>('');
@@ -244,18 +252,22 @@ export default function App() {
   }
 
   return (
+    <PageLayoutsContext.Provider value={{layouts:isAdmin&&layoutPreview?{...store.pageLayouts,[layoutPreview.page]:layoutPreview.layout}:store.pageLayouts,legacyHome:store.homeWidgets}}>
     <div className="min-h-screen flex flex-col bg-[#F4F6F9]">
       <Navbar
         mode={mode}
         activeTab={activeTab}
         onSelectTab={(tab) => handleNavigate(tab)}
-        onToggleMode={() => setMode((prev) => (prev === 'portal' ? 'cms' : 'portal'))}
+        onToggleMode={() => {if(layoutPreview)endLayoutPreview();else setMode(prev=>prev==='portal'?'cms':'portal');}}
       />
 
+      {isAdmin&&layoutPreview&&<div role="status" className="bg-amber-100 text-slate-950 p-4 flex flex-wrap gap-4 justify-between"><span>Osparad layoutförhandsvisning · {layoutPreview.page} · API-skrivningar blockerade. Inget är publicerat.</span><button type="button" className="font-bold underline" onClick={endLayoutPreview}>Avsluta förhandsvisning – tillbaka till CMS</button></div>}
       <main className="flex-1">
         {mode === 'cms' && user?.emailVerified && !isAdmin ? <CompanyWorkspace key={user.uid} /> : mode === 'cms' ? (
           <CMSAccess isAdmin={isAdmin}>
             <CMSStudio
+              layoutPreviewDraft={layoutPreviewDraft??undefined}
+              onPreviewPageLayout={(page,layout)=>{setLayoutPreviewDraft({page,layout});setLayoutPreview({page,layout});setLayoutPreviewReadOnly(true);setMode('portal');handleNavigate(page);}}
               store={store}
               onRefresh={fetchStore}
               onOpenEditor={(editorMode, item) => {
@@ -952,5 +964,6 @@ export default function App() {
         </div>
       )}
     </div>
+    </PageLayoutsContext.Provider>
   );
 }

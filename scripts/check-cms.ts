@@ -1,3 +1,6 @@
+import { toggleSavedSessionInFirestore } from '../src/firebaseSync.ts';
+import { PAGE_WIDGETS, defaultPageLayout, validPageLayout, validPageLayouts } from '../shared/pageLayouts.ts';
+import { setLayoutPreviewReadOnly, api as layoutPreviewApi } from '../src/api.ts';
 import { ContentText } from '../src/components/ContentText.tsx';
 import { ContentEditor } from '../src/components/ContentEditor.tsx';
 import { contentUrl, inlineParts, validContentMetadata, cleanContentMetadata } from '../shared/contentFormat.ts';
@@ -138,6 +141,36 @@ async function request(path: string, method = 'GET', body?: unknown, identity?: 
   }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
 }
 try {
+  const rawBeforePages=structuredClone(snapshot);const beforePages=structuredClone(await service.getStore());
+  assert.equal((await request('/api/page-layouts/om','PUT',defaultPageLayout('om'))).status,401);
+  assert.equal((await request('/api/page-layouts/om','PUT',defaultPageLayout('om'),'member-two')).status,403);
+  assert.equal((await request('/api/page-layouts/cms','PUT',defaultPageLayout('om'),'admin-fixture')).status,400);
+  assert.equal((await request('/api/page-layouts/community','PUT',{...defaultPageLayout('community'),items:defaultPageLayout('community').items.map((i,n)=>n===0?{...i,id:'messages'}:i)},'admin-fixture')).status,400);
+  for(const page of Object.keys(PAGE_WIDGETS) as Array<keyof typeof PAGE_WIDGETS>){
+    const initial=defaultPageLayout(page);
+    const hidden={...initial,items:initial.items.map(i=>({...i,enabled:PAGE_WIDGETS[page].find(d=>d.id===i.id)!.locked?true:false}))};
+    assert.ok(validPageLayout(page,hidden));
+    const response=await request(`/api/page-layouts/${page}`,'PUT',{...hidden,...(page==='marknad'?{legacyHomeRevision:beforePages.homeWidgets?.revision??0}:{})},'admin-fixture');
+    assert.equal(response.status,200,`Save ${page}`);assert.equal((await response.json()).revision,1);
+    assert.equal((await request(`/api/page-layouts/${page}`,'PUT',hidden,'admin-fixture')).status,409,`Stale ${page}`);
+    const locked=PAGE_WIDGETS[page].find(d=>d.locked)!;
+    assert.equal((await request(`/api/page-layouts/${page}`,'PUT',{...hidden,revision:1,items:hidden.items.map(i=>i.id===locked.id?{...i,enabled:false}:i)},'admin-fixture')).status,400);
+  }
+  const pagesStored=await service.getStore();assert.equal(Object.keys(pagesStored.pageLayouts!).length,14);assert.ok(validPageLayouts(pagesStored.pageLayouts));assert.ok(validateSnapshot(pagesStored));
+  for(const key of ['merchants','partners','jobs','news','startGuide','saleListings','regions','paketindexArchive','homeWidgets','contactMessages','memberGovernance'] as const)assert.deepEqual(pagesStored[key],beforePages[key],`Layout cannot change ${key}`);
+  assert.equal((await request('/api/home-widgets','PUT',DEFAULT_HOME_WIDGETS,'admin-fixture')).status,409,'Old homepage UI cannot override unified layout');
+  assert.ok(!validateSnapshot({...pagesStored,pageLayouts:{cms:defaultPageLayout('om')}}));
+  assert.ok(!validateSnapshot({...pagesStored,pageLayouts:{om:{...defaultPageLayout('om'),items:[]}}}));
+  snapshot=structuredClone(rawBeforePages);snapshot.homeWidgets={...structuredClone(DEFAULT_HOME_WIDGETS),revision:5};
+  assert.equal((await request('/api/page-layouts/marknad','PUT',defaultPageLayout('marknad'),'admin-fixture')).status,409,'Migration must detect concurrent legacy-home changes');
+  assert.equal((await request('/api/page-layouts/marknad','PUT',{...defaultPageLayout('marknad'),legacyHomeRevision:5},'admin-fixture')).status,200);
+  snapshot=structuredClone(rawBeforePages);snapshot.memberGovernance={...emptyGovernance(),blocks:[{uid:'fixture-user',reason:'fixture',createdAt:new Date().toISOString()}]};
+  assert.equal((await request('/api/page-layouts/om','PUT',defaultPageLayout('om'),'admin-fixture')).status,403);
+  setLayoutPreviewReadOnly(true);
+  await assert.rejects(layoutPreviewApi.savePublicPageLayout('om',defaultPageLayout('om')),/skrivskyddad/);
+  await assert.rejects(layoutPreviewApi.submitSaleListing({} as any),/skrivskyddad/);
+  await assert.rejects(toggleSavedSessionInFirestore('fixture-user',{} as any,true),/skrivskyddad/);
+  setLayoutPreviewReadOnly(false);snapshot=rawBeforePages;
   const richText='# This becomes H2\n\n## Heading\n\nA **bold** and *italic* [safe](https://example.org/page) text.\n\n- First\n- Second\n\n1. One\n2. Two\n\n---\n\n![Product](https://firebasestorage.googleapis.com/v0/b/fixture/o/image.webp?alt=media)\n\n<script>alert(1)</script>\n\n[bad](javascript:alert)';
   const richHtml=renderToString(createElement(ContentText,{text:richText,format:'markdown'}));
   for(const marker of ['<h2','<strong>bold</strong>','<em>italic</em>','<ul','<ol','<hr','alt="Product"','href="https://example.org/page"'])assert.ok(richHtml.includes(marker));

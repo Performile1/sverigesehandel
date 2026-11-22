@@ -1,3 +1,4 @@
+import { PageZone } from './PageLayout';
 import { useEffect, useState } from 'react';
 import { Check, Copy, ExternalLink, Mail, Megaphone } from 'lucide-react';
 import type { AdBanner, ContactFormConfig, PageCopyBlock } from '../types';
@@ -134,7 +135,8 @@ export function KontaktView({
   return (
     <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header Banner */}
-      <div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl p-6 sm:p-8">
+      <PageZone page="kontakt" zone="content" widgets={{
+"header": (<div className="bg-[#040B16] text-white border border-slate-800 rounded-2xl p-6 sm:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-8 space-y-3">
             <div className="text-xs font-mono text-[#FECC02] font-semibold">
@@ -177,9 +179,8 @@ export function KontaktView({
             </div>
           </div>
         </div>
-      </div>
-
-      {extraTopForms.map((f) => (
+      </div>),
+"extra-forms": (extraTopForms.map((f) => (
         <DynamicFormWidget
           key={f.id}
           form={f}
@@ -187,10 +188,8 @@ export function KontaktView({
           onSubmitted={onFormSubmitted}
           onNotify={onNotify}
         />
-      ))}
-
-      {/* Contact Form + Ad Slots Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      ))),
+"contact": (<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-7">
           <DynamicFormWidget
             form={primaryForm}
@@ -272,25 +271,24 @@ export function KontaktView({
             </a>
           </div>
         </div>
-      </div>
-
-      <PageFormSlot
+      </div>),
+"mid-form": (<PageFormSlot
         forms={contactForms}
         page="kontakt"
         position="mid"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
-
-      <PageFormSlot
+      />),
+"bottom-form": (<PageFormSlot
         forms={contactForms}
         page="kontakt"
         position="bottom"
         adBanners={adBanners}
         onSubmitted={onFormSubmitted}
         onNotify={onNotify}
-      />
+      />)
+}}/>
     </div>
   );
 }
