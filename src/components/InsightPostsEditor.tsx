@@ -1,3 +1,4 @@
+import { PublicationFields } from './PublicationFields';
 import { useState } from 'react';
 import type { InsightPost } from '../types';
 import { api } from '../api';
@@ -11,16 +12,16 @@ const blank: InsightPost = { id: '', title: '', category: '', excerpt: '', body:
 
 export function InsightPostsEditor({ posts, onRefresh }: { posts: InsightPost[]; onRefresh: () => Promise<void> }) {
   const [selectedId, setId] = useState('new');
-  const selected = posts.find((post) => post.id === selectedId);
+  const selected = posts.find((post) => post.id === selectedId && !post.trashedAt);
   return <section className="bg-white rounded-2xl border p-5 space-y-4">
     <h2 className="text-xl font-bold">Blogg & Insikter</h2>
     <p className="text-sm text-slate-600">Redigera startsidans kort och skapa nya redaktionella inlägg. Ingress visas i kortet; fulltext öppnas med ”Läs hela artikeln”. Publicering och redigering sker bara här i CMS. Uppgifterna i de tre ursprungliga korten är bevarade, inte nya verifierade faktapåståenden – granska särskilt statistik och eventdatum före återpublicering.</p>
     <label className="block text-sm">Välj inlägg<select className={field} value={selected?.id || 'new'} onChange={(event) => setId(event.target.value)}>
-      <option value="new">Nytt inlägg</option>{[...posts].sort((a, b) => a.order - b.order).map((post) => <option key={post.id} value={post.id}>{post.order} · {post.title} · {post.status === 'published' ? 'Publicerad' : 'Utkast'}</option>)}
+      <option value="new">Nytt inlägg</option>{[...posts].filter(p=>!p.trashedAt).sort((a, b) => a.order - b.order).map((post) => <option key={post.id} value={post.id}>{post.order} · {post.title} · {post.status === 'published' ? 'Publicerad' : 'Utkast'}</option>)}
     </select></label>
     <PostForm key={selected ? JSON.stringify(selected) : 'new'} initial={selected || blank} onSave={async (post) => {
       await api.saveInsightPost(post); await onRefresh(); setId(post.id);
-    }} onDelete={selected ? async () => { await api.deleteInsightPost(selected.id); await onRefresh(); setId('new'); } : undefined} />
+    }} onDelete={selected ? async () => { await api.deleteInsightPost(selected.id,selected.revision??0); await onRefresh(); setId('new'); } : undefined} />
   </section>;
 }
 function PostForm({ initial, onSave, onDelete }: { initial: InsightPost; onSave: (post: InsightPost) => Promise<void>; onDelete?: () => Promise<void> }) {
@@ -57,11 +58,12 @@ function PostForm({ initial, onSave, onDelete }: { initial: InsightPost; onSave:
     </div>
     <p className="text-xs text-slate-600">Egen bild: spara inlägget först, välj sedan ”Inläggsbild” i CMS → Firebase: Bilder & Statistik. Uppladdning kräver separat aktiverad Firebase Storage. En uppladdad bild prioriteras framför medföljande bild. Bortkoppling görs i samma bildpanel och raderar inte filen fysiskt.</p>
     {draft.image && <p className="text-xs">Inlägget har en uppladdad bild. Alt-text: {draft.image.alt}</p>}
+    <PublicationFields value={draft} onChange={v=>setDraft(p=>({...p,...v}))}/>
     <div className="flex gap-3"><button className={button} disabled={busy} type="submit">Spara inlägg</button>
       {onDelete && <button className={button} disabled={busy} type="button" onClick={async () => {
-        if (!window.confirm('Ta bort inlägget? Uppladdade bildfiler behålls för säker återställning.')) return;
+        if (!window.confirm('Flytta inlägget till papperskorgen? Innehåll och bilder bevaras.')) return;
         setBusy(true); setMessage(''); try { await onDelete(); } catch (cause) { setMessage((cause as Error).message); } finally { setBusy(false); }
-      }}>Ta bort inlägg</button>}
+      }}>Flytta till papperskorg</button>}
     </div>
     {message && <p role="status">{message}</p>}
     <h3 className="font-bold pt-4">Lokal förhandsvisning (osparade ändringar)</h3>

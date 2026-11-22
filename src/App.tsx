@@ -1,3 +1,4 @@
+import { publiclyVisible } from '../shared/editorialLifecycle';
 import { publicSaleListing } from '../shared/commerce';
 import { StartGuideView } from './components/StartGuideView';
 import { MarketplaceView } from './components/MarketplaceView';
@@ -518,7 +519,7 @@ export default function App() {
               />
             )}
             {activeTab === 'starta' && <StartGuideView chapters={store.startGuide||[]} onNavigate={handleNavigate}/>}
-            {activeTab === 'kop-salj' && <MarketplaceView onSubmitted={()=>void fetchStore()} listings={store.publicSaleListings || (isAdmin ? (store.saleListings||[]).filter(r=>r.status==='published').map(publicSaleListing) : [])}/>}
+            {activeTab === 'kop-salj' && <MarketplaceView onSubmitted={()=>void fetchStore()} listings={store.publicSaleListings || (isAdmin ? (store.saleListings||[]).filter(row=>publiclyVisible(row)).map(publicSaleListing) : [])}/>}
             {activeTab === 'om' && <AboutView copy={store.pageContent?.om} onNavigate={handleNavigate}/>}
             {activeTab === 'kontakt' && (
               <KontaktView

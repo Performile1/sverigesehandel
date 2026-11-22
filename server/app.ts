@@ -28,7 +28,7 @@ const commerceRoute = (handler:RequestHandler):RequestHandler => route(async(req
   try { await handler(req,res,next); }
   catch(error) {
     const status=(error as {status?:number})?.status;
-    const messages:Record<number,string>={400:'Kontrollera obligatoriska fält, längder, datum och granskningsbekräftelser.',403:'Åtkomst nekad.',404:'Annonsen finns inte eller är inte tillgänglig.',409:'Referensen används redan av en annan förfrågan. Kontakta redaktionen.',413:'Lagringen eller inkorgen är full. Inga äldre poster har raderats. Kontakta redaktionen.',429:'Du har nått gränsen för väntande annonser eller dagens intresseförfrågningar.'};
+    const messages:Record<number,string>={400:'Kontrollera obligatoriska fält, längder, datum och granskningsbekräftelser.',403:'Åtkomst nekad.',404:'Annonsen finns inte eller är inte tillgänglig.',409:'Ändringskonflikt eller använd referens. Kopiera din text, ladda om och jämför sparad version innan nytt försök.',413:'Lagringen eller inkorgen är full. Inga äldre poster har raderats. Kontakta redaktionen.',429:'Du har nått gränsen för väntande annonser eller dagens intresseförfrågningar.'};
     if(status&&messages[status]){res.status(status).json({error:messages[status]});return;}
     throw error;
   }
@@ -110,33 +110,41 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
   app.post('/api/media/image', route(async (req, res) => {
     if (!features.status().mediaEnabled) { res.status(409).json({ error: 'Firebase-bildlagring är avstängd i denna miljö.' }); return; }
     const { targetType, targetId, data, alt } = req.body || {};
-    if (!['partner', 'ad', 'insight'].includes(targetType) || typeof targetId !== 'string') {
+    if (!['partner', 'ad', 'insight', 'sale'].includes(targetType) || typeof targetId !== 'string') {
       res.status(400).json({ error: 'Välj partner, annons eller insiktsinlägg.' }); return;
     }
     const snapshot = await store.getStore();
-    if (!(targetType === 'partner' ? snapshot.partners : targetType === 'ad' ? snapshot.adBanners : (snapshot.insightPosts || [])).some((item) => item.id === targetId)) {
+    if (!(targetType === 'partner' ? snapshot.partners : targetType === 'ad' ? snapshot.adBanners : targetType==='sale'?(snapshot.saleListings||[]):(snapshot.insightPosts || [])).some((item) => item.id === targetId)) {
       res.status(404).json({ error: 'Posten finns inte längre.' }); return;
+    }
+    if(targetType==='sale'||targetType==='insight'){
+      if((snapshot.editorialHistory?.length??0)>=120){res.status(413).json({error:'Versionsarkivet är fullt. Ingen fil laddades upp.'});return;}
+      const item=(targetType==='sale'?snapshot.saleListings:snapshot.insightPosts)?.find(r=>r.id===targetId);
+      if((item?.revision??0)!==(req.body?.revision??0)){res.status(409).json({error:'Posten har ändrats. Ladda om före uppladdning.'});return;}
+      if(item?.trashedAt||targetType==='sale'&&(item as import('../src/types').SaleListing).images?.length===5){res.status(400).json({error:'Posten är i papperskorgen eller har redan fem bilder.'});return;}
     }
     let prepared;
     try { prepared = await prepareImage(data, alt); }
     catch { res.status(400).json({ error: 'Välj en PNG/JPEG/WebP-stillbild, högst 350 kB, 6000 × 6000 och 16 megapixel, samt alt-text (1–200 tecken).' }); return; }
     try {
       const image = await features.upload(prepared);
-      if (!await store.assignCmsImage(targetType, targetId, image)) {
+      if (!await store.assignCmsImage(targetType, targetId, image,req.body?.revision,res.locals.cmsIdentity.uid)) {
         res.status(409).json({ error: 'Bilden laddades upp men posten försvann. Filen behöver granskas vid lagringsstädning.' }); return;
       }
       res.json({ image });
-    } catch {
+    } catch(error) {
+      if((error as {status?:number}).status===413){res.status(413).json({error:'CMS eller versionsarkivet är fullt. Kontrollera filen i Storage före nytt försök.'});return;}
+      if((error as {status?:number}).status===409){res.status(409).json({error:'Posten ändrades under uppladdningen. Ladda om; en oanvänd fil kan finnas i Storage.'});return;}
       // No provider response, access URL or credential is logged or reflected.
       res.status(503).json({ error: 'Bilden kunde inte kopplas säkert. Ladda om och kontrollera posten före nytt försök; en uppladdad fil kan finnas kvar. Kontrollera Storage-konfiguration och IAM.' });
     }
   }));
-  app.delete('/api/media/image', route(async (req, res) => {
+  app.delete('/api/media/image', commerceRoute(async (req, res) => {
     const { targetType, targetId } = req.body || {};
-    if (!['partner', 'ad', 'insight'].includes(targetType) || typeof targetId !== 'string') {
+    if (!['partner', 'ad', 'insight', 'sale'].includes(targetType) || typeof targetId !== 'string') {
       res.status(400).json({ error: 'Välj partner, annons eller insiktsinlägg.' }); return;
     }
-    if (!await store.assignCmsImage(targetType, targetId, null)) {
+    if (!await store.assignCmsImage(targetType, targetId, null,req.body?.revision,res.locals.cmsIdentity.uid)) {
       res.status(404).json({ error: 'Posten hittades inte.' }); return;
     }
     // Detach only: a file can be referenced by a backup or another item.
@@ -362,17 +370,20 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     res.json({ deleted: true });
   }));
 
+  app.post('/api/editorial/:kind/:id', commerceRoute(async(req,res)=>{res.json(await store.changeEditorialState(res.locals.cmsIdentity,req.params.kind as 'sale'|'guide'|'insight',req.params.id,req.body));}));
+  app.put('/api/sale-cases/:id', commerceRoute(async(req,res)=>{res.json(await store.assignSaleCase(res.locals.cmsIdentity,req.params.id,req.body));}));
+  app.put('/api/sales/:id/gallery', commerceRoute(async(req,res)=>{res.json(await store.saleImageGallery(res.locals.cmsIdentity,req.params.id,req.body));}));
   app.put('/api/start-guide/:id', commerceRoute(async(req,res)=>{res.json(await store.saveGuideChapter(res.locals.cmsIdentity,{...req.body,id:req.params.id}));}));
   app.post('/api/sales', commerceRoute(async(req,res)=>{res.status(201).json(await store.createCmsSaleListing(res.locals.cmsIdentity,req.body));}));
   app.post('/api/sales/submissions', commerceRoute(async(req,res)=>{res.status(201).json(await store.submitSaleListing(res.locals.cmsIdentity,req.body));}));
   app.put('/api/sales/:id', commerceRoute(async(req,res)=>{res.json(await store.reviewSaleListing(res.locals.cmsIdentity,req.params.id,req.body));}));
   app.post('/api/sales/:id/inquiries', commerceRoute(async(req,res)=>{res.json(await store.inquireSaleListing(res.locals.cmsIdentity,req.params.id,req.body));}));
 
-  app.put('/api/insights/:id', route(async (req, res) => {
-    res.json(await store.upsertInsightPost({ ...req.body, id: req.params.id }));
+  app.put('/api/insights/:id', commerceRoute(async (req, res) => {
+    res.json(await store.upsertInsightPost({ ...req.body, id: req.params.id },res.locals.cmsIdentity.uid));
   }));
-  app.delete('/api/insights/:id', route(async (req, res) => {
-    if (!await store.deleteInsightPost(req.params.id)) { res.status(404).json({ error: 'Inlägget hittades inte.' }); return; }
+  app.delete('/api/insights/:id', commerceRoute(async (req, res) => {
+    if (!await store.deleteInsightPost(req.params.id,req.body?.revision??0,res.locals.cmsIdentity)) { res.status(404).json({ error: 'Inlägget hittades inte.' }); return; }
     res.json({ deleted: true });
   }));
 

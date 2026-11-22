@@ -1,3 +1,6 @@
+import { validSaleCases, validInstant } from '../shared/editorialLifecycle.ts';
+import { validInsightPost } from '../shared/insightPosts.ts';
+import { validChapter } from '../shared/commerce.ts';
 import { validGuide, validSaleListings } from '../shared/commerce.ts';
 import { INITIAL_START_GUIDE } from '../shared/startGuide.ts';
 import { validStaffProfiles } from '../shared/staffProfiles.ts';
@@ -186,7 +189,9 @@ export function validateSnapshot(value: unknown): value is CMSStore {
   const arrays = ['merchants', 'partners', 'logisticsProviders', 'news', 'events', 'sessions', 'jobs', 'recruitmentSites',
     'orderBenchmarks', 'shippingTiers', 'laws', 'intelligenceSources', 'techStackShares',
     'adBanners', 'contactForms', 'contactMessages', 'timeline', 'communityThreads', 'communityMembers', 'directMessages'];
-  return (store.startGuide === undefined || validGuide(store.startGuide)) && (store.saleListings === undefined || validSaleListings(store.saleListings)) && (store.staffProfiles === undefined || validStaffProfiles(store.staffProfiles)) && (store.memberGovernance === undefined || validGovernance(store.memberGovernance)) && (store.insightPosts === undefined || validInsightPosts(store.insightPosts)) && (Array.isArray(store.jobs) && store.jobs.every((job) => job && (job.salaryEstimate == null || validSalaryEstimate(job.salaryEstimate)))) && (store.paketindexArchive === undefined || validArchive(store.paketindexArchive)) && (store.mapPoints === undefined || (Array.isArray(store.mapPoints) &&
+  return (store.saleCases===undefined||validSaleCases(store.saleCases)) &&
+    (store.editorialHistory===undefined||(Array.isArray(store.editorialHistory)&&store.editorialHistory.length<=120&&new Set(store.editorialHistory.map(v=>v?.id)).size===store.editorialHistory.length&&store.editorialHistory.every(v=>v&&typeof v.id==='string'&&typeof v.actorUid==='string'&&v.actorUid.length<=128&&validInstant(v.at)&&typeof v.action==='string'&&v.action.length<=100&&v.targetId===v.before?.id&&(v.kind==='sale'?validSaleListings([v.before]):v.kind==='guide'?validChapter(v.before):v.kind==='insight'?validInsightPost(v.before):false)))) &&
+    (store.startGuide === undefined || validGuide(store.startGuide)) && (store.saleListings === undefined || validSaleListings(store.saleListings)) && (store.staffProfiles === undefined || validStaffProfiles(store.staffProfiles)) && (store.memberGovernance === undefined || validGovernance(store.memberGovernance)) && (store.insightPosts === undefined || validInsightPosts(store.insightPosts)) && (Array.isArray(store.jobs) && store.jobs.every((job) => job && (job.salaryEstimate == null || validSalaryEstimate(job.salaryEstimate)))) && (store.paketindexArchive === undefined || validArchive(store.paketindexArchive)) && (store.mapPoints === undefined || (Array.isArray(store.mapPoints) &&
     store.mapPoints.every(validMapPoint) && new Set(store.mapPoints.map((point) => point.id)).size === store.mapPoints.length)) && arrays.every((key) => Array.isArray(store[key])) &&
     ['regions', 'deliveryStats', 'paketindex', 'pageContent'].every((key) => store[key] !== null &&
       typeof store[key] === 'object' && !Array.isArray(store[key])) &&

@@ -1,5 +1,9 @@
 # Skapa annonser direkt i CMS
 
+Senare implementation av menygrupper, historik, konfliktskydd, annonsgalleri,
+publiceringsperioder, papperskorg och ärendeuppföljning beskrivs i
+`cms-arbetsfloden.md`. Nedan finns ursprunglig genomgång och prioritering.
+
 CMS → **Startguide & Köp/sälj → Skapa köp- eller säljannons**.
 
 - Global admin kan registrera annons för varumärke, webshop/verksamhet eller
