@@ -1,3 +1,4 @@
+import { ABOUT_CONTENT } from '../../shared/portalContent';
 import { MemberGovernancePanel } from './MemberGovernancePanel';
 import { InsightPostsEditor } from './InsightPostsEditor';
 import { PaketindexArchiveEditor } from './PaketindexArchiveEditor';
@@ -4208,6 +4209,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                     ['jobb', 'Jobb'],
                     ['community', 'Community'],
                     ['kontakt', 'Kontakt'],
+                    ['om', 'Om Sveriges E-handel'],
                   ] as Array<[keyof PageContentMap, string]>
                 ).map(([key, label]) => (
                   <button
@@ -4226,7 +4228,7 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
               </div>
 
               {(() => {
-                const block = pagesDraft[activePageKey];
+                const block = activePageKey === 'om' ? {...ABOUT_CONTENT,...pagesDraft.om} : pagesDraft[activePageKey];
                 return (
                   <div className="space-y-3 text-xs">
                     <div>
@@ -4278,6 +4280,10 @@ export function CMSStudio({ store, onRefresh, onOpenEditor, onNotify }: CMSStudi
                       />
                     </div>
 
+                    {activePageKey === 'om' && <label className="block">Om oss – brödtext (stycken)
+                      <textarea rows={10} className="block w-full p-3 border rounded-xl" value={pagesDraft.om?.body ?? ABOUT_CONTENT.body}
+                        onChange={e=>setPagesDraft({...pagesDraft,om:{...ABOUT_CONTENT,...pagesDraft.om,body:e.target.value}})}/>
+                    </label>}
                     {activePageKey === 'marknad' && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
                         <div>

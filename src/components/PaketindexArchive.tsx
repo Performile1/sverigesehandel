@@ -1,3 +1,4 @@
+import { latestQuarter } from '../../shared/latestPaketindex';
 import { useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { PaketindexObservation } from '../types';
@@ -5,18 +6,22 @@ import { PACKAGE_METRICS, observationKey, comparison, formatObservation } from '
 
 export function PaketindexArchive({ rows, admin = false }: { rows: PaketindexObservation[]; admin?: boolean }) {
   const available = useMemo(() => rows.filter((row) => admin || row.status === 'published'), [rows, admin]);
-  const editions = [...new Set(available.map((row) => row.edition))].sort().reverse();
+  const newest = latestQuarter(available);
+  const editions = [...new Set(available.map((row) => row.edition))].sort((a,b)=>{
+    const date=(edition:string)=>available.filter(r=>r.edition===edition).reduce((d,r)=>r.publishedDate>d?r.publishedDate:d,'');
+    return date(b).localeCompare(date(a))||b.localeCompare(a);
+  });
   const [chosenEdition, setEdition] = useState('');
-  const edition = editions.includes(chosenEdition) ? chosenEdition : editions[0] || '';
+  const edition = editions.includes(chosenEdition) ? chosenEdition : newest?.edition || editions[0] || '';
   const [metric, setMetric] = useState<PaketindexObservation['metric']>('total');
   const [basis, setBasis] = useState<PaketindexObservation['basis']>('carrier');
   const series = available.filter((row) => row.edition === edition && row.metric === metric && row.basis === basis)
     .sort((a, b) => a.period.localeCompare(b.period));
   const [chosenPeriod, setPeriod] = useState('');
-  const selected = series.find((row) => row.period === chosenPeriod) || series[series.length - 1];
+  const selected = series.find((row) => row.period === chosenPeriod) || [...series].filter(r=>/^\d{4}-Q[1-4]$/.test(r.period)).at(-1) || series[series.length - 1];
   const result = selected ? comparison(selected, series) : null;
   const quarterly = series.filter((row) => /^\d{4}-Q[1-4]$/.test(row.period));
-  return <section className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-8 space-y-5">
+  return <section id="paketindex-archive" className="scroll-mt-24 bg-white border border-slate-200 rounded-2xl p-5 sm:p-8 space-y-5">
     <h2 className="text-2xl font-bold">Paketindex – periodarkiv</h2>
     <p className="text-sm text-slate-600">Rapportversionerna hålls åtskilda eftersom historiska värden kan skilja sig. Jämförelser görs endast inom samma rapportversion, mått och metod. Returer/export är separata segment; second hand är en delmängd, inte ett tillägg till totalen.</p>
     {!editions.length ? <p>Inga granskade arkivposter är publicerade ännu.</p> : <>

@@ -1,3 +1,5 @@
+import { LatestPaketindex } from './LatestPaketindex';
+import { latestPaketindex } from '../../shared/latestPaketindex';
 import { InsightPosts } from './InsightPosts';
 import type { InsightPost } from '../types';
 import { INITIAL_INSIGHT_POSTS } from '../../shared/insightPosts';
@@ -343,6 +345,7 @@ export function MarknadView({
     { country: 'Storbritannien & USA', pct: '12%', width: '32%', color: 'bg-slate-400' },
   ];
 
+  const latestIndex = latestPaketindex(paketindexArchive);
   return (
     <div>
       {/* Hero Section */}
@@ -421,12 +424,12 @@ export function MarknadView({
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
               <div className="text-xs font-mono text-slate-400">
-                {pageCopy?.kpi3Label || `Paketindex ${paketindex?.quarterLabel || ''}`}
+                {`Paketindex ${latestIndex.row.period}`}
               </div>
               <div className="font-display text-2xl font-extrabold text-[#FECC02] mt-1 tabular-nums">
-                {pageCopy?.kpi3Value || '64,2M (+16,9 %)'}
+                {(latestIndex.row.value/1_000_000).toLocaleString('sv-SE',{maximumFractionDigits:3})} milj. paket
               </div>
-              <div className="text-xs text-slate-300 mt-1">32,8 % från utlandet · &gt;7M second hand</div>
+              <div className="text-xs text-slate-300 mt-1">{latestIndex.result?.growthPct!=null ? `${latestIndex.result.growthPct.toLocaleString('sv-SE',{maximumFractionDigits:1,signDisplay:'exceptZero'})} % mot samma kvartal föregående år` : 'Jämförbart underlag saknas'}</div>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
               <div className="text-xs font-mono text-slate-400">Import &amp; Export</div>
@@ -450,6 +453,16 @@ export function MarknadView({
 
       {/* Main Content */}
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        <section aria-label="Hitta rätt på Sveriges E-handel" className="grid md:grid-cols-3 gap-4">
+          {([{title:'Jag driver e-handel',text:'Hitta rätt tjänster och samarbetspartner.',tab:'partners',cta:'Hitta rätt partner'},
+            {title:'Jag är leverantör eller transportör',text:'Hitta din plats i nätverket och kontakta redaktionen.',tab:'community',cta:'Bli en del av nätverket'},
+            {title:'Jag söker jobb eller kunskap',text:'Upptäck möjligheter inom svensk e-handel.',tab:'jobb',cta:'Utforska jobb'}] as const).map(item=><div key={item.tab} className="bg-white border rounded-2xl p-5 space-y-3">
+              <h2 className="font-bold text-lg">{item.title}</h2><p>{item.text}</p>
+              <button className="bg-[#006AA7] text-white rounded-lg px-4 py-2" onClick={()=>onNavigate(item.tab)}>{item.cta} →</button>
+            </div>)}
+        </section>
+        <LatestPaketindex rows={paketindexArchive}/>
+        <PaketindexArchive rows={paketindexArchive} />
         {/* Top Sponsored Banner (D-Congress 2027) */}
         <AdBannerSlot
           banners={adBanners}
@@ -2479,11 +2492,11 @@ export function MarknadView({
           );
         })()}
 
-        {/* Äldre Paketindexsammanfattning (separat från versionsarkivet) */}
-        <PaketindexArchive rows={paketindexArchive} />
+        {/* Äldre Paketindexsammanfattning bevaras; senaste rapport och arkiv finns överst. */}
 
         {paketindex && (
           <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
+            <p className="text-sm bg-amber-50 p-3 rounded-lg">Historiskt sammanfattningsunderlag – inte den senaste rapporten. Innehållet bevaras; aktuell Paketindexperiod visas överst på sidan.</p>
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100">
               <div>
                 <div className="text-xs font-mono font-semibold text-[#006AA7] inline-flex items-center gap-1.5">

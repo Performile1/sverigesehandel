@@ -1,3 +1,4 @@
+import { AboutView } from './components/AboutView';
 import { visibleCommunityThreads } from '../shared/memberGovernance';
 import { CompanyWorkspace } from './components/CompanyWorkspace';
 import { CMSAccess } from './components/CMSAccess';
@@ -23,6 +24,7 @@ import { ThreePlView } from './components/ThreePlView';
 import type { CMSStore, JobRoleCategory, Merchant, PortalTab, TechPartner } from './types';
 
 const TAB_TITLES: Record<PortalTab, string> = {
+  om: 'Om Sveriges E-handel | sverigesehandel.se',
   marknad: 'Sveriges E-handel – Marknadsdata, ECDB, Statista & Tech | sverigesehandel.se',
   nyheter: 'E-handelsnyheter – Temu, Nya Butiker & SaaS i Sverige & Europa | sverigesehandel.se',
   event: 'Event & Mässor 2027 – D-Congress, E-commerce Expo & Retail Tech | sverigesehandel.se',
@@ -508,6 +510,7 @@ export default function App() {
                 onNotify={notify}
               />
             )}
+            {activeTab === 'om' && <AboutView copy={store.pageContent?.om} onNavigate={handleNavigate}/>}
             {activeTab === 'kontakt' && (
               <KontaktView
                 adBanners={store.adBanners}
@@ -595,6 +598,9 @@ export default function App() {
                     >
                       D-Congress & Event 2027
                     </a>
+                  </li>
+                  <li>
+                    <a href="#om" className="block text-slate-300 hover:text-white" onClick={e=>{e.preventDefault();handleNavigate('om');}}>Om Sveriges E-handel</a>
                   </li>
                   <li>
                     <a

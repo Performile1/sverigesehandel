@@ -611,6 +611,7 @@ export interface PageCopyBlock {
 }
 
 export interface PageContentMap {
+  om?: PageCopyBlock & { body?: string };
   marknad: PageCopyBlock & {
     badgeLabel?: string;
     heroHighlight?: string;
@@ -754,6 +755,7 @@ export interface DiscoveredRecruiterCandidate {
 }
 
 export type PortalTab =
+  | 'om'
   | 'marknad'
   | 'nyheter'
   | 'event'
