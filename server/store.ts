@@ -1,3 +1,5 @@
+import { collaborationAction, teamWorkspace, rolesFor, can, contentHash, checkActor, fail as collaborationFail } from './collaboration.ts';
+import { validCollaboration } from '../shared/collaboration.ts';
 import { isPublicPage, validPageLayout } from '../shared/pageLayouts.ts';
 import type { PageLayout } from '../src/types.ts';
 import { contentMetadata } from '../shared/contentFormat.ts';
@@ -434,6 +436,7 @@ function ensureStoreFile(): CMSStore {
       startGuide: upgradedRaw.startGuide,
       homeWidgets: upgradedRaw.homeWidgets,
       pageLayouts: upgradedRaw.pageLayouts,
+      collaboration: upgradedRaw.collaboration,
       editorialHistory: upgradedRaw.editorialHistory,
       saleCases: upgradedRaw.saleCases,
       saleListings: upgradedRaw.saleListings,
@@ -1469,7 +1472,7 @@ export function getMemberDirectory(requesterUid?: string, requesterEmail?: strin
   const rank = (status?: string) => (status === 'verified' ? 0 : 1);
 
   return (store.communityMembers || [])
-    .filter((m) => !m.directoryHidden && m.verificationStatus !== 'rejected' && !store.memberGovernance?.blocks.some((b) => b.uid === m.authorUid))
+    .filter((m) => !m.directoryHidden && m.verificationStatus !== 'rejected' && !store.memberGovernance?.blocks.some((b) => b.uid === m.authorUid) && !store.collaboration?.communityBlocks.some(b=>b.uid===m.authorUid))
     .slice()
     .sort((a, b) => rank(a.verificationStatus) - rank(b.verificationStatus))
     .map((m): PublicMemberProfile => ({
@@ -1536,7 +1539,7 @@ export function sendDirectMessage(input: {
   const recipient = (store.communityMembers || []).find(
     (m) => m.id === input.recipientMemberId && m.verificationStatus !== 'rejected'
   );
-  if (!recipient || (recipient.authorUid && store.memberGovernance?.blocks.some((b) => b.uid === recipient.authorUid))) return null;
+  if (!recipient || (recipient.authorUid && (store.memberGovernance?.blocks.some((b) => b.uid === recipient.authorUid)||store.collaboration?.communityBlocks.some(b=>b.uid===recipient.authorUid)))) return null;
 
   const senderProfile = resolveMemberByIdentity(
     store.communityMembers || [],
@@ -2304,7 +2307,7 @@ export function markUserInvitationAccepted(actor:CmsIdentity,uid:string,startedA
 }
 
 function commerceActor(actor:CmsIdentity,admin=false):asserts actor is CmsIdentity & {email:string} {
-  if(!actor?.verified||!actor.email||!actor.uid||(admin&&!actor.admin)||isBlocked(ensureStoreFile().memberGovernance,actor.uid))
+  if(!actor?.verified||!actor.email||!actor.uid||(admin&&!rolesFor(ensureStoreFile(),actor).includes('admin'))||isBlocked(ensureStoreFile().memberGovernance,actor.uid))
     throw Object.assign(new Error('Verifierad behörighet krävs.'),{status:403});
 }
 function saveCommerce(store:CMSStore) {
@@ -2442,4 +2445,46 @@ export function savePublicPageLayout(actor:CmsIdentity,page:unknown,input:unknow
   if(page==='marknad'&&!store.pageLayouts?.marknad&&(input.legacyHomeRevision??0)!==(store.homeWidgets?.revision??0))throw Object.assign(new Error('Äldre startsidesval har ändrats. Ladda om före layoutkonvertering.'),{status:409});
   const layout:PageLayout={version:1,revision:input.revision+1,items:input.items.map(i=>({id:i.id,enabled:i.enabled,order:i.order}))};
   store.pageLayouts={...store.pageLayouts,[page]:layout};saveCommerce(store);return layout;
+}
+
+export function getAccessWorkspace(actor:CmsIdentity){return teamWorkspace(ensureStoreFile(),actor);}
+export function accessSummary(actor:CmsIdentity){const s=ensureStoreFile();checkActor(s,actor);return {roles:rolesFor(s,actor)};}
+export function executeCollaboration(actor:CmsIdentity,operation:string,input:unknown) {
+  const store=structuredClone(ensureStoreFile());
+  if(operation==='editorial-unpublish'){
+    checkActor(store,actor);if(!can(store,actor,'editor'))collaborationFail('Redaktör krävs.',403);
+    const v=input as {kind:string;id:string;hash:string};if(!v||!['insight','guide','news'].includes(v.kind))collaborationFail('Ogiltig innehållstyp.');
+    const row=v.kind==='insight'?store.insightPosts?.find(p=>p.id===v.id):v.kind==='guide'?store.startGuide?.find(p=>p.id===v.id):store.news.find(p=>p.id===v.id);
+    if(!row)collaborationFail('Innehållet saknas.',404);
+    // Fresh hash supplied by workspace; no arbitrary state/status/identity fields accepted.
+    if(contentHash(store,v.kind,v.id)!==v.hash)collaborationFail('Innehållet har ändrats.',409);
+    const changed=withStore(store,()=>{if(v.kind==='insight')return upsertInsightPost({...row,status:'draft'} as import('../src/types').InsightPost,actor.uid);if(v.kind==='guide')return saveGuideChapter({...actor,admin:true,baseAdmin:true},{...row,status:'draft'});return upsertNews({...row,status:'draft'});});
+    saveCommerce(changed.store);return {ok:true};
+  }
+  const result=collaborationAction(store,actor,operation,input);
+  const publication=(result as {publication?:import('../src/types.ts').EditorialDraft}).publication;
+  let finalStore=store;
+  if(publication){
+    const d=publication;
+    const generated=withStore(store,()=>{
+      if(d.kind==='insight'){
+        const old=store.insightPosts?.find(p=>p.id===d.targetId);
+        return upsertInsightPost({...old,id:d.targetId,title:d.title,excerpt:d.summary,body:d.body,category:d.category,sourceUrl:d.sourceUrl,author:old?.author??store.staffProfiles?.find(p=>p.uid===d.uid)?.name??'Sveriges E-handel',publishedDate:d.date,
+          imageKey:old?.imageKey??'',imageAlt:old?.imageAlt??'',ctaLabel:old?.ctaLabel??'',targetTab:old?.targetTab??'',targetUrl:old?.targetUrl??'',theme:old?.theme??'light',order:old?.order??(store.insightPosts?.length??0),status:'published',contentFormat:'markdown',revision:old?.revision??0},actor.uid);
+      }
+      if(d.kind==='guide'){
+        const old=store.startGuide?.find(p=>p.id===d.targetId);
+        return saveGuideChapter({...actor,admin:true,baseAdmin:true},{...old,id:d.targetId,title:d.title,summary:d.summary,body:d.body,checklist:old?.checklist??[],targetTab:old?.targetTab??'partners',sourceUrl:d.sourceUrl,reviewedDate:d.date,order:old?.order??(store.startGuide?.length??0),status:'published',contentFormat:'markdown',revision:old?.revision??0});
+      }
+      if((input as {confirmArticleLink?:boolean}).confirmArticleLink!==true)collaborationFail('Granska nyhetens exakta originalartikel före publicering.');
+      return upsertNews({id:d.targetId,title:d.title,summary:d.summary,sourceName:d.sourceName,sourceUrl:d.sourceUrl,publishedDate:d.date,status:'published',confirmArticleLink:true});
+    });finalStore=generated.store;
+  }
+  if(!validCollaboration(finalStore.collaboration))collaborationFail('Registergräns eller valideringsfel. Inga poster har raderats.',413);
+  saveCommerce(finalStore);return {ok:true,...('id' in result?{id:result.id}:{})};
+}
+export function moderateAsRole(actor:CmsIdentity,operation:string,input:unknown){
+  const store=structuredClone(ensureStoreFile());checkActor(store,actor);
+  if(!can(store,actor,'community-admin')||!['moderate','resolve-report','settings'].includes(operation))collaborationFail('Otillåten modereringsoperation.',403);
+  const result=runGovernance(store,{...actor,admin:true},operation,input);saveCommerce(store);return result;
 }

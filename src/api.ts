@@ -85,6 +85,9 @@ type DiscoveryResult<T extends DiscoveryTarget> = T extends 'merchants'
   : DiscoveredRecruiterCandidate[];
 
 export const api = {
+  accessSummary:()=>request<{roles:import('./types').PlatformRole[]}>('/api/access/me'),
+  teamspace:()=>request<import('../server/collaboration').TeamWorkspace>('/api/teamspace'),
+  teamAction:(operation:string,payload:unknown)=>request<{ok:boolean;id?:string}>(`/api/teamspace/${operation}`,{method:'POST',body:JSON.stringify(payload)}),
   savePublicPageLayout:(page:import('./types').PortalTab,layout:import('./types').PageLayout)=>request<import('./types').PageLayout>(`/api/page-layouts/${page}`,{method:'PUT',body:JSON.stringify(layout)}),
   saveHomeWidgets:(layout:import('./types').HomeWidgetLayout)=>request<import('./types').HomeWidgetLayout>('/api/home-widgets',{method:'PUT',body:JSON.stringify(layout)}),
   editorialState:(kind:EditorialKind,id:string,input:{revision:number;action:'trash'|'untrash'|'restore';versionId?:string})=>request<{ok:boolean}>(`/api/editorial/${kind}/${id}`,{method:'POST',body:JSON.stringify(input)}),

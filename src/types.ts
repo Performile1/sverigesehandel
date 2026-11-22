@@ -649,6 +649,8 @@ export interface MapPoint {
 }
 
 export interface CMSStore {
+  collaboration?: CollaborationStore;
+  publicCompanyPages?: PublicCompanyPage[];
   pageLayouts?: PageLayouts;
   homeWidgets?: HomeWidgetLayout;
   editorialHistory?: EditorialVersion[];
@@ -779,6 +781,7 @@ export type PortalTab =
   | 'kontakt';
 
 export type CMSSection =
+  | 'collaboration'
   | 'widgets'
   | 'workflow'
   | 'commerce'
@@ -964,3 +967,15 @@ export interface ContentMetadata {
 
 export interface PageLayout {version:1;revision:number;legacyHomeRevision?:number;items:Array<{id:string;enabled:boolean;order:number}>}
 export type PageLayouts=Partial<Record<PortalTab,PageLayout>>;
+
+export type PlatformRole='admin'|'editor'|'writer'|'community-admin';
+export interface RoleGrant {uid:string;roles:PlatformRole[];updatedAt:string;updatedBy:string}
+export interface EditorialDraft {id:string;uid:string;revision:number;kind:'insight'|'guide'|'news';targetId:string;baseHash:string;targetHash?:string;state:'draft'|'review'|'published';title:string;summary:string;body:string;category:string;sourceUrl:string;sourceName:string;date:string;updatedAt:string}
+export interface CompanyWidget {id:string;type:'text'|'services'|'image'|'contact'|'form';title:string;body:string;url:string;alt:string;formId:string;enabled:boolean}
+export interface CompanyPageField {id:string;label:string;type:'text'|'email'|'tel'|'textarea'|'select';required:boolean;options:string[]}
+export interface CompanyPageForm {id:string;title:string;purpose:'lead'|'quote'|'support';fields:CompanyPageField[];recipientUids:string[]}
+export interface CompanyPageContent {title:string;summary:string;widgets:CompanyWidget[];forms:CompanyPageForm[]}
+export interface CompanyPage {managedByPlatform?:boolean;responsibleUid?:string;id:string;entityType:CompanyEntityType;entityId:string;slug:string;revision:number;draft:CompanyPageContent;published?:CompanyPageContent;state:'draft'|'review'|'published'|'rejected';submittedAsAdmin?:boolean;submittedBy:string;reviewedBy:string;updatedAt:string}
+export interface PublicCompanyPage {entityType?:CompanyEntityType;id:string;slug:string;entityName:string;content:Omit<CompanyPageContent,'forms'>&{forms:Array<Omit<CompanyPageForm,'recipientUids'>>}}
+export interface CompanyPageMessage {id:string;pageId:string;formId:string;purpose:'lead'|'quote'|'support';uid:string;email:string;answers:Record<string,string>;createdAt:string;assignedUid:string;state:'new'|'working'|'resolved';revision:number}
+export interface CollaborationStore {revision:number;roles:RoleGrant[];drafts:EditorialDraft[];pages:CompanyPage[];messages:CompanyPageMessage[];audit:Array<{id:string;uid:string;action:string;target:string;at:string}>;communityBlocks:Array<{uid:string;reason:string;at:string}>}

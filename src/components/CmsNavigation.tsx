@@ -4,7 +4,7 @@ export const CMS_GROUPS:Array<{label:string;sections:CMSSection[]}>= [
   {label:'Företag & upptäckt',sections:['discover','merchants','partners','logistics']},
   {label:'Innehåll & marknad',sections:['pages','widgets','news','insights','paketindex','timeline']},
   {label:'Affärer & möjligheter',sections:['commerce','events','jobs']},
-  {label:'Medlemmar & ärenden',sections:['members','forms','content']},
+  {label:'Medlemmar & ärenden',sections:['members','collaboration','forms','content']},
   {label:'Drift & säkerhet',sections:['workflow','firebase','overview']},
 ];
 export function CmsNavigation({items,active,onSelect}:{items:Array<{id:CMSSection;label:string;count?:number}>;active:CMSSection;onSelect:(id:CMSSection)=>void}) {

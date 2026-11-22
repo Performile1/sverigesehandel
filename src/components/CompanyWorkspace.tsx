@@ -1,3 +1,4 @@
+import { TeamWorkspace } from './TeamWorkspace';
 import { MyProfileEditor } from './StaffProfiles';
 import { useEffect, useState } from 'react';
 import type { CompanyWorkspace as Workspace } from '../types';
@@ -12,6 +13,7 @@ export function CompanyWorkspace() {
   return <section className="max-w-5xl mx-auto p-5 space-y-5">
     <h1 className="text-2xl font-bold">Min företagsyta</h1>
     <MyProfileEditor/>
+    <TeamWorkspace/>
     <p>Här visas endast företag och meddelanden som Sveriges E-handel har gett ditt konto åtkomst till. Ändringsförslag publiceras aldrig direkt. Borttagning måste begäras och beslutas av Sveriges E-handel.</p>
     <button className={button} onClick={() => void reload()}>Uppdatera företagsytan</button>
     {error && <p role="alert" className="text-red-700">{error}</p>}

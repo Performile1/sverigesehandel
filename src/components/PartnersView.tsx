@@ -1,3 +1,4 @@
+import { CompanyDirectoryLinks } from './CompanyDirectoryLinks';
 import { PageZone } from './PageLayout';
 import { CmsPublicImage } from './CmsPublicImage';
 import { useMemo, useState } from 'react';
@@ -167,6 +168,7 @@ export function PartnersView({
     <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
       <PageZone page="partners" zone="content" widgets={{
 "header": (<div className="bg-gradient-to-br from-[#040B16] via-[#0A1628] to-[#022C22] text-white border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+        <CompanyDirectoryLinks type="partner"/>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="font-mono text-xs text-[#FECC02] font-semibold">

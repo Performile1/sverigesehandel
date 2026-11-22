@@ -436,3 +436,24 @@ Auth/database accounts for the manual acceptance gate.
 Run `bun run check:page-layouts` for 14 pre/post default markup fixtures plus
 allowlist/lock/order tests. Full CMS/startup/build checks still apply. See
 [coverage, limits, safety boundaries and per-page acceptance matrix](docs/alla-sidor-widgets.md).
+
+## Roles and company pages (review gate)
+
+**Medlemmar & ärenden → Roller & företagssidor** manages verified UID-bound admin,
+editor, writer and community-admin grants. Existing owner/Firebase-admin access
+remains. Non-admin roles use a restricted workspace, never the full CMS snapshot.
+Editors publish blog/guide/news without extra admin approval; writers only draft.
+Community moderation does not include private DMs/company inquiries.
+
+Admins can reserve a unique company hash address (e.g. `#klarna`, `#dhl`) for an
+existing entity. **No actual brand pages are seeded.** Existing verified company
+links/canPropose control a widget/form builder. Drafts remain separate from live
+pages, and only platform admin approves company changes. Custom forms allow no
+attachments, arbitrary recipients or webhooks; verified submitter identity and
+current per-company recipient rights are checked on the server. All private
+roles/drafts/recipient lists/inquiries are excluded from the public projection.
+
+See [permissions, privacy, limits, review workflow and required live tests](docs/roller-foretagssidor.md).
+No real role grants, pages, Auth accounts, mail, billing, provider changes, MFA or
+tracking are created/activated by the code delivery. Use isolated Auth/test data
+before assigning real staff or collecting business/support inquiries.

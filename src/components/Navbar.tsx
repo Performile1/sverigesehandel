@@ -89,7 +89,7 @@ export function Navbar({ mode, activeTab, onSelectTab, onToggleMode }: NavbarPro
                 : 'bg-[#FECC02] text-[#040B16] hover:bg-[#EAB308]'
             }`}
           >
-            {mode === 'cms' ? 'Visa portal' : user?.emailVerified && !isAdmin ? 'Min företagsyta' : 'Öppna CMS'}
+            {mode === 'cms' ? 'Visa portal' : user?.emailVerified && !isAdmin ? 'Min arbetsyta' : 'Öppna CMS'}
           </button>
 
           <button
