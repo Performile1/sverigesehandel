@@ -2481,7 +2481,7 @@ export function executeCollaboration(actor:CmsIdentity,operation:string,input:un
     });finalStore=generated.store;
   }
   if(!validCollaboration(finalStore.collaboration))collaborationFail('Registergräns eller valideringsfel. Inga poster har raderats.',413);
-  saveCommerce(finalStore);return {ok:true,...('id' in result?{id:result.id}:{})};
+  saveCommerce(finalStore);return {ok:true,...('id' in result?{id:result.id}:{}),...('starterPages' in result?{starterPages:result.starterPages}:{})};
 }
 export function moderateAsRole(actor:CmsIdentity,operation:string,input:unknown){
   const store=structuredClone(ensureStoreFile());checkActor(store,actor);

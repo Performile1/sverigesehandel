@@ -781,6 +781,7 @@ export type PortalTab =
   | 'kontakt';
 
 export type CMSSection =
+  | 'company-pages'
   | 'collaboration'
   | 'widgets'
   | 'workflow'
@@ -979,3 +980,6 @@ export interface CompanyPage {managedByPlatform?:boolean;responsibleUid?:string;
 export interface PublicCompanyPage {entityId?:string;entityType?:CompanyEntityType;id:string;slug:string;entityName:string;content:Omit<CompanyPageContent,'forms'>&{forms:Array<Omit<CompanyPageForm,'recipientUids'>>}}
 export interface CompanyPageMessage {id:string;pageId:string;formId:string;purpose:'lead'|'quote'|'support';uid:string;email:string;answers:Record<string,string>;createdAt:string;assignedUid:string;state:'new'|'working'|'resolved';revision:number}
 export interface CollaborationStore {revision:number;roles:RoleGrant[];drafts:EditorialDraft[];pages:CompanyPage[];messages:CompanyPageMessage[];audit:Array<{id:string;uid:string;action:string;target:string;at:string}>;communityBlocks:Array<{uid:string;reason:string;at:string}>}
+
+export interface StarterPagesResult {created:number;existing:number;pages:Array<{id:string;slug:string;created:boolean}>}
+export interface TeamActionResult {ok:boolean;id?:string;starterPages?:StarterPagesResult}

@@ -1,49 +1,51 @@
-import { COMPANY_PAGE_STARTERS } from '../../shared/companyPageStarters';
+import { CreateCompanyPages } from './CreateCompanyPages';
+import { CompanyPagesPanel } from './CompanyPagesPanel';
 import { useEffect, useState } from 'react';
 import type { TeamWorkspace as Workspace } from '../../server/collaboration';
 import type { EditorialDraft } from '../types';
 import { ROLE_LABELS } from '../../shared/collaboration';
 import { api } from '../api';
-import { CompanyPageEditor } from './CompanyPageEditor';
 import { ContentEditor } from './ContentEditor';
 const field='block w-full border rounded-lg p-2 mt-1';const button='border rounded-lg px-3 py-2 disabled:opacity-40';
-export function TeamWorkspace(){
+export function TeamWorkspace({companyOnly=false}:{companyOnly?:boolean}){
   const [data,setData]=useState<Workspace|null>(null);const [error,setError]=useState('');
   const reload=async()=>{try{setData(await api.teamspace());setError('');}catch(err){setData(null);setError((err as Error).message);}};
   useEffect(()=>{void reload();},[]);
-  if(!data)return <section className="p-5">{error?<p role="alert">{error}</p>:<p>Läser roll- och företagsbehörigheter…</p>}</section>;
+  if(!data)return <section className="p-5">{error?<><p role="alert">{error}</p><button type="button" className={button} onClick={()=>void reload()}>Försök läsa arbetsytan igen</button></>:<p>Läser roll- och företagsbehörigheter…</p>}</section>;
   const admin=data.roles.includes('admin');const editor=admin||data.roles.includes('editor');const writer=editor||data.roles.includes('writer');
   const act=async(op:string,payload:unknown)=>{try{await api.teamAction(op,payload);await reload();}catch(err){setError((err as Error).message);}};
-  return <section className="max-w-6xl mx-auto p-5 space-y-6"><h1 className="text-2xl font-bold">Redaktion, roller & företagssidor</h1>
+  return <section className="max-w-6xl mx-auto p-5 space-y-6"><h1 className="text-2xl font-bold">{companyOnly?'Företagssidor':'Redaktion, roller & företagssidor'}</h1>
     <p>Dina plattformsroller: {data.roles.map(r=>ROLE_LABELS[r]).join(', ')||'Inga – eventuell företagsåtkomst visas nedan'}. Företagskoppling är en separat behörighet och ger inte plattformsadmin.</p><button className={button} onClick={()=>void reload()}>Läs om aktuella rättigheter</button>{error&&<p role="alert">{error}</p>}
-    {admin&&<>
-      <section className="bg-white border rounded-xl p-5 space-y-3"><h2 className="text-xl font-bold">Förbered åtta företagssidor</h2><p>{COMPANY_PAGE_STARTERS.map(p=>p.name).join(', ')}. Skapas endast som utkast utan formulär eller företagsåtkomst. Ditt inloggade adminkonto registreras som ansvarig. Befintliga sidor lämnas oförändrade. Saknade företag får en tom katalogpost som utkast – inga företagsfakta hittas på.</p><button className={button} onClick={async()=>{if(!window.confirm('Skapa saknade utkast med dig som ansvarig? Inget publiceras och befintliga sidor ändras inte.'))return;await act('starter-pages',{revision:data.revision,confirm:true});}}>Skapa saknade sidutkast</button></section>
+    {admin&&<CreateCompanyPages revision={data.revision} onLoaded={loaded=>{setData(loaded);setError('');}}/>}
+    <CompanyPagesPanel data={data} admin={admin} reload={reload}/>
+    {!companyOnly&&admin&&<>
       <form className="bg-white border rounded-xl p-5 space-y-3" onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);if(!window.confirm('Ändra plattformsroller för vald person? Admin ger full systemåtkomst.'))return;await act('roles',{uid:String(f.get('uid')),roles:f.getAll('roles'),revision:data.revision});}}>
         <h2 className="text-xl font-bold">Tilldela / ersätt plattformsroller</h2><p>Bara godkända UID-kopplade medlemmar kan väljas. Kryssa i ALLA roller som ska gälla; tomt val återkallar tilldelade roller. Befintlig ägar-/Firebase-adminpolicy finns kvar och kan inte återkallas här. Du kan inte ändra dina egna roller.</p>
         <label className="block">Medlem<select name="uid" className={field} required><option value="">Välj person</option>{data.members.filter(m=>m.status==='verified').map(m=><option key={m.uid} value={m.uid}>{m.name} · {m.email}</option>)}</select></label>
         {Object.entries(ROLE_LABELS).map(([id,label])=><label key={id} className="flex gap-2"><input name="roles" type="checkbox" value={id}/>{label}</label>)}<button className={button}>Spara roller</button>
         <h3 className="font-bold">Nuvarande tilldelningar</h3>{data.grants.map(g=><p key={g.uid}>{data.members.find(m=>m.uid===g.uid)?.name||g.uid}: {g.roles.map(r=>ROLE_LABELS[r]).join(', ')||'Återkallade'} · {g.updatedAt}</p>)}
       </form>
+    </>}
+    {admin&&<>
       <form className="bg-white border rounded-xl p-5 space-y-3" onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const target=String(f.get('entity'));const split=target.indexOf('|');await act('reserve-page',{entityType:target.slice(0,split),entityId:target.slice(split+1),slug:String(f.get('slug')).trim().toLowerCase(),revision:data.revision});}}>
         <h2 className="text-xl font-bold">Reservera företagssida</h2><p>Admin väljer företag och unik adress, exempelvis klarna eller dhl. Inga varumärkesanspråk godkänns automatiskt. Koppla företagsredaktörer i befintliga Medlemmar & Community. Ingen riktig företagssida skapas förrän du sparar.</p>
         <label className="block">Företag<select className={field} name="entity" required><option value="">Välj</option>{data.companies.map(c=><option key={`${c.entityType}|${c.entityId}`} value={`${c.entityType}|${c.entityId}`}>{c.name} · {c.entityType}</option>)}</select></label>
         <label className="block">Adress efter #<input name="slug" className={field} required pattern="[a-z][a-z0-9-]{1,49}" maxLength={50}/></label><button className={button}>Reservera adress och skapa utkast</button>
       </form>
     </>}
-    {writer&&<EditorialWorkspace data={data} editor={editor} reload={reload}/>}
-    {data.moderation&&<section className="bg-white border rounded-xl p-5 space-y-4"><h2 className="text-xl font-bold">Communitymoderering</h2><p>Endast öppet innehåll och anmälningsdata. Inga privata meddelanden eller företagsärenden följer rollen. Communityblockering gäller communityfunktioner, inte Firebase-kontot eller hela portalen.</p>
+    {!companyOnly&&writer&&<EditorialWorkspace data={data} editor={editor} reload={reload}/>}
+    {!companyOnly&&data.moderation&&<section className="bg-white border rounded-xl p-5 space-y-4"><h2 className="text-xl font-bold">Communitymoderering</h2><p>Endast öppet innehåll och anmälningsdata. Inga privata meddelanden eller företagsärenden följer rollen. Communityblockering gäller communityfunktioner, inte Firebase-kontot eller hela portalen.</p>
       {data.moderation.reports.filter(r=>r.status==='open').map(r=><div key={r.id} className="border p-3 rounded-lg"><p>{data.moderation!.threads.find(t=>t.id===r.threadId)?.title} · {r.reason} · {r.detail}</p><button className={button} onClick={()=>{const reason=window.prompt('Motivering');if(reason)void act('moderate',{operation:'moderate',payload:{threadId:r.threadId,commentId:r.commentId,reportId:r.id,hidden:true,reason}});}}>Dölj anmält innehåll</button><button className={button} onClick={()=>{const reason=window.prompt('Beslut / motivering');if(reason)void act('moderate',{operation:'resolve-report',payload:{id:r.id,reason}});}}>Avsluta anmälan</button></div>)}
       {data.moderation.hidden.map(h=><button className={button} key={`${h.threadId}/${h.commentId}`} onClick={()=>{const reason=window.prompt('Motivering för återställning');if(reason)void act('moderate',{operation:'moderate',payload:{...h,hidden:false,reason}});}}>Återställ dolt innehåll {h.threadId}/{h.commentId}</button>)}
       {data.moderation.settings&&<form className="space-y-2" onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);await act('moderate',{operation:'settings',payload:Object.fromEntries(Object.keys(data.moderation!.settings!).map(key=>[key,f.get(key)==='on']))});}}><h3 className="font-bold">Communityinställningar</h3>{Object.entries(data.moderation.settings).map(([k,v])=><label key={k} className="flex gap-2"><input name={k} type="checkbox" defaultChecked={v}/>{k}</label>)}<button className={button}>Spara communityinställningar</button></form>}
       <form className="space-y-2" onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);await act('community-block',{uid:String(f.get('uid')),reason:String(f.get('reason')),blocked:true});}}><h3 className="font-bold">Blockera känd communityanvändare</h3><label className="block">UID från inlägg / medlem<input className={field} name="uid" required maxLength={128}/></label><label className="block">Motivering<input className={field} name="reason" required maxLength={1000}/></label><button className={button}>Blockera från community</button></form>
       {data.moderation.blocks.map(b=><p key={b.uid}>{b.uid} · {b.reason} <button className={button} onClick={()=>void act('community-block',{uid:b.uid,reason:'Återställd av moderator',blocked:false})}>Avblockera</button></p>)}
     </section>}
-    {data.pages.map(page=><CompanyPageEditor key={`${page.id}-${page.revision}`} page={page} admin={admin} reload={reload}/>)}
-    <section className="bg-white border rounded-xl p-5 space-y-3"><h2 className="text-xl font-bold">Företagssidors formulärinkorg</h2><p>Endast admin eller aktivt kopplade och valda mottagare får se ärenden. Tilldelning begränsar, den ger inte behörighet. Inga automatiska mejl skickas.</p>
+    {!companyOnly&&<section className="bg-white border rounded-xl p-5 space-y-3"><h2 className="text-xl font-bold">Företagssidors formulärinkorg</h2><p>Endast admin eller aktivt kopplade och valda mottagare får se ärenden. Tilldelning begränsar, den ger inte behörighet. Inga automatiska mejl skickas.</p>
       {!data.messages.length&&<p>Inga tillgängliga ärenden.</p>}{data.messages.map(m=><article className="border rounded-lg p-3 space-y-2" key={`${m.id}-${m.revision}`}><h3 className="font-bold">{data.pages.find(p=>p.id===m.pageId)?.slug} · {m.purpose} · {m.state}</h3><p className="text-sm">{m.email} · {m.createdAt}</p>{Object.entries(m.answers).map(([id,value])=><p className="whitespace-pre-wrap" key={id}>{data.pages.find(p=>p.id===m.pageId)?.published?.forms.find(f=>f.id===m.formId)?.fields.find(f=>f.id===id)?.label||id}: {value}</p>)}
         <form className="space-y-2" onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);await act('message-status',{id:m.id,revision:m.revision,state:String(f.get('state')),assignedUid:String(f.get('uid'))});}}><label>Status<select className={field} name="state" defaultValue={m.state}><option value="new">Ny</option><option value="working">Pågår</option><option value="resolved">Avslutad</option></select></label><label>Tilldelning<select className={field} name="uid" defaultValue={m.assignedUid}><option value="">Gemensam behörig inkorg</option>{(m.purpose==='support'?data.pages.find(p=>p.id===m.pageId)?.recipients.support:data.pages.find(p=>p.id===m.pageId)?.recipients.lead)?.map(p=><option key={p.uid} value={p.uid}>{p.name}</option>)}</select></label><button className={button}>Spara ärendestatus</button></form>
       </article>)}
-    </section>
+    </section>}
   </section>;
 }
 function EditorialWorkspace({data,editor,reload}:{data:Workspace;editor:boolean;reload:()=>Promise<void>}){
