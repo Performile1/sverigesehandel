@@ -1,3 +1,4 @@
+import { COMPANY_PAGE_STARTERS } from '../shared/companyPageStarters.ts';
 import { ADMIN_EMAIL } from '../shared/firebaseSettings.ts';
 import { randomUUID, createHash } from 'node:crypto';
 import type { CMSStore, CollaborationStore, CompanyPageContent, CompanyPage, EditorialDraft, PlatformRole, CompanyPageMessage } from '../src/types.ts';
@@ -26,13 +27,13 @@ export function canReceive(s:CMSStore,uid:string,p:CompanyPage,purpose:string,cr
 export function eligibleRecipients(s:CMSStore,p:CompanyPage,purpose:string,at=new Date().toISOString()){return (s.memberGovernance?.links??[]).filter(l=>l.entityType===p.entityType&&l.entityId===p.entityId&&canReceive(s,l.uid,p,purpose,at)).map(l=>({uid:l.uid,name:s.communityMembers.find(m=>m.authorUid===l.uid)?.name??l.uid}));}
 export function teamWorkspace(s:CMSStore,a:CmsIdentity){
   checkActor(s,a);const roles=rolesFor(s,a),admin=roles.includes('admin'),editor=admin||roles.includes('editor'),moderator=admin||roles.includes('community-admin');const c=s.collaboration??emptyCollaboration();
-  const pages=c.pages.filter(p=>admin||companyLink(s,a.uid,p));
+  const pages=c.pages.filter(p=>admin||(!p.managedByPlatform&&companyLink(s,a.uid,p)));
   const messages=c.messages.filter(m=>{if(admin)return true;const p=pages.find(p=>p.id===m.pageId);const form=p?.published?.forms.find(f=>f.id===m.formId);return !!p&&!!form&&form.recipientUids.includes(a.uid)&&(!m.assignedUid||m.assignedUid===a.uid)&&canReceive(s,a.uid,p,m.purpose,m.createdAt);});
   return {roles,revision:c.revision,
     grants:admin?c.roles:[],members:admin?s.communityMembers.filter(m=>m.authorUid).map(m=>({uid:m.authorUid!,name:m.name,email:m.email,status:m.verificationStatus})):[],
     drafts:(editor?c.drafts:roles.includes('writer')?c.drafts.filter(d=>d.uid===a.uid):[]),
     editorial:editor?{insights:(s.insightPosts??[]).map(p=>({...p,editHash:contentHash(s,'insight',p.id)})),guides:(s.startGuide??[]).map(p=>({...p,editHash:contentHash(s,'guide',p.id)})),news:s.news.map(p=>({...p,editHash:contentHash(s,'news',p.id)}))}:null,
-    pages:pages.map(p=>({...p,canEdit:admin||!!companyLink(s,a.uid,p)?.canPropose,recipients:{lead:eligibleRecipients(s,p,'lead'),support:eligibleRecipients(s,p,'support')}})),messages,
+    pages:pages.map(p=>({...p,canEdit:admin||(!p.managedByPlatform&&!!companyLink(s,a.uid,p)?.canPropose),recipients:{lead:eligibleRecipients(s,p,'lead'),support:eligibleRecipients(s,p,'support')}})),messages,
     companies:admin?[...s.partners.map(e=>({entityType:'partner',entityId:e.id,name:e.name})),...s.logisticsProviders.map(e=>({entityType:'logistics',entityId:e.id,name:e.name})),...s.merchants.map(e=>({entityType:'merchant',entityId:e.id,name:e.name}))]:[],
     moderation:moderator?{settings:s.memberGovernance?.settings,reports:s.memberGovernance?.reports??[],hidden:s.memberGovernance?.hidden??[],blocks:c.communityBlocks,threads:s.communityThreads.map(t=>({id:t.id,title:t.title,authorUid:t.authorUid,comments:t.comments?.map(m=>({id:m.id,body:m.body,authorUid:m.authorUid}))}))}:null,
   };
@@ -48,6 +49,37 @@ export function collaborationAction(s:CMSStore,a:CmsIdentity,op:string,v:any){
     if(!Array.isArray(v.roles)||v.roles.length>4||new Set(v.roles).size!==v.roles.length||!v.roles.every((r:unknown)=>typeof r==='string'&&Object.hasOwn(ROLE_LABELS,r)))fail('Ogiltiga roller.');
     c.roles=[...c.roles.filter(r=>r.uid!==v.uid),{uid:v.uid,roles:v.roles,updatedBy:a.uid,updatedAt:now}];c.revision++;audit(c,a,'roles',v.uid);return {ok:true};
   }
+  if(op==='starter-pages'){
+    if(!admin)fail('Admin krävs.',403);
+    if(v.confirm!==true)fail('Bekräfta att skapa privata utkast.');
+    conflict(c.revision,v.revision);
+    for(const spec of COMPANY_PAGE_STARTERS){
+      const names=[spec.name,...spec.aliases].map(n=>n.toLowerCase());
+      const candidates=s.partners.filter(e=>names.includes(e.name.trim().toLowerCase())||e.id===`p-${spec.slug}`);
+      if(candidates.length>1)fail(`Flera företag matchar ${spec.name}. Välj manuellt.`,409);
+      let entity=candidates[0];
+      const taken=c.pages.find(p=>p.slug===spec.slug);
+      if(taken){
+        if(!entity||taken.entityType!=='partner'||taken.entityId!==entity.id)fail(`Adressen ${spec.slug} används redan.`,409);
+        // An existing page is not claimed, reset, assigned or overwritten by this package.
+        continue;
+      }
+      if(entity&&c.pages.some(p=>p.entityType==='partner'&&p.entityId===entity.id))continue;
+      if(!entity){
+        entity={id:`p-${spec.slug}`,name:spec.name,domain:'',cat:'',origin:'',stack:'',notableClients:[],desc:'',status:'draft',updatedAt:now};
+        s.partners.push(entity);
+      }
+      const result=collaborationAction(s,a,'reserve-page',{entityType:'partner',entityId:entity.id,slug:spec.slug,revision:c.revision});
+      const page=c.pages.find(p=>p.id===result.id)!;
+      page.managedByPlatform=true;page.responsibleUid=a.uid;
+      page.draft={title:spec.name,summary:'Redaktionell företagssida som förvaltas av Sveriges E-handel.',forms:[],widgets:[
+        {id:'presentation',type:'text',title:'Om '+spec.name,body:'Presentation kompletteras av Sveriges E-handel före publicering.',url:'',alt:'',formId:'',enabled:true},
+        {id:'ansvar',type:'text',title:'Om sidan',body:'Denna sida förvaltas redaktionellt av Sveriges E-handel. Den är inte företagets officiella kundservice.',url:'',alt:'',formId:'',enabled:true},
+      ]};
+      page.submittedBy=a.uid;page.submittedAsAdmin=Boolean(a.baseAdmin??a.admin);
+    }
+    return {ok:true};
+  }
   if(op==='reserve-page'){
     if(!admin)fail('Admin krävs.',403);conflict(c.revision,v.revision);const p={entityType:v.entityType,entityId:v.entityId} as CompanyPage;
     if(!['partner','logistics','merchant'].includes(v.entityType)||!text(v.entityId,200,true)||!companyEntity(s,p)||!validSlug(v.slug))fail('Välj företag och ledig, icke reserverad adress.');
@@ -57,7 +89,7 @@ export function collaborationAction(s:CMSStore,a:CmsIdentity,op:string,v:any){
     c.pages.push(page);c.revision++;audit(c,a,'reserve-page',page.id);return {ok:true,id:page.id};
   }
   if(op==='page-draft'){
-    const p=c.pages.find(p=>p.id===v.id);if(!p)fail('Sidan saknas.',404);if(!admin&&!companyLink(s,a.uid,p)?.canPropose)fail('Ingen företagsredaktörsrättighet.',403);conflict(p.revision,v.revision);
+    const p=c.pages.find(p=>p.id===v.id);if(!p)fail('Sidan saknas.',404);if(!admin&&(p.managedByPlatform||!companyLink(s,a.uid,p)?.canPropose))fail('Ingen företagsredaktörsrättighet.',403);conflict(p.revision,v.revision);
     if(!validCompanyContent(v.content))fail('Ogiltiga widgets eller formulär.');
     // Only own currently eligible staff can be recipients; no arbitrary mailbox or external URL delivery.
     for(const f of v.content.forms)for(const uid of f.recipientUids)if(!eligibleRecipients(s,p,f.purpose,now).some(r=>r.uid===uid))fail('Mottagaren saknar aktiv företags-/mottagarbehörighet.',403);

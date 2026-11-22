@@ -1,3 +1,4 @@
+import { COMPANY_PAGE_STARTERS } from '../../shared/companyPageStarters';
 import { useEffect, useState } from 'react';
 import type { TeamWorkspace as Workspace } from '../../server/collaboration';
 import type { EditorialDraft } from '../types';
@@ -16,6 +17,7 @@ export function TeamWorkspace(){
   return <section className="max-w-6xl mx-auto p-5 space-y-6"><h1 className="text-2xl font-bold">Redaktion, roller & företagssidor</h1>
     <p>Dina plattformsroller: {data.roles.map(r=>ROLE_LABELS[r]).join(', ')||'Inga – eventuell företagsåtkomst visas nedan'}. Företagskoppling är en separat behörighet och ger inte plattformsadmin.</p><button className={button} onClick={()=>void reload()}>Läs om aktuella rättigheter</button>{error&&<p role="alert">{error}</p>}
     {admin&&<>
+      <section className="bg-white border rounded-xl p-5 space-y-3"><h2 className="text-xl font-bold">Förbered åtta företagssidor</h2><p>{COMPANY_PAGE_STARTERS.map(p=>p.name).join(', ')}. Skapas endast som utkast utan formulär eller företagsåtkomst. Ditt inloggade adminkonto registreras som ansvarig. Befintliga sidor lämnas oförändrade. Saknade företag får en tom katalogpost som utkast – inga företagsfakta hittas på.</p><button className={button} onClick={async()=>{if(!window.confirm('Skapa saknade utkast med dig som ansvarig? Inget publiceras och befintliga sidor ändras inte.'))return;await act('starter-pages',{revision:data.revision,confirm:true});}}>Skapa saknade sidutkast</button></section>
       <form className="bg-white border rounded-xl p-5 space-y-3" onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);if(!window.confirm('Ändra plattformsroller för vald person? Admin ger full systemåtkomst.'))return;await act('roles',{uid:String(f.get('uid')),roles:f.getAll('roles'),revision:data.revision});}}>
         <h2 className="text-xl font-bold">Tilldela / ersätt plattformsroller</h2><p>Bara godkända UID-kopplade medlemmar kan väljas. Kryssa i ALLA roller som ska gälla; tomt val återkallar tilldelade roller. Befintlig ägar-/Firebase-adminpolicy finns kvar och kan inte återkallas här. Du kan inte ändra dina egna roller.</p>
         <label className="block">Medlem<select name="uid" className={field} required><option value="">Välj person</option>{data.members.filter(m=>m.status==='verified').map(m=><option key={m.uid} value={m.uid}>{m.name} · {m.email}</option>)}</select></label>

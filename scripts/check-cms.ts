@@ -278,6 +278,26 @@ try {
   assert.deepEqual(snapshot,beforeFullTeamWrite,'Full audit must not erase history or create a partial company page');snapshot=fullAuditSnapshot;
 
   assert.deepEqual((await service.getStore()).regions,beforeTeam.regions);assert.deepEqual((await service.getStore()).paketindexArchive,beforeTeam.paketindexArchive);
+  const beforeStarters=structuredClone(snapshot);
+  assert.equal((await request('/api/teamspace/starter-pages','POST',{confirm:true,revision:snapshot.collaboration!.revision},'member-two')).status,403);
+  assert.equal((await request('/api/teamspace/starter-pages','POST',{confirm:true,revision:snapshot.collaboration!.revision},'admin-fixture')).status,200);
+  const seeded=await service.getStore();
+  for(const slug of ['dhl','klarna','qliro','bring','postnord','wetail','synkka','alignr']){
+    const page=seeded.collaboration!.pages.find(p=>p.slug===slug);if(!page){const entity=seeded.partners.find(p=>p.id===`p-${slug}`)!;const original=beforeStarters.collaboration!.pages.find(p=>p.entityId===entity.id)!;assert.ok(original);assert.deepEqual(seeded.collaboration!.pages.find(p=>p.id===original.id),original);continue;}assert.equal(page.state,'draft');assert.equal(page.published,undefined);
+    assert.equal(page.responsibleUid,'fixture-user');assert.equal(page.managedByPlatform,true);assert.deepEqual(page.draft.forms,[]);
+  }
+  const once=structuredClone(snapshot);
+  assert.equal((await request('/api/teamspace/starter-pages','POST',{confirm:true,revision:snapshot.collaboration!.revision},'admin-fixture')).status,200);
+  assert.deepEqual({...snapshot,updatedAt:once.updatedAt},once,'Repeating starter package must not overwrite any existing page or company');
+  assert.deepEqual(publicStore(snapshot).publicCompanyPages,publicStore(beforeStarters).publicCompanyPages);
+  const locked=seeded.collaboration!.pages.find(p=>p.slug==='dhl')!;
+  snapshot.memberGovernance!.links.push({id:'starter-company-link',updatedAt:new Date().toISOString(),uid:'fixture-user-two',entityType:'partner',entityId:locked.entityId,status:'active',canPropose:true,receiveIntros:true,receiveMessages:true,includeHistory:true,createdAt:new Date().toISOString()} as any);
+  assert.ok(!(await(await request('/api/teamspace','GET',undefined,'member-two')).json()).pages.some((p:any)=>p.id===locked.id));
+  assert.equal((await request('/api/teamspace/page-draft','POST',{id:locked.id,revision:locked.revision,content:locked.draft,state:'draft'},'member-two')).status,403);
+  snapshot=structuredClone(beforeStarters);snapshot.collaboration!.pages.push({...locked,slug:'wetail',entityId:'wrong-company',id:'page-conflict'});
+  const beforeConflict=structuredClone(snapshot);
+  assert.equal((await request('/api/teamspace/starter-pages','POST',{confirm:true,revision:snapshot.collaboration!.revision},'admin-fixture')).status,409);
+  assert.deepEqual(snapshot,beforeConflict,'Conflict in package must roll back earlier additions');
   snapshot=rawBeforeTeam;
   const rawBeforePages=structuredClone(snapshot);const beforePages=structuredClone(await service.getStore());
   assert.equal((await request('/api/page-layouts/om','PUT',defaultPageLayout('om'))).status,401);

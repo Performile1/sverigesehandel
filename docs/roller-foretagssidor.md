@@ -182,3 +182,22 @@ kan browserkontrolleras; full roll-/företagsresa kräver isolerade Firebase Aut
 konton med godkända medlems-/företagskopplingar. README saknar testidentitet eller
 auth-bypass. Den verkliga inloggade resan och fungerande externa Firebase-
 behörigheter får inte påstås verifierade av mocktester/READY-build.
+
+## Förberedda sidutkast: åtta företag
+
+Admin kan använda **Förbered åtta företagssidor → Skapa saknade sidutkast**.
+Paketet omfattar DHL, Klarna, Qliro, Bring, PostNord, Wetail, Synkka och Alignr.
+Det är en explicit CMS-operation, inte automatisk migration eller publicering vid
+merge. Inloggad admin blir ansvarig med verklig Firebase-UID; inga UID:n gissas.
+Sidorna låses för företagskopplade konton (`managedByPlatform`) tills separat
+överlämning kan byggas/testas. Övriga plattformsadmin behåller normal adminåtkomst.
+
+Befintliga företag återanvänds via exakta namn/alias eller stabila ID:n. Saknade
+företag får minimala katalogutkast utan domän, företagsfakta eller kontaktuppgifter.
+Sidorna har neutral text och inga formulär, logotyper eller automatiska utskick.
+Existerande sidor ändras inte, inte heller om de har en annan ansvarig eller adress.
+Vid adresskonflikt/otydlig företagsmatchning stoppas hela paketet utan delskrivning.
+Upprepad körning skriver inte över befintliga poster. Ansvarig UID hålls privat.
+
+Inloggad skapandeoperation och överlämning till företag återstår att verifiera mot
+isolerad Firebase. Detta paket gör inte PR #25 fullständigt driftgodkänd.
