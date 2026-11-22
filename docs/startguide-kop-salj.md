@@ -1,5 +1,9 @@
 # Startguide och modererad Köp & sälj
 
+Uppdatering: direkt adminskapande samt Köpes/Säljes finns i `cms-annonskapande.md`.
+Äldre poster utan annonstyp räknas som Säljes. Kontaktpersoner som admin registrerar
+blir inte automatiskt verifierade användare. Nedan beskrivs ursprungligt medlemsflöde.
+
 ## Omfattning
 
 - `#starta`: tio planeringskapitel: idé/målgrupp, ekonomi, produkter/dropshipping,

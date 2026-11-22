@@ -358,3 +358,12 @@ cannot accept new inquiries. Full registers fail without evicting old data.
 Guide drafts and sale records are included in existing admin backup, with strict
 import validation. No new providers, billing or tracking is activated. See
 [workflow, privacy, limits and verification](docs/startguide-kop-salj.md).
+
+### CMS-created buy/sell ads
+
+Global admins can create an ad directly in **Startguide & Köp/sälj** with private
+contact details, a draft default and explicit review before publication. Contacts
+are not auto-verified, provisioned as Auth users or given company rights. CMS
+creator UID and contact data stay private. Buy/sell intent is shown and filterable
+in the portal; legacy ads remain selling listings. See
+[workflow and remaining CMS gaps](docs/cms-annonskapande.md).

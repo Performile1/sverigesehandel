@@ -916,10 +916,13 @@ export interface GuideChapter {
 }
 export type SaleCategory = 'brand' | 'webshop' | 'stock';
 export interface SaleDetails {
+  intent?: 'buy' | 'sell';
   title: string; category: SaleCategory; description: string; included: string;
   location: string; priceLabel: string; quantity: string; condition: string;
 }
 export interface SaleListing extends SaleDetails {
+  origin?: 'cms';
+  createdByUid?: string;
   id: string; status: 'pending' | 'draft' | 'published' | 'rejected';
   availability: 'available' | 'discussions' | 'sold';
   sellerUid: string; sellerEmail: string; sellerName: string;
