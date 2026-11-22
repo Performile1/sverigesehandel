@@ -1,3 +1,4 @@
+import { CompanyPagesContext, CompanyPageLink } from '../src/components/CompanyDirectoryLinks.tsx';
 import { emptyCollaboration, validCollaboration, validCompanyContent, validSlug, companySlugFromHash } from '../shared/collaboration.ts';
 import { CompanyPageView } from '../src/components/CompanyPageView.tsx';
 import { toggleSavedSessionInFirestore } from '../src/firebaseSync.ts';
@@ -1432,6 +1433,14 @@ try {
     onOpenEditor: () => {},
     onRequestIntro: () => {},
   }));
+  const linkedPartner=visible.partners[0];
+  const linkPage={id:'page-link-test',entityType:'partner' as const,entityId:linkedPartner.id,slug:'chosen-slug',entityName:linkedPartner.name,content:{title:linkedPartner.name,summary:'',widgets:[],forms:[]}};
+  const linkedCard=renderToString(createElement(CompanyPagesContext.Provider,{value:[linkPage]},createElement(PartnersView,{partners:[linkedPartner],adBanners:[],onNavigate:()=>{},onBookAdSlot:()=>{},onOpenDiscover:()=>{},onOpenEditor:()=>{},onRequestIntro:()=>{}})));
+  assert.ok(linkedCard.includes('href="#chosen-slug"')&&linkedCard.includes('Visa företagssida →'));
+  assert.ok(!partnersHtml.includes('Visa företagssida →'),'No published pages means no broken card links');
+  const wrongEntityLink=renderToString(createElement(CompanyPagesContext.Provider,{value:[{...linkPage,entityId:'different-id'}]},createElement(CompanyPageLink,{type:'partner',entityId:linkedPartner.id})));
+  assert.equal(wrongEntityLink,'','Identical company name must not substitute a different entity ID');
+  assert.equal(renderToString(createElement(CompanyPagesContext.Provider,{value:[{...linkPage,entityType:'logistics'}]},createElement(CompanyPageLink,{type:'partner',entityId:linkedPartner.id}))), '');
   assert.ok(partnersHtml.includes('iBoxen'));
   assert.ok(partnersHtml.includes('Leveranstjänster'));
   assert.ok(partnersHtml.includes('Paketskåp'));

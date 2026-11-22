@@ -16,7 +16,7 @@ export function publicCompanyPages(s:CMSStore){return (s.collaboration?.pages??[
   const entity=companyEntity(s,p);if(!p.published||entity?.status!=='published')return [];
   const widgets=p.published.widgets.filter(w=>w.enabled).map(w=>({id:w.id,type:w.type,title:w.title,body:w.body,url:w.url,alt:w.alt,formId:w.formId,enabled:true}));
   const forms=p.published.forms.filter(f=>widgets.some(w=>w.type==='form'&&w.formId===f.id)).map(f=>({id:f.id,title:f.title,purpose:f.purpose,fields:f.fields.map(q=>({id:q.id,label:q.label,type:q.type,required:q.required,options:[...q.options]}))}));
-  return [{id:p.id,entityType:p.entityType,slug:p.slug,entityName:entity.name,content:{title:p.published.title,summary:p.published.summary,widgets,forms}}];
+  return [{id:p.id,entityId:p.entityId,entityType:p.entityType,slug:p.slug,entityName:entity.name,content:{title:p.published.title,summary:p.published.summary,widgets,forms}}];
 });}
 export function contentHash(s:CMSStore,kind:string,id:string){const value=kind==='insight'?s.insightPosts?.find(p=>p.id===id):kind==='guide'?s.startGuide?.find(p=>p.id===id):s.news.find(p=>p.id===id);return createHash('sha256').update(JSON.stringify(value??null)).digest('hex');}
 export function checkActor(s:CMSStore,a:CmsIdentity){if(!a?.verified||!a.uid||!a.email||isBlocked(s.memberGovernance,a.uid))fail('Verifierad åtkomst krävs.',403);}

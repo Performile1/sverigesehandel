@@ -201,3 +201,11 @@ Upprepad körning skriver inte över befintliga poster. Ansvarig UID hålls priv
 
 Inloggad skapandeoperation och överlämning till företag återstår att verifiera mot
 isolerad Firebase. Detta paket gör inte PR #25 fullständigt driftgodkänd.
+
+## Länkar från partnerkatalogen
+
+Publicerade företagssidor länkas både i kataloghuvudet och via **Visa företagssida**
+på rätt partnerkort och i sida-vid-sida-jämförelsen. Kopplingen använder företagets
+stabila ID + typ, inte namn, domän eller antagen slug. Extern hemsida och introknapp
+finns kvar separat. Utkast eller avpublicerade sidor ger ingen publik länk.
+Att skapa sidutkasten räcker alltså inte: de behöver först fyllas i och publiceras.
