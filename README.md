@@ -457,3 +457,15 @@ See [permissions, privacy, limits, review workflow and required live tests](docs
 No real role grants, pages, Auth accounts, mail, billing, provider changes, MFA or
 tracking are created/activated by the code delivery. Use isolated Auth/test data
 before assigning real staff or collecting business/support inquiries.
+
+## Verified company administration and TOTP (activation gate)
+
+Company administration claims, exact reviewed domains and manual handover are
+prepared behind `FIREBASE_TOTP_ENABLED`. Recent token-proven TOTP is required for
+new claims and decisions; approval checks current Firebase Auth identity and grants
+proposal-only access, never publication/global roles/private inbox history.
+TOTP enrollment UI is opt-in with `VITE_FIREBASE_TOTP_ENABLED`; global privileged
+API enforcement is a separate `REQUIRE_PRIVILEGED_MFA` rollout. No providers,
+flags, MFA enrollments, IAM, roles, payments or real claims are activated by merge.
+See [security model, limits, isolated tests, recovery and activation checklist](docs/verifierad-foretagsadministration-2fa.md).
+Existing direct Firestore Rules are not upgraded by this API policy.

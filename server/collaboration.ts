@@ -1,3 +1,4 @@
+import { companyVerificationAction, type VerifiedClaimant } from './companyVerification.ts';
 import { COMPANY_PAGE_STARTERS } from '../shared/companyPageStarters.ts';
 import { ADMIN_EMAIL } from '../shared/firebaseSettings.ts';
 import { randomUUID, createHash } from 'node:crypto';
@@ -29,7 +30,7 @@ export function teamWorkspace(s:CMSStore,a:CmsIdentity){
   checkActor(s,a);const roles=rolesFor(s,a),admin=roles.includes('admin'),editor=admin||roles.includes('editor'),moderator=admin||roles.includes('community-admin');const c=s.collaboration??emptyCollaboration();
   const pages=c.pages.filter(p=>admin||(!p.managedByPlatform&&companyLink(s,a.uid,p)));
   const messages=c.messages.filter(m=>{if(admin)return true;const p=pages.find(p=>p.id===m.pageId);const form=p?.published?.forms.find(f=>f.id===m.formId);return !!p&&!!form&&form.recipientUids.includes(a.uid)&&(!m.assignedUid||m.assignedUid===a.uid)&&canReceive(s,a.uid,p,m.purpose,m.createdAt);});
-  return {roles,revision:c.revision,
+  return {roles,revision:c.revision,mfa:{enabled:process.env.FIREBASE_TOTP_ENABLED==='true',required:process.env.REQUIRE_PRIVILEGED_MFA==='true',verified:a.mfaFactor==='totp'},verification:{policies:admin?(c.verification?.policies??[]):[],claims:(c.verification?.claims??[]).filter(x=>admin||x.uid===a.uid),targets:[...s.partners.filter(e=>e.status==='published').map(e=>({entityType:'partner' as const,entityId:e.id,name:e.name})),...s.logisticsProviders.filter(e=>e.status==='published').map(e=>({entityType:'logistics' as const,entityId:e.id,name:e.name})),...s.merchants.filter(e=>e.status==='published').map(e=>({entityType:'merchant' as const,entityId:e.id,name:e.name}))]},
     grants:admin?c.roles:[],members:admin?s.communityMembers.filter(m=>m.authorUid).map(m=>({uid:m.authorUid!,name:m.name,email:m.email,status:m.verificationStatus})):[],
     drafts:(editor?c.drafts:roles.includes('writer')?c.drafts.filter(d=>d.uid===a.uid):[]),
     editorial:editor?{insights:(s.insightPosts??[]).map(p=>({...p,editHash:contentHash(s,'insight',p.id)})),guides:(s.startGuide??[]).map(p=>({...p,editHash:contentHash(s,'guide',p.id)})),news:s.news.map(p=>({...p,editHash:contentHash(s,'news',p.id)}))}:null,
@@ -40,8 +41,9 @@ export function teamWorkspace(s:CMSStore,a:CmsIdentity){
 }
 function audit(c:CollaborationStore,a:CmsIdentity,action:string,target:string){if(c.audit.length>=300)fail('Ändringsloggen är full. Arkivering krävs; ingen historik raderas.',413);c.audit.push({id:randomUUID(),uid:a.uid,action,target,at:new Date().toISOString()});}
 function conflict(actual:number,provided:unknown){if(actual!==provided)fail('Ändringskonflikt. Ladda om.',409);}
-export function collaborationAction(s:CMSStore,a:CmsIdentity,op:string,v:any){
+export function collaborationAction(s:CMSStore,a:CmsIdentity,op:string,v:any,claimant?:VerifiedClaimant){
   checkActor(s,a);if(!v||typeof v!=='object'||Array.isArray(v))fail('Objekt krävs.');const c=s.collaboration??emptyCollaboration();s.collaboration=c;const admin=can(s,a,'admin');const now=new Date().toISOString();
+  if(['verification-policy','claim-submit','claim-decision'].includes(op))return companyVerificationAction(s,a,op,v,claimant);
   if(op==='roles'){
     if(!admin)fail('Admin krävs.',403);conflict(c.revision,v.revision);
     const member=s.communityMembers.find(m=>m.authorUid===v.uid&&m.verificationStatus==='verified');if(!member||isBlocked(s.memberGovernance,v.uid))fail('Välj en godkänd UID-kopplad medlem.');
@@ -72,7 +74,7 @@ export function collaborationAction(s:CMSStore,a:CmsIdentity,op:string,v:any){
         s.partners.push(entity);
       }
       const result=collaborationAction(s,a,'reserve-page',{entityType:'partner',entityId:entity.id,slug:spec.slug,revision:c.revision});
-      const page=c.pages.find(p=>p.id===result.id)!;
+      const page=c.pages.find(p=>p.id===('id' in result?result.id:undefined))!;
       page.managedByPlatform=true;page.responsibleUid=a.uid;
       page.draft={title:spec.name,summary:'Redaktionell företagssida som förvaltas av Sveriges E-handel.',forms:[],widgets:[
         {id:'presentation',type:'text',title:'Om '+spec.name,body:'Presentation kompletteras av Sveriges E-handel före publicering.',url:'',alt:'',formId:'',enabled:true},

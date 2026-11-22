@@ -1,7 +1,9 @@
+import { completeTotpChallenge } from '../../shared/totpChallenge';
 import { requestEmailLogin, completeEmailLogin, emailCallbackLocation } from '../../shared/emailAuthFlow';
 import { SignInDialog } from '../components/SignInDialog';
 import { authProviderOptions, normalizeLoginEmail, loginErrorMessage } from '../../shared/authOptions';
 import {
+  getMultiFactorResolver, TotpMultiFactorGenerator, type MultiFactorError, type MultiFactorResolver,
   FacebookAuthProvider, OAuthProvider, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, sendEmailVerification, reload,
   getRedirectResult,
   onIdTokenChanged,
@@ -57,6 +59,8 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [savedSessionIds, setSavedSessionIds] = useState<string[]>([]);
   const [showSignIn,setShowSignIn]=useState(false);
   const [pendingEmailLink,setPendingEmailLink]=useState<string|null>(null);
+  const [mfaResolver,setMfaResolver]=useState<MultiFactorResolver|null>(null);
+  const captureMfa=useCallback((err:unknown)=>{if((err as {code?:string})?.code!=='auth/multi-factor-auth-required')return false;setMfaResolver(getMultiFactorResolver(auth,err as MultiFactorError));setShowSignIn(true);setAuthError(null);return true;},[]);
   const authAttempt=useRef(false);
   const requestSignIn=useCallback(()=>{setAuthError(null);setShowSignIn(true);},[]);
   useEffect(()=>{
@@ -72,7 +76,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
     void getRedirectResult(auth).catch((err) => {
-      if (active) setAuthError(formatAuthError(err));
+      if (active&&!captureMfa(err)) setAuthError(formatAuthError(err));
     });
     return () => { active = false; };
   }, []);
@@ -128,7 +132,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     try {
       await signInWithRedirect(auth, googleProvider);
     } catch (err) {
-      setAuthError(formatAuthError(err));
+      if(!captureMfa(err))setAuthError(formatAuthError(err));
       setSigningIn(false);authAttempt.current=false;
     }
   }, []);
@@ -149,13 +153,14 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
       setShowSignIn(false);
       return result.user;
     } catch (err) {
+      if(captureMfa(err))return null;
       const code = (err as { code?: string })?.code;
       if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
         try {
           await signInWithRedirect(auth, googleProvider);
           return null;
         } catch (redirectErr) {
-          setAuthError(formatAuthError(redirectErr));
+          if(!captureMfa(redirectErr))setAuthError(formatAuthError(redirectErr));
           return null;
         }
       }
@@ -180,7 +185,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
         await requestEmailLogin(email,window.location.origin,(address,settings)=>sendSignInLinkToEmail(auth,address,settings));
       }
       return true;
-    }catch(error){setAuthError(formatAuthError(error));return false;}
+    }catch(error){if(!captureMfa(error))setAuthError(formatAuthError(error));return false;}
     finally{authAttempt.current=false;setSigningIn(false);}
   };
   const socialSignIn=async(kind:'facebook'|'linkedin')=>{
@@ -190,7 +195,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
       const provider=kind==='facebook'?new FacebookAuthProvider():new OAuthProvider(providerOptions.linkedin);
       provider.addScope('email');if(kind==='linkedin')provider.addScope('profile');
       const result=await signInWithPopup(auth,provider);setShowSignIn(!result.user.emailVerified);
-    }catch(error){setAuthError(formatAuthError(error));}
+    }catch(error){if(!captureMfa(error))setAuthError(formatAuthError(error));}
     finally{authAttempt.current=false;setSigningIn(false);}
   };
   const verifyCurrentEmail=async()=>{
@@ -208,7 +213,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   };
 
   const signOutUser = useCallback(async () => {
-    setAuthError(null);
+    setMfaResolver(null);setAuthError(null);
     await signOut(auth);
     setSavedSessionIds([]);
   }, []);
@@ -248,8 +253,13 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     >
       {children}
       {showSignIn&&<SignInDialog busy={signingIn} error={authError} user={user}
+        mfa={mfaResolver?{factors:mfaResolver.hints.filter(f=>f.factorId===TotpMultiFactorGenerator.FACTOR_ID).map(f=>({uid:f.uid,name:f.displayName||'Autentiseringsapp'})),onCancel:()=>{setMfaResolver(null);setAuthError(null);},onComplete:async(uid,code)=>{
+          if(authAttempt.current||!mfaResolver.hints.some(f=>f.uid===uid&&f.factorId===TotpMultiFactorGenerator.FACTOR_ID))return;
+          authAttempt.current=true;setSigningIn(true);setAuthError(null);
+          try{await completeTotpChallenge(mfaResolver.hints,uid,code,(factor,value)=>mfaResolver.resolveSignIn(TotpMultiFactorGenerator.assertionForSignIn(factor,value)));setMfaResolver(null);setPendingEmailLink(null);setShowSignIn(false);}catch{setAuthError('2FA kunde inte verifieras. Kontrollera koden och enhetens tid, eller starta om inloggningen.');}finally{authAttempt.current=false;setSigningIn(false);}
+        }}:undefined}
         emailEnabled={providerOptions.email} facebookEnabled={providerOptions.facebook} linkedinEnabled={Boolean(providerOptions.linkedin)}
-        pendingEmailLink={Boolean(pendingEmailLink)} onClose={()=>{if(!signingIn)setShowSignIn(false);}}
+        pendingEmailLink={Boolean(pendingEmailLink)} onClose={()=>{if(!signingIn){setMfaResolver(null);setShowSignIn(false);}}}
         onGoogle={()=>void signInWithGoogle()} onGoogleRedirect={()=>void signInWithGoogleRedirect()}
         onSocial={(kind)=>void socialSignIn(kind)} onEmail={emailSignIn} onVerify={verifyCurrentEmail}
         onReload={reloadVerification} onDiscardLink={()=>{setPendingEmailLink(null);setAuthError(null);}}/>}

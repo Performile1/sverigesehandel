@@ -36,7 +36,9 @@ export function cmsFirestore() { return getFirestore(cmsAdminApp(), firebaseConf
 export function cmsFirebaseAuth() { return getAuth(cmsAdminApp()); }
 export async function verifyCmsToken(token: string) {
   // verifyIdToken(token) works without IAM permissions on Google-hosted Starter Tier projects.
-  const claims = await cmsFirebaseAuth().verifyIdToken(token);
+  let claims = await cmsFirebaseAuth().verifyIdToken(token);
+  // Security-sensitive MFA sessions must honor disabled accounts and token revocation.
+  if(claims.firebase?.sign_in_second_factor||process.env.FIREBASE_TOTP_ENABLED==='true'||process.env.REQUIRE_PRIVILEGED_MFA==='true')claims=await cmsFirebaseAuth().verifyIdToken(token,true);
   return resolveCmsIdentity(claims, async (uid) => {
     if (!hasExplicitAdminCredentials()) return false;
     try {

@@ -1,3 +1,4 @@
+import { requireTotp } from './mfaPolicy.ts';
 import { rolesFor } from './collaboration.ts';
 import { invitationConfigured, sendUserInvitation } from './userInvitation.ts';
 import type { InvitationStatus } from './userInvitation.ts';
@@ -9,7 +10,7 @@ import type { CmsDataStore } from './firestoreStore.ts';
 import { publicStore } from './publicStore.ts';
 import type { CmsIdentity } from './authPolicy.ts';
 import { upgradeSnapshot, validateSnapshot } from './snapshot.ts';
-import { hasExplicitAdminCredentials, cmsFirestore } from './firebaseAdmin.ts';
+import { hasExplicitAdminCredentials, cmsFirestore, cmsFirebaseAuth } from './firebaseAdmin.ts';
 import {
   discoverJobsWithAI,
   discoverMerchantsWithAI,
@@ -55,7 +56,7 @@ const isMemberSubmission = (method: string, path: string) => isCompanyMemberRout
 
 export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) => Promise<CmsIdentity>, features = {
   status: firebaseFeatureStatus, upload: uploadCmsImage, report: getCmsAnalytics,
-}, users = { resolve: resolveCmsUser }, invitations = { configured:invitationConfigured, send:sendUserInvitation, sender:()=>process.env.RESEND_FROM_EMAIL?.trim() || '' }, protectedAdmin=(uid:string)=>cmsFirestore().doc(`admins/${uid}`).get().then(doc=>doc.exists)) {
+}, users = { resolve: resolveCmsUser }, invitations = { configured:invitationConfigured, send:sendUserInvitation, sender:()=>process.env.RESEND_FROM_EMAIL?.trim() || '' }, protectedAdmin=(uid:string)=>cmsFirestore().doc(`admins/${uid}`).get().then(doc=>doc.exists), verifyClaimant=async(uid:string)=>{const u=await cmsFirebaseAuth().getUser(uid);return {uid:u.uid,email:u.email??'',verified:u.emailVerified,disabled:u.disabled,totpEnrolled:Boolean(u.multiFactor?.enrolledFactors.some(f=>f.factorId==='totp'))};}) {
   const app = express();
   app.disable('x-powered-by');
   app.use('/api', (_req, res, next) => {
@@ -99,6 +100,17 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
     if (identity && isBlocked((await store.getStore()).memberGovernance, identity.uid)) {
       res.status(403).json({ error: 'Ditt konto är blockerat i Sveriges E-handel. Kontakta redaktionen.' }); return;
     }
+    if(identity){
+      const current=await store.getStore();
+      const verifiedLinks=current.memberGovernance?.links.filter(l=>l.uid===identity!.uid&&l.status==='active'&&l.verificationClaimId)??[];
+      const authStatus=path==='/api/access/me';
+      const ordinaryMessage=path==='/api/teamspace/message';
+      const protectedScope=admin||path==='/api/teamspace'||path.startsWith('/api/company/')||(path.startsWith('/api/teamspace/')&&!ordinaryMessage);
+      if(!authStatus&&protectedScope&&((process.env.REQUIRE_PRIVILEGED_MFA==='true')||verifiedLinks.length>0)){
+        try{requireTotp(identity);if(verifiedLinks.some(l=>l.verifiedEmail?.toLowerCase()!==identity!.email?.toLowerCase()))throw new Error();}
+        catch{res.status(403).json({error:'Logga in på nytt med 2FA. Ändrad företagsmejl behöver granskas av admin.'});return;}
+      }
+    }
     next();
   }));
   app.use(express.json({ limit: '800kb' }));
@@ -113,7 +125,18 @@ export function createCmsApp(store: CmsDataStore, verifyToken: (token: string) =
       if(typeof req.body?.uid==='string'&&req.body.uid.length<=128&&!req.body.uid.includes('/')&&await protectedAdmin(req.body.uid)){res.status(403).json({error:'Skyddat administratörskonto. Global admin hanterar detta.'});return;}
     }
     if(req.params.operation==='moderate')res.json(await store.moderateAsRole(res.locals.cmsIdentity,req.body?.operation,req.body?.payload));
-    else res.json(await store.executeCollaboration(res.locals.cmsIdentity,req.params.operation,req.body));
+    else {
+      let claimant;
+      if(req.params.operation==='claim-decision'&&req.body?.decision==='approve'){
+        requireTotp(res.locals.cmsIdentity,true);
+        const w=await store.getAccessWorkspace(res.locals.cmsIdentity);
+        if(!w.roles.includes('admin')){res.status(403).json({error:'Admin krävs.'});return;}
+        const claim=w.verification.claims.find(c=>c.id===req.body.id);
+        if(!claim){res.status(404).json({error:'Ansökan saknas.'});return;}
+        claimant=await verifyClaimant(claim.uid); // Trusted lookup, never the request body's email/MFA claims.
+      }
+      res.json(await store.executeCollaboration(res.locals.cmsIdentity,req.params.operation,req.body,claimant));
+    }
   }));
   app.get('/api/firebase-features', (_req, res) => { res.json(features.status()); });
   app.get('/api/analytics/report', route(async (req, res) => {

@@ -31,7 +31,7 @@ export function loginErrorMessage(error:unknown):string {
     'auth/popup-blocked':'Popup blockerades. Tillåt popup eller välj Google via omdirigering.',
     'auth/popup-closed-by-user':'Inloggningsfönstret stängdes. Försök igen.',
     'auth/cancelled-popup-request':'Inloggningsförsöket avbröts.',
-    'auth/multi-factor-auth-required':'Kontot kräver en andra faktor. Detta inloggningsflöde stöder ännu inte MFA; kontakta administratören. Inget MFA-krav kringgås.',
+    'auth/multi-factor-auth-required':'Kontot kräver en andra faktor. Ange koden från din autentiseringsapp. Om din faktor inte stöds: kontakta administratören. Inget MFA-krav kringgås.',
   };
   return (code&&messages[code])||'Inloggningen kunde inte slutföras. Försök igen eller kontakta administratören.';
 }

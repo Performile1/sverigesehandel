@@ -1,3 +1,5 @@
+import { CompanyVerificationPanel } from './CompanyVerificationPanel';
+import { useFirebase } from '../contexts/FirebaseContext';
 import { CreateCompanyPages } from './CreateCompanyPages';
 import { CompanyPagesPanel } from './CompanyPagesPanel';
 import { useEffect, useState } from 'react';
@@ -8,14 +10,16 @@ import { api } from '../api';
 import { ContentEditor } from './ContentEditor';
 const field='block w-full border rounded-lg p-2 mt-1';const button='border rounded-lg px-3 py-2 disabled:opacity-40';
 export function TeamWorkspace({companyOnly=false}:{companyOnly?:boolean}){
+  const {requestSignIn}=useFirebase();
   const [data,setData]=useState<Workspace|null>(null);const [error,setError]=useState('');
   const reload=async()=>{try{setData(await api.teamspace());setError('');}catch(err){setData(null);setError((err as Error).message);}};
   useEffect(()=>{void reload();},[]);
-  if(!data)return <section className="p-5">{error?<><p role="alert">{error}</p><button type="button" className={button} onClick={()=>void reload()}>Försök läsa arbetsytan igen</button></>:<p>Läser roll- och företagsbehörigheter…</p>}</section>;
+  if(!data)return <section className="p-5">{error?<><p role="alert">{error}</p><button type="button" className={button} onClick={()=>void reload()}>Försök läsa arbetsytan igen</button><button type="button" className={button} onClick={requestSignIn}>Öppna inloggning / 2FA</button></>:<p>Läser roll- och företagsbehörigheter…</p>}</section>;
   const admin=data.roles.includes('admin');const editor=admin||data.roles.includes('editor');const writer=editor||data.roles.includes('writer');
   const act=async(op:string,payload:unknown)=>{try{await api.teamAction(op,payload);await reload();}catch(err){setError((err as Error).message);}};
   return <section className="max-w-6xl mx-auto p-5 space-y-6"><h1 className="text-2xl font-bold">{companyOnly?'Företagssidor':'Redaktion, roller & företagssidor'}</h1>
     <p>Dina plattformsroller: {data.roles.map(r=>ROLE_LABELS[r]).join(', ')||'Inga – eventuell företagsåtkomst visas nedan'}. Företagskoppling är en separat behörighet och ger inte plattformsadmin.</p><button className={button} onClick={()=>void reload()}>Läs om aktuella rättigheter</button>{error&&<p role="alert">{error}</p>}
+    <CompanyVerificationPanel data={data} reload={reload}/>
     {admin&&<CreateCompanyPages revision={data.revision} onLoaded={loaded=>{setData(loaded);setError('');}}/>}
     <CompanyPagesPanel data={data} admin={admin} reload={reload}/>
     {!companyOnly&&admin&&<>

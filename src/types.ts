@@ -883,6 +883,7 @@ export interface CommunitySettings {
   registrationEnabled: boolean; directoryEnabled: boolean; reportsEnabled: boolean;
 }
 export interface CompanyMemberLink {
+  verificationClaimId?:string; verifiedEmail?:string;
   id: string; uid: string; entityType: CompanyEntityType; entityId: string;
   status: 'active' | 'revoked'; canPropose: boolean; receiveIntros: boolean;
   receiveMessages: boolean; includeHistory: boolean; createdAt: string; updatedAt: string;
@@ -979,7 +980,11 @@ export interface CompanyPageContent {title:string;summary:string;widgets:Company
 export interface CompanyPage {managedByPlatform?:boolean;responsibleUid?:string;id:string;entityType:CompanyEntityType;entityId:string;slug:string;revision:number;draft:CompanyPageContent;published?:CompanyPageContent;state:'draft'|'review'|'published'|'rejected';submittedAsAdmin?:boolean;submittedBy:string;reviewedBy:string;updatedAt:string}
 export interface PublicCompanyPage {entityId?:string;entityType?:CompanyEntityType;id:string;slug:string;entityName:string;content:Omit<CompanyPageContent,'forms'>&{forms:Array<Omit<CompanyPageForm,'recipientUids'>>}}
 export interface CompanyPageMessage {id:string;pageId:string;formId:string;purpose:'lead'|'quote'|'support';uid:string;email:string;answers:Record<string,string>;createdAt:string;assignedUid:string;state:'new'|'working'|'resolved';revision:number}
-export interface CollaborationStore {revision:number;roles:RoleGrant[];drafts:EditorialDraft[];pages:CompanyPage[];messages:CompanyPageMessage[];audit:Array<{id:string;uid:string;action:string;target:string;at:string}>;communityBlocks:Array<{uid:string;reason:string;at:string}>}
+export interface CollaborationStore {verification?:CompanyVerificationState;revision:number;roles:RoleGrant[];drafts:EditorialDraft[];pages:CompanyPage[];messages:CompanyPageMessage[];audit:Array<{id:string;uid:string;action:string;target:string;at:string}>;communityBlocks:Array<{uid:string;reason:string;at:string}>}
 
 export interface StarterPagesResult {created:number;existing:number;pages:Array<{id:string;slug:string;created:boolean}>}
 export interface TeamActionResult {ok:boolean;id?:string;starterPages?:StarterPagesResult}
+
+export interface CompanyVerificationPolicy {entityType:CompanyEntityType;entityId:string;domains:string[];registrationNumber:string;address:string;reviewedBy:string;reviewedAt:string}
+export interface CompanyAdministrationClaim {id:string;uid:string;email:string;entityType:CompanyEntityType;entityId:string;name:string;position:string;registrationNumber:string;address:string;reason:string;state:'pending'|'approved'|'rejected'|'revoked';revision:number;createdAt:string;reviewedBy:string;reviewedAt:string;reviewNote:string;domainMatched:boolean;mfaVerifiedAt:string;linkId?:string}
+export interface CompanyVerificationState {policies:CompanyVerificationPolicy[];claims:CompanyAdministrationClaim[]}

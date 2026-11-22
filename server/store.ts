@@ -2449,7 +2449,7 @@ export function savePublicPageLayout(actor:CmsIdentity,page:unknown,input:unknow
 
 export function getAccessWorkspace(actor:CmsIdentity){return teamWorkspace(ensureStoreFile(),actor);}
 export function accessSummary(actor:CmsIdentity){const s=ensureStoreFile();checkActor(s,actor);return {roles:rolesFor(s,actor)};}
-export function executeCollaboration(actor:CmsIdentity,operation:string,input:unknown) {
+export function executeCollaboration(actor:CmsIdentity,operation:string,input:unknown,claimant?:import('./companyVerification.ts').VerifiedClaimant) {
   const store=structuredClone(ensureStoreFile());
   if(operation==='editorial-unpublish'){
     checkActor(store,actor);if(!can(store,actor,'editor'))collaborationFail('Redaktör krävs.',403);
@@ -2461,7 +2461,7 @@ export function executeCollaboration(actor:CmsIdentity,operation:string,input:un
     const changed=withStore(store,()=>{if(v.kind==='insight')return upsertInsightPost({...row,status:'draft'} as import('../src/types').InsightPost,actor.uid);if(v.kind==='guide')return saveGuideChapter({...actor,admin:true,baseAdmin:true},{...row,status:'draft'});return upsertNews({...row,status:'draft'});});
     saveCommerce(changed.store);return {ok:true};
   }
-  const result=collaborationAction(store,actor,operation,input);
+  const result=collaborationAction(store,actor,operation,input,claimant);
   const publication=(result as {publication?:import('../src/types.ts').EditorialDraft}).publication;
   let finalStore=store;
   if(publication){
